@@ -1,0 +1,19 @@
+[project]
+name = "careeros-backend"
+version = "0.1.0"
+description = "CareerOS AI - Resume Builder Backend"
+requires-python = ">=3.11"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "W", "F", "I", "N", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
