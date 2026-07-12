@@ -3,14 +3,23 @@ import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from app.api.v1.routers import auth, profile, users
+from app.api.v1.router import router as v1_router
 from app.core.config import get_settings
+from app.core.exceptions import (
+    CareerOSException,
+    ResourceNotFoundError,
+    ConflictError,
+    ValidationError,
+    UnauthorizedError,
+    ForbiddenError,
+)
 from app.db.session import engine
-from app.db.base import Base
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -45,16 +54,91 @@ def create_application() -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "Accept"],
     )
 
-    # ─── Routers ──────────────────────────────────────────────────────────────
-    prefix = settings.API_V1_PREFIX
-    app.include_router(auth.router, prefix=prefix)
-    app.include_router(users.router, prefix=prefix)
-    app.include_router(profile.router, prefix=prefix)
-
-    # ─── Health check ─────────────────────────────────────────────────────────
+    # ─── Health Checks ────────────────────────────────────────────────────────
     @app.get("/health", tags=["Health"])
     async def health() -> dict[str, str]:
-        return {"status": "ok", "version": "0.1.0"}
+        return {
+            "status": "healthy",
+            "service": "CareerOS AI API"
+        }
+
+    @app.get(f"{settings.API_V1_PREFIX}/health", tags=["Health"])
+    async def api_v1_health() -> dict[str, str]:
+        return {
+            "status": "healthy",
+            "api_version": "v1"
+        }
+
+    # ─── Exception Handlers ──────────────────────────────────────────────────
+    @app.exception_handler(CareerOSException)
+    async def careeros_exception_handler(request: Request, exc: CareerOSException) -> JSONResponse:
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        if isinstance(exc, ResourceNotFoundError):
+            status_code = status.HTTP_404_NOT_FOUND
+        elif isinstance(exc, ConflictError):
+            status_code = status.HTTP_409_CONFLICT
+        elif isinstance(exc, ValidationError):
+            status_code = status.HTTP_400_BAD_REQUEST
+        elif isinstance(exc, UnauthorizedError):
+            status_code = status.HTTP_401_UNAUTHORIZED
+        elif isinstance(exc, ForbiddenError):
+            status_code = status.HTTP_403_FORBIDDEN
+
+        return JSONResponse(
+            status_code=status_code,
+            content={
+                "error": {
+                    "code": exc.code,
+                    "message": exc.message,
+                    "details": exc.details,
+                }
+            },
+        )
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "code": "HTTP_EXCEPTION",
+                    "message": exc.detail,
+                    "details": None,
+                }
+            },
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Input validation failed",
+                    "details": exc.errors(),
+                }
+            },
+        )
+
+    @app.exception_handler(Exception)
+    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("Unhandled server error occurred")
+        # Ensure no secret or stack trace is exposed in production / fallback
+        message = str(exc) if settings.DEBUG else "An unexpected error occurred."
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": message,
+                    "details": None,
+                }
+            },
+        )
+
+    # ─── Routers ──────────────────────────────────────────────────────────────
+    app.include_router(v1_router, prefix=settings.API_V1_PREFIX)
 
     return app
 

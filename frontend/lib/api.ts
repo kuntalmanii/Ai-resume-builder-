@@ -56,6 +56,8 @@ export function getRefreshToken(): string | null {
 
 // ─── Core Fetch Wrapper ───────────────────────────────────────────────────────
 
+import { apiClient, APIError } from "./api/client";
+
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -64,65 +66,17 @@ interface RequestOptions {
   formData?: FormData;
 }
 
-export class APIError extends Error {
-  status: number;
-  detail: string;
-
-  constructor(status: number, detail: string) {
-    super(detail);
-    this.status = status;
-    this.detail = detail;
-    this.name = "APIError";
-  }
-}
+export { APIError };
 
 async function request<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, authenticated = true, formData } = options;
-
-  const headers: Record<string, string> = {
-    ...(options.headers || {}),
-  };
-
-  if (!formData) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  if (authenticated) {
-    const token = getAccessToken();
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
-
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: formData ? formData : body ? JSON.stringify(body) : undefined,
+  const { body, ...rest } = options;
+  return apiClient<T>(path, {
+    bodyData: body,
+    ...rest,
   });
-
-  if (!response.ok) {
-    let detail = "An unexpected error occurred";
-    try {
-      const errorData = await response.json();
-      if (typeof errorData.detail === "string") {
-        detail = errorData.detail;
-      } else if (Array.isArray(errorData.detail)) {
-        detail = errorData.detail.map((e: { msg: string }) => e.msg).join(", ");
-      }
-    } catch {
-      detail = response.statusText;
-    }
-    throw new APIError(response.status, detail);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
 }
 
 // ─── Auth API ─────────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ export interface User {
 
 export interface TokenResponse {
   access_token: string;
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
 }
@@ -214,3 +215,95 @@ export interface ResumeAnalysis {
 export interface APIError {
   detail: string | { msg: string; type: string }[];
 }
+
+// ─── Client Evidence & Suggestions ───────────────────────────────────────────
+
+export type VerificationStatus = "verified" | "partially_verified" | "unverified";
+export type SuggestionStatus = "pending" | "accepted" | "rejected" | "edited";
+
+export interface ClientEvidenceSource {
+  id: string;
+  label: string;
+  sourceType: "resume" | "profile" | "inference";
+  sourceReference?: string;
+  verified: boolean;
+}
+
+export interface ClientAISuggestion {
+  id: string;
+  originalContent: string;
+  suggestedContent: string;
+  evidenceSources: ClientEvidenceSource[];
+  confidence: number;
+  verificationStatus: VerificationStatus;
+  unverifiedClaims: string[];
+  status: SuggestionStatus;
+}
+
+// ─── Scoring Details ─────────────────────────────────────────────────────────
+
+export type CheckStatus = "passed" | "warning" | "failed";
+
+export interface ScoreDeduction {
+  reason: string;
+  points: number;
+}
+
+export interface Recommendation {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  impact: "high" | "medium" | "low";
+  actionableText: string;
+}
+
+export interface AnalysisCheck {
+  id: string;
+  label: string;
+  status: CheckStatus;
+  message: string;
+  points_affected: number;
+}
+
+export interface AnalysisCategory {
+  id: string;
+  title: string;
+  score: number;
+  maxScore: number;
+  passedChecks: number;
+  warnings: number;
+  failedChecks: number;
+  pointDeductions: ScoreDeduction[];
+  recommendations: Recommendation[];
+}
+
+export interface AnalysisResult {
+  overallScore: number;
+  categories: AnalysisCategory[];
+}
+
+// ─── Keywords Matching ───────────────────────────────────────────────────────
+
+export type KeywordMatchType = "exact_match" | "semantic_match" | "missing" | "optional";
+
+export interface ClientKeywordMatch {
+  keyword: string;
+  matchType: KeywordMatchType;
+  foundInResume: boolean;
+  alternativeTerms: string[];
+  contextSentence?: string;
+}
+
+export interface SkillGap {
+  skill: string;
+  importance: "required" | "preferred";
+  recommendation: string;
+}
+
+export interface ExperienceGap {
+  requirement: string;
+  details: string;
+  gapYears: number;
+}
+

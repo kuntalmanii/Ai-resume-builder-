@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.profile import CareerProfile
+from app.db.models.profile import CareerProfile
 from app.schemas.profile import CareerProfileUpdate
 
 

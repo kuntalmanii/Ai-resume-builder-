@@ -81,6 +81,15 @@ class LanguageEntry(BaseModel):
 class CareerProfileResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
+    
+    phone: str | None = None
+    location: str | None = None
+    professional_title: str | None = None
+    professional_summary: str | None = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
+
     education: list[EducationEntry] = Field(default_factory=list)
     experience: list[ExperienceEntry] = Field(default_factory=list)
     projects: list[ProjectEntry] = Field(default_factory=list)
@@ -90,12 +99,21 @@ class CareerProfileResponse(BaseModel):
     positions_of_responsibility: list[PositionEntry] = Field(default_factory=list)
     languages: list[LanguageEntry] = Field(default_factory=list)
     interests: list[str] = Field(default_factory=list)
+    created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
 
 
 class CareerProfileUpdate(BaseModel):
+    phone: str | None = None
+    location: str | None = None
+    professional_title: str | None = None
+    professional_summary: str | None = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
+
     education: list[EducationEntry] | None = None
     experience: list[ExperienceEntry] | None = None
     projects: list[ProjectEntry] | None = None

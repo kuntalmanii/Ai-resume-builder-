@@ -1,13 +1,15 @@
 /**
- * Dashboard layout with sidebar navigation and auth guard.
+ * Dashboard layout with sidebar navigation, mobile drawer navigation, and auth guard.
  */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
-import { Sidebar } from "@/components/shared/Sidebar";
+import { Sidebar, SidebarContent } from "@/components/shared/Sidebar";
 import { Loader2 } from "lucide-react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import TopHeader from "@/components/layout/TopHeader";
 
 export default function DashboardLayout({
   children,
@@ -16,6 +18,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -36,11 +39,27 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row">
+      {/* Mobile Drawer (Sheet) */}
+      <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+        <SheetContent side="left" className="p-0 w-64 bg-card border-r border-border h-full" showCloseButton={false}>
+          <SidebarContent onClose={() => setIsMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
       <Sidebar />
-      <main className="flex-1 min-h-screen overflow-auto lg:ml-64">
-        <div className="p-6 lg:p-8">{children}</div>
-      </main>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-64">
+        {/* Top App Header */}
+        <TopHeader onMenuClick={() => setIsMobileOpen(true)} />
+
+        {/* Content Page Container */}
+        <main className="flex-1 overflow-auto bg-background/50">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

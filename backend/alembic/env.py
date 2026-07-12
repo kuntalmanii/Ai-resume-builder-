@@ -9,7 +9,18 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import all models so Alembic can detect them
 from app.db.base import Base
-from app.models import user, profile, resume, analysis  # noqa: F401
+from app.db.models import (  # noqa: F401
+    User,
+    CareerProfile,
+    Resume,
+    ResumeAnalysis,
+    ResumeVersion,
+    JobDescription,
+    AnalysisCheck,
+    JobMatchResult,
+    AISuggestion,
+    EvidenceSource,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
