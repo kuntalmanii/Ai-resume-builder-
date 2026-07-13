@@ -20,6 +20,7 @@ from app.db.models import (  # noqa: F401
     JobMatchResult,
     AISuggestion,
     EvidenceSource,
+    CareerEntry,
 )
 
 # this is the Alembic Config object, which provides

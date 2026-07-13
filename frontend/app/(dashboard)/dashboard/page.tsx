@@ -23,9 +23,13 @@ import {
   TrendingUp,
   Clock,
   Lightbulb,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AtsScoreRing } from "@/components/ui/ats-score";
+import { resumesAPI } from "@/lib/api";
+import type { Resume } from "@/types";
+import { toast } from "sonner";
 
 const quickActions = [
   {
@@ -66,33 +70,6 @@ const quickActions = [
   },
 ];
 
-const mockActivities = [
-  {
-    id: "act-1",
-    type: "analyze",
-    description: "Analyzed resume 'Software Engineer Lead'",
-    time: "2 hours ago",
-    icon: BarChart3,
-    color: "text-blue-500 bg-blue-500/10",
-  },
-  {
-    id: "act-2",
-    type: "profile",
-    description: "Updated skills in Career Profile",
-    time: "1 day ago",
-    icon: User,
-    color: "text-purple-500 bg-purple-500/10",
-  },
-  {
-    id: "act-3",
-    type: "create",
-    description: "Created new resume draft 'Product Manager 2024'",
-    time: "2 days ago",
-    icon: FileText,
-    color: "text-emerald-500 bg-emerald-500/10",
-  },
-];
-
 const aiTips = [
   "Action verbs like 'Spearheaded' or 'Formulated' score 25% higher on ATS screeners than generic verbs like 'Led' or 'Managed'.",
   "Ensure your key technical skills are formatted as comma-separated values inside a clean 'Skills' section for optimal parser indexing.",
@@ -108,14 +85,39 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
+const formatDate = (dateStr: string) => {
+  try {
+    const d = new Date(dateStr);
+    return `Edited ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return "Recently edited";
+  }
+};
+
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [greeting, setGreeting] = useState("Good morning");
   const [tipIndex, setTipIndex] = useState(0);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await resumesAPI.list();
+      setResumes(data);
+    } catch {
+      toast.error("Failed to load dashboard data.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
+    fetchDashboardData();
+
     const hours = new Date().getHours();
     if (hours >= 12 && hours < 17) {
       setGreeting("Good afternoon");
@@ -133,6 +135,14 @@ export default function DashboardPage() {
   }, []);
 
   const firstName = mounted && user?.full_name?.split(" ")[0] ? user.full_name.split(" ")[0] : "there";
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -226,38 +236,73 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="bg-card border-border text-foreground shadow-sm">
-              <CardHeader className="pb-3 border-b border-border/40">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  Resume Spotlight
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 flex flex-col sm:flex-row items-center gap-6 justify-between">
-                <div className="space-y-2 text-center sm:text-left">
-                  <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 font-bold px-2 py-0.5 text-[9px] uppercase">
-                    Highest ATS Score
-                  </Badge>
-                  <h3 className="font-bold text-base text-foreground">Software Engineer Lead</h3>
-                  <p className="text-xs text-muted-foreground leading-normal max-w-sm">
-                    This resume is currently optimized with strong quantification metrics and high keyword density.
+            {resumes.length === 0 ? (
+              <Card className="bg-card border-border text-foreground shadow-sm">
+                <CardContent className="p-8 text-center space-y-3">
+                  <FileText className="w-8 h-8 mx-auto text-muted-foreground/60" />
+                  <h3 className="font-bold text-sm">No resumes built yet</h3>
+                  <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                    Build your first resume to start optimizing your ATS score with AI suggestions.
                   </p>
                   <div className="pt-2">
-                    <Link href="/resumes/resume-2/edit">
-                      <Button size="sm" className="h-8 text-xs font-semibold px-4">
-                        Improve Further
-                        <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                    <Link href="/resumes/new">
+                      <Button size="sm" className="h-8 text-xs font-semibold">
+                        Create Resume
                       </Button>
                     </Link>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            ) : (
+              (() => {
+                const resumesWithScore = resumes.filter((r) => r.latest_score !== undefined && r.latest_score !== null);
+                const spotlightResume = resumesWithScore.length > 0 
+                  ? [...resumesWithScore].sort((a, b) => (b.latest_score ?? 0) - (a.latest_score ?? 0))[0]
+                  : resumes[0];
+                const hasScore = spotlightResume.latest_score !== undefined && spotlightResume.latest_score !== null;
 
-                <div className="flex flex-col items-center bg-[#F1F3F6]/50 border border-border/30 p-4 rounded-xl shrink-0">
-                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">ATS Score</span>
-                  <AtsScoreRing score={92} size="sm" />
-                </div>
-              </CardContent>
-            </Card>
+                return (
+                  <Card className="bg-card border-border text-foreground shadow-sm">
+                    <CardHeader className="pb-3 border-b border-border/40">
+                      <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                        Resume Spotlight
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-5 flex flex-col sm:flex-row items-center gap-6 justify-between">
+                      <div className="space-y-2 text-center sm:text-left">
+                        <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 font-bold px-2 py-0.5 text-[9px] uppercase">
+                          {hasScore ? "Highest ATS Score" : "Active Resume"}
+                        </Badge>
+                        <h3 className="font-bold text-base text-foreground">{spotlightResume.title}</h3>
+                        <p className="text-xs text-muted-foreground leading-normal max-w-sm">
+                          {hasScore
+                            ? "This resume is currently optimized with strong qualification metrics and high keyword density."
+                            : "This resume hasn't been analyzed yet. Run an ATS check to identify optimization opportunities."}
+                        </p>
+                        <div className="pt-2">
+                          <Link href={`/resumes/${spotlightResume.id}/edit`}>
+                            <Button size="sm" className="h-8 text-xs font-semibold px-4">
+                              {hasScore ? "Improve Further" : "Edit Resume"}
+                              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-center bg-[#F1F3F6]/50 border border-border/30 p-4 rounded-xl shrink-0">
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">ATS Score</span>
+                        {hasScore ? (
+                          <AtsScoreRing score={spotlightResume.latest_score ?? 0} size="sm" />
+                        ) : (
+                          <span className="text-xs font-bold text-muted-foreground py-4">Not analyzed yet</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()
+            )}
           </motion.div>
 
           {/* Recent Activity Timeline */}
@@ -274,20 +319,25 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
-                {mockActivities.map((act, idx) => (
-                  <div key={act.id} className="flex items-start gap-4">
-                    <div className={cn("w-7.5 h-7.5 rounded-lg flex items-center justify-center flex-shrink-0", act.color)}>
-                      <act.icon className="w-4 h-4" />
+                {resumes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-2 text-center">No recent activity.</p>
+                ) : (
+                  resumes.slice(0, 3).map((r) => (
+                    <div key={r.id} className="flex items-start gap-4">
+                      <div className="w-7.5 h-7.5 rounded-lg flex items-center justify-center flex-shrink-0 text-emerald-500 bg-emerald-500/10">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">
+                          Updated resume "{r.title}" (v{r.version})
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {formatDate(r.updated_at)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-foreground truncate">{act.description}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{act.time}</p>
-                    </div>
-                    {idx < mockActivities.length - 1 && (
-                      <div className="w-[1px] bg-border absolute left-8 h-8" />
-                    )}
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -301,39 +351,48 @@ export default function DashboardPage() {
             transition={{ delay: 0.4 }}
             className="h-full"
           >
-            <Card className="bg-card border-border text-foreground shadow-sm h-full flex flex-col">
-              <CardHeader className="pb-3 border-b border-border/40">
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Your Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 flex-1 flex flex-col justify-around gap-6">
-                {[
-                  { label: "Resumes Created", value: "2", trend: "+1 this month", icon: FileText },
-                  { label: "Analyses Conducted", value: "12", trend: "+4 this week", icon: BarChart3 },
-                  { label: "Avg ATS Score", value: "85", trend: "+8.5% improvement", icon: Target, isGreen: true },
-                ].map((stat, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-[#F1F3F6] border border-border/20 flex items-center justify-center">
-                        <stat.icon className="w-4 h-4 text-primary" />
+            {(() => {
+              const resumesWithScore = resumes.filter((r) => r.latest_score !== undefined && r.latest_score !== null);
+              const avgScore = resumesWithScore.length > 0
+                ? Math.round(resumesWithScore.reduce((sum, r) => sum + (r.latest_score ?? 0), 0) / resumesWithScore.length)
+                : null;
+
+              return (
+                <Card className="bg-card border-border text-foreground shadow-sm h-full flex flex-col">
+                  <CardHeader className="pb-3 border-b border-border/40">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Your Metrics
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5 flex-1 flex flex-col justify-around gap-6">
+                    {[
+                      { label: "Resumes Created", value: String(resumes.length), trend: "Live database count", icon: FileText },
+                      { label: "Analyses Conducted", value: String(resumesWithScore.length), trend: "Analyzed documents", icon: BarChart3 },
+                      { label: "Avg ATS Score", value: avgScore !== null ? `${avgScore}%` : "—", trend: avgScore !== null ? "Average of reports" : "Not analyzed yet", icon: Target, isGreen: avgScore !== null },
+                    ].map((stat, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-[#F1F3F6] border border-border/20 flex items-center justify-center">
+                            <stat.icon className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-base font-extrabold text-foreground leading-none">{stat.value}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1.5 leading-none">{stat.label}</p>
+                          </div>
+                        </div>
+                        <div className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full border", 
+                          stat.isGreen 
+                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" 
+                            : "bg-[#F1F3F6] border-border text-muted-foreground"
+                        )}>
+                          {stat.trend}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-base font-extrabold text-foreground leading-none">{stat.value}</p>
-                        <p className="text-[10px] text-muted-foreground mt-1.5 leading-none">{stat.label}</p>
-                      </div>
-                    </div>
-                    <div className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full border", 
-                      stat.isGreen 
-                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" 
-                        : "bg-[#F1F3F6] border-border text-muted-foreground"
-                    )}>
-                      {stat.trend}
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </motion.div>
         </div>
       </div>

@@ -22,6 +22,8 @@ import {
   Eye,
   Target,
   Sparkles,
+  Copy,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -29,48 +31,72 @@ import { AtsScoreRing } from "@/components/ui/ats-score";
 import { SkeletonResumeCard } from "@/components/ui/skeletons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { resumesAPI } from "@/lib/api";
+import type { Resume } from "@/types";
 
-interface ResumeItem {
-  id: string;
-  title: string;
-  updatedAt: string;
-  score: number;
-}
-
-const mockResumes: ResumeItem[] = [
-  {
-    id: "resume-1",
-    title: "Product Manager 2024",
-    updatedAt: "Last edited 2 hours ago",
-    score: 78,
-  },
-  {
-    id: "resume-2",
-    title: "Software Engineer Lead",
-    updatedAt: "Last edited 1 day ago",
-    score: 92,
-  },
-];
+const formatDate = (dateStr: string) => {
+  try {
+    const d = new Date(dateStr);
+    return `Last edited ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return "Recently edited";
+  }
+};
 
 export default function ResumesPage() {
-  const [resumes, setResumes] = useState<ResumeItem[]>(mockResumes);
+  const [resumes, setResumes] = useState<Resume[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"date" | "score">("date");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Simulate premium dashboard loading
-    const timer = setTimeout(() => {
+  const fetchResumes = async () => {
+    try {
+      setIsLoading(true);
+      const data = await resumesAPI.list();
+      setResumes(data);
+    } catch {
+      toast.error("Failed to load resumes.");
+    } finally {
       setIsLoading(false);
-    }, 700);
-    return () => clearTimeout(timer);
+    }
+  };
+
+  useEffect(() => {
+    fetchResumes();
   }, []);
 
-  const handleDelete = (id: string, title: string) => {
-    setResumes(resumes.filter((r) => r.id !== id));
-    toast.success(`"${title}" deleted successfully`);
+  const handleDelete = async (id: string, title: string) => {
+    try {
+      await resumesAPI.delete(id);
+      setResumes((prev) => prev.filter((r) => r.id !== id));
+      toast.success(`"${title}" deleted successfully`);
+    } catch {
+      toast.error(`Failed to delete "${title}"`);
+    }
+    setActiveMenuId(null);
+  };
+
+  const handleDuplicate = async (id: string) => {
+    try {
+      const dup = await resumesAPI.duplicate(id);
+      setResumes((prev) => [dup, ...prev]);
+      toast.success(`Duplicated "${dup.title}" successfully`);
+    } catch {
+      toast.error("Failed to duplicate resume.");
+    }
+    setActiveMenuId(null);
+  };
+
+  const handleSetPrimary = async (id: string) => {
+    try {
+      await resumesAPI.setPrimary(id);
+      fetchResumes();
+      toast.success("Primary resume updated successfully");
+    } catch {
+      toast.error("Failed to set primary resume.");
+    }
     setActiveMenuId(null);
   };
 
@@ -81,10 +107,11 @@ export default function ResumesPage() {
   // Sorting
   const sortedResumes = [...filteredResumes].sort((a, b) => {
     if (sortBy === "score") {
-      return b.score - a.score;
+      const scoreA = a.latest_score ?? 0;
+      const scoreB = b.latest_score ?? 0;
+      return scoreB - scoreA;
     }
-    // Simple fallback since it's mock date logic
-    return a.id.localeCompare(b.id);
+    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
 
   return (
@@ -240,18 +267,23 @@ export default function ResumesPage() {
 
                     {/* Compact ATS Score Overlay Badge */}
                     <div className="absolute top-2 right-2 bg-card border border-border/80 rounded-full p-1.5 shadow-md group-hover:scale-105 transition-transform">
-                      <AtsScoreRing score={resume.score} size="sm" />
+                      <AtsScoreRing score={resume.latest_score ?? 0} size="sm" />
                     </div>
                   </div>
 
                   {/* Title & Timestamp */}
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground leading-snug truncate max-w-[180px]">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold text-foreground leading-snug truncate flex items-center gap-1.5">
                         {resume.title}
+                        {resume.is_primary && (
+                          <span className="inline-block px-1 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-xs text-[8px] font-bold uppercase shrink-0">
+                            Primary
+                          </span>
+                        )}
                       </h3>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {resume.updatedAt}
+                        {formatDate(resume.updated_at)}
                       </p>
                     </div>
 
@@ -284,8 +316,24 @@ export default function ResumesPage() {
                                   Edit Resume
                                 </button>
                               </Link>
+                              <button
+                                onClick={() => handleDuplicate(resume.id)}
+                                className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                                Duplicate Resume
+                              </button>
+                              {!resume.is_primary && (
+                                <button
+                                  onClick={() => handleSetPrimary(resume.id)}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground"
+                                >
+                                  <Star className="w-3.5 h-3.5" />
+                                  Make Primary
+                                </button>
+                              )}
                               <Link href={`/resumes/${resume.id}/analyze`}>
-                                <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground">
+                                <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground border-t border-border/50 pt-1.5 mt-1">
                                   <BarChart3 className="w-3.5 h-3.5" />
                                   Analyze ATS
                                 </button>
@@ -333,8 +381,15 @@ export default function ResumesPage() {
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-foreground">{resume.title}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{resume.updatedAt}</p>
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        {resume.title}
+                        {resume.is_primary && (
+                          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[8px] font-bold uppercase">
+                            Primary
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(resume.updated_at)}</p>
                     </div>
                   </div>
 
@@ -343,11 +398,11 @@ export default function ResumesPage() {
                       <span className="text-[10px] font-bold text-muted-foreground uppercase">ATS Score:</span>
                       <span className={cn(
                         "text-xs font-bold px-2 py-0.5 rounded-full border",
-                        resume.score >= 85 
+                        (resume.latest_score ?? 0) >= 85 
                           ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" 
                           : "bg-amber-500/10 border-amber-500/20 text-amber-600"
                       )}>
-                        {resume.score}%
+                        {resume.latest_score ?? 0}%
                       </span>
                     </div>
 
@@ -357,11 +412,24 @@ export default function ResumesPage() {
                           Edit
                         </Button>
                       </Link>
-                      <Link href={`/resumes/${resume.id}/analyze`}>
-                        <Button variant="ghost" size="sm" className="h-8 text-xs font-semibold text-primary">
-                          Analyze
+                      <Button
+                        onClick={() => handleDuplicate(resume.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs font-semibold"
+                      >
+                        Duplicate
+                      </Button>
+                      {!resume.is_primary && (
+                        <Button
+                          onClick={() => handleSetPrimary(resume.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs font-semibold"
+                        >
+                          Make Primary
                         </Button>
-                      </Link>
+                      )}
                       <Button
                         onClick={() => handleDelete(resume.id, resume.title)}
                         variant="ghost"

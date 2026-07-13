@@ -31,3 +31,8 @@ temp/
 .DS_Store
 .vscode/
 .idea/
+
+# ─── Databases ────────────────────────────────────────────────────────────────
+*.db
+*.db-journal
+*.sqlite

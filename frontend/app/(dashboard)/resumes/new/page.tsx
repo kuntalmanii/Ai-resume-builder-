@@ -1,12 +1,35 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Edit, Upload, FileText, ArrowRight } from "lucide-react";
+import { Edit, Upload, FileText, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { resumesAPI } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function NewResumePage() {
+  const router = useRouter();
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleStartFromScratch = async () => {
+    try {
+      setIsCreating(true);
+      const res = await resumesAPI.create({
+        title: "Untitled Resume",
+        template_id: "modern",
+        source_type: "scratch",
+      });
+      toast.success("Resume draft created!");
+      router.push(`/resumes/${res.id}/edit`);
+    } catch {
+      toast.error("Failed to initialize new resume draft.");
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <PageHeader
@@ -28,12 +51,23 @@ export default function NewResumePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 pt-0 mt-auto">
-            <Link href="/resumes/resume-new/edit" passHref>
-              <Button className="w-full text-xs font-semibold gap-1.5 h-9 bg-primary hover:bg-primary/95 text-white">
-                <span>Start building</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
+            <Button
+              onClick={handleStartFromScratch}
+              disabled={isCreating}
+              className="w-full text-xs font-semibold gap-1.5 h-9 bg-primary hover:bg-primary/95 text-white"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                <>
+                  <span>Start building</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 

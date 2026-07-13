@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/shared/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,41 +25,109 @@ import {
   Heart,
   Save,
   Check,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { mockCareerProfile } from "@/lib/mock-data";
+import { resumesAPI } from "@/lib/api";
+import type { Resume } from "@/types";
 
 export default function ResumeEditPage({ params }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [activeSection, setActiveSection] = useState<string>("personal");
-
-  // Form State initialized with mock profile data
-  const [personalInfo, setPersonalInfo] = useState({
-    fullName: "Manish Kuntal",
-    email: "manish@example.com",
-    phone: "+91 98765 43210",
-    location: "Bangalore, India",
-    website: "https://manishkuntal.dev",
-    github: "github.com/manish",
-  });
-
-  const [summary, setSummary] = useState(
-    "Senior Frontend Engineer with 4+ years of experience specializing in React, Next.js, and high-performance SaaS web applications."
-  );
-
-  const [experience, setExperience] = useState(mockCareerProfile.experience);
-  const [education, setEducation] = useState(mockCareerProfile.education);
-  const [skills, setSkills] = useState(mockCareerProfile.skills.technical);
-
+  
+  const [resume, setResume] = useState<Resume | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+  // Form State
+  const [personalInfo, setPersonalInfo] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    location: "",
+    website: "",
+    github: "",
+  });
+
+  const [summary, setSummary] = useState("");
+  const [experience, setExperience] = useState<any[]>([]);
+  const [education, setEducation] = useState<any[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
+
+  const fetchResume = async () => {
+    try {
+      setIsLoading(true);
+      const data = await resumesAPI.get(params.id);
+      setResume(data);
+
+      const content = data.content || {};
+      setPersonalInfo({
+        fullName: content.personal_information?.full_name || "",
+        email: content.personal_information?.email || "",
+        phone: content.personal_information?.phone || "",
+        location: content.personal_information?.location || "",
+        website: content.personal_information?.portfolio_url || "",
+        github: content.personal_information?.github_url || "",
+      });
+      setSummary(content.professional_summary || "");
+      setExperience(content.experience || []);
+      setEducation(content.education || []);
+      
+      const skillGroup = content.skills?.find((s: any) => s.category.toLowerCase() === "technical skills" || s.category.toLowerCase() === "technical") || content.skills?.[0];
+      setSkills(skillGroup?.skills || []);
+    } catch {
+      toast.error("Failed to load resume draft.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchResume();
+  }, [params.id]);
+
+  const handleSave = async () => {
+    if (!resume) return;
+    try {
+      setIsSaving(true);
+      const updatedContent = {
+        personal_information: {
+          full_name: personalInfo.fullName,
+          email: personalInfo.email,
+          phone: personalInfo.phone,
+          location: personalInfo.location,
+          portfolio_url: personalInfo.website,
+          github_url: personalInfo.github,
+        },
+        professional_summary: summary,
+        experience,
+        education,
+        skills: [
+          {
+            category: "Technical Skills",
+            skills: skills,
+          }
+        ],
+        section_order: ["personal_information", "professional_summary", "experience", "education", "skills"],
+      };
+
+      const updated = await resumesAPI.updateContent(
+        params.id,
+        updatedContent,
+        resume.version // concurrency token check
+      );
+      setResume(updated);
       toast.success("Resume saved successfully!");
-    }, 1000);
+    } catch (err: any) {
+      if (err.status === 409) {
+        toast.error("Conflict warning: This resume was modified elsewhere. Please refresh to fetch newer edits.");
+      } else {
+        toast.error("Failed to save resume content.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const sectionsList = [
@@ -70,11 +138,19 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
     { id: "skills", label: "Skills", icon: Wrench },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/20 flex flex-col">
       {/* Editor Header */}
       <Header
-        initialTitle="Product Manager 2024"
+        initialTitle={resume?.title || "Untitled Resume"}
         onSave={handleSave}
         onExport={() => toast.success("Exporting PDF...")}
         isSaving={isSaving}
@@ -197,7 +273,12 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
               <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="flex justify-between items-center border-b border-border pb-2">
                   <h3 className="text-sm font-bold text-foreground">Work Experience</h3>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] font-semibold border-border gap-1">
+                  <Button
+                    onClick={() => setExperience([...experience, { company: "", title: "", start_date: "", end_date: "", bullet_points: [] }])}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px] font-semibold border-border gap-1"
+                  >
                     <Plus className="w-3.5 h-3.5" /> Add Job
                   </Button>
                 </div>
@@ -245,12 +326,24 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
               <div className="space-y-4 animate-in fade-in duration-200">
                 <div className="flex justify-between items-center border-b border-border pb-2">
                   <h3 className="text-sm font-bold text-foreground">Education</h3>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px] font-semibold border-border gap-1">
+                  <Button
+                    onClick={() => setEducation([...education, { institution: "", degree: "", field_of_study: "", end_date: "" }])}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px] font-semibold border-border gap-1"
+                  >
                     <Plus className="w-3.5 h-3.5" /> Add Degree
                   </Button>
                 </div>
                 {education.map((edu, index) => (
-                  <div key={index} className="p-4 border border-border rounded-lg bg-muted/10 space-y-3">
+                  <div key={index} className="p-4 border border-border rounded-lg bg-muted/10 space-y-3 relative group">
+                    <button
+                      className="absolute top-4 right-4 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                      onClick={() => setEducation(education.filter((_, i) => i !== index))}
+                      aria-label="Delete education entry"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase">Institution</span>
@@ -366,11 +459,6 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
                   <span className="text-[9px] text-muted-foreground">{job.start_date} — {job.end_date}</span>
                 </div>
                 <p className="text-[9.5px] italic text-text-secondary">{job.title}</p>
-                <ul className="list-disc pl-4 text-[9px] space-y-0.5 text-foreground leading-relaxed">
-                  {job.bullet_points.map((pt, pIdx) => (
-                    <li key={pIdx}>{pt}</li>
-                  ))}
-                </ul>
               </div>
             ))}
           </div>

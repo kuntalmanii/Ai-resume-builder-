@@ -4,6 +4,8 @@
  */
 import type {
   CareerProfile,
+  Resume,
+  ResumeContent,
   ResumeAnalysis,
   TokenResponse,
   User,
@@ -132,17 +134,200 @@ export const usersAPI = {
 // ─── Profile API ──────────────────────────────────────────────────────────────
 
 export const profileAPI = {
-  get: (): Promise<CareerProfile> => request<CareerProfile>("/profile"),
+  get: (): Promise<CareerProfile> => request<CareerProfile>("/career-profile"),
 
   update: (data: Partial<CareerProfile>): Promise<CareerProfile> =>
-    request<CareerProfile>("/profile", { method: "PUT", body: data }),
+    request<CareerProfile>("/career-profile", { method: "PATCH", body: data }),
+};
 
-  patchSection: (
-    section: string,
-    data: unknown
-  ): Promise<CareerProfile> =>
-    request<CareerProfile>(`/profile/section/${section}`, {
-      method: "PATCH",
-      body: { data },
+// ─── Career Entries API ──────────────────────────────────────────────────────
+
+export interface CareerEntry {
+  id: string;
+  user_id: string;
+  entry_type: string;
+  title: string;
+  organization: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current: boolean;
+  data: Record<string, any>;
+  verification_status: string;
+  source_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const careerEntriesAPI = {
+  list: (entryType?: string): Promise<CareerEntry[]> => {
+    const query = entryType ? `?entry_type=${encodeURIComponent(entryType)}` : "";
+    return request<CareerEntry[]>(`/career-profile/entries${query}`);
+  },
+
+  get: (id: string): Promise<CareerEntry> =>
+    request<CareerEntry>(`/career-profile/entries/${id}`),
+
+  create: (data: {
+    entry_type: string;
+    title: string;
+    organization: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    is_current?: boolean;
+    data?: Record<string, any>;
+    source_type?: string;
+  }): Promise<CareerEntry> =>
+    request<CareerEntry>("/career-profile/entries", {
+      method: "POST",
+      body: data,
     }),
+
+  update: (id: string, data: {
+    title?: string;
+    organization?: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    is_current?: boolean;
+    data?: Record<string, any>;
+  }): Promise<CareerEntry> =>
+    request<CareerEntry>(`/career-profile/entries/${id}`, {
+      method: "PATCH",
+      body: data,
+    }),
+
+  delete: (id: string): Promise<void> =>
+    request<void>(`/career-profile/entries/${id}`, {
+      method: "DELETE",
+    }),
+
+  confirm: (id: string): Promise<CareerEntry> =>
+    request<CareerEntry>(`/career-profile/entries/${id}/confirm`, {
+      method: "POST",
+    }),
+};
+
+// ─── Resumes API ──────────────────────────────────────────────────────────────
+
+export interface ResumeVersionResponse {
+  id: string;
+  resume_id: string;
+  version_number: number;
+  content_snapshot: ResumeContent;
+  change_reason?: string | null;
+  created_at: string;
+}
+
+export const resumesAPI = {
+  list: (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+    sort_by?: string;
+    sort_order?: string;
+  }): Promise<Resume[]> => {
+    if (!params) return request<Resume[]>("/resumes");
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null) {
+        searchParams.append(key, String(val));
+      }
+    });
+    return request<Resume[]>(`/resumes?${searchParams.toString()}`);
+  },
+
+  get: (id: string): Promise<Resume> => request<Resume>(`/resumes/${id}`),
+
+  create: (data: {
+    title: string;
+    template_id?: string;
+    content?: ResumeContent;
+    raw_text?: string;
+    status?: string;
+    is_primary?: boolean;
+    source_type?: string;
+  }): Promise<Resume> =>
+    request<Resume>("/resumes", { method: "POST", body: data }),
+
+  patchMetadata: (
+    id: string,
+    data: {
+      title?: string;
+      template_id?: string;
+      is_primary?: boolean;
+      status?: string;
+    }
+  ): Promise<Resume> =>
+    request<Resume>(`/resumes/${id}`, {
+      method: "PATCH",
+      body: data,
+    }),
+
+  updateContent: (
+    id: string,
+    content: ResumeContent,
+    expectedVersion?: number,
+    changeReason?: string
+  ): Promise<Resume> => {
+    const params = new URLSearchParams();
+    if (expectedVersion !== undefined) params.append("expected_version", String(expectedVersion));
+    if (changeReason) params.append("change_reason", changeReason);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return request<Resume>(`/resumes/${id}/content${query}`, {
+      method: "PUT",
+      body: content,
+    });
+  },
+
+  delete: (id: string): Promise<void> =>
+    request<void>(`/resumes/${id}`, { method: "DELETE" }),
+
+  duplicate: (id: string): Promise<Resume> =>
+    request<Resume>(`/resumes/${id}/duplicate`, { method: "POST" }),
+
+  setPrimary: (id: string): Promise<Resume> =>
+    request<Resume>(`/resumes/${id}/primary`, { method: "POST" }),
+
+  listVersions: (id: string): Promise<ResumeVersionResponse[]> =>
+    request<ResumeVersionResponse[]>(`/resumes/${id}/versions`),
+
+  restoreVersion: (id: string, versionNumber: number): Promise<Resume> =>
+    request<Resume>(`/resumes/${id}/versions/${versionNumber}/restore`, {
+      method: "POST",
+    }),
+};
+
+// ─── Job Descriptions API ─────────────────────────────────────────────────────
+
+export interface JobDescription {
+  id: string;
+  user_id: string;
+  title: string;
+  company: string;
+  raw_text: string;
+  source_filename?: string | null;
+  source_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const jobDescriptionsAPI = {
+  list: (): Promise<JobDescription[]> => request<JobDescription[]>("/job-descriptions"),
+
+  get: (id: string): Promise<JobDescription> => request<JobDescription>(`/job-descriptions/${id}`),
+
+  create: (data: {
+    title: string;
+    company: string;
+    raw_text: string;
+    source_filename?: string;
+    source_type?: string;
+  }): Promise<JobDescription> =>
+    request<JobDescription>("/job-descriptions", { method: "POST", body: data }),
+
+  update: (id: string, data: Partial<JobDescription>): Promise<JobDescription> =>
+    request<JobDescription>(`/job-descriptions/${id}`, { method: "PUT", body: data }),
+
+  delete: (id: string): Promise<void> =>
+    request<void>(`/job-descriptions/${id}`, { method: "DELETE" }),
 };

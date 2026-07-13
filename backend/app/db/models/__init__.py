@@ -9,6 +9,7 @@ from app.db.models.analysis_check import AnalysisCheck
 from app.db.models.job_match_result import JobMatchResult
 from app.db.models.ai_suggestion import AISuggestion
 from app.db.models.evidence_source import EvidenceSource
+from app.db.models.career_entry import CareerEntry
 
 __all__ = [
     "User",
@@ -21,4 +22,5 @@ __all__ = [
     "JobMatchResult",
     "AISuggestion",
     "EvidenceSource",
+    "CareerEntry",
 ]

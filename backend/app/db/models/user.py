@@ -44,6 +44,9 @@ class User(Base):
     job_descriptions: Mapped[list["JobDescription"]] = relationship(  # type: ignore[name-defined]
         "JobDescription", back_populates="user", cascade="all, delete-orphan"
     )
+    career_entries: Mapped[list["CareerEntry"]] = relationship(  # type: ignore[name-defined]
+        "CareerEntry", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email}>"

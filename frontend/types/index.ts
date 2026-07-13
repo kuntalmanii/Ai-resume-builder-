@@ -92,9 +92,43 @@ export interface LanguageEntry {
   proficiency: string;
 }
 
+export interface CareerEntry {
+  id: string;
+  user_id: string;
+  entry_type:
+    | "education"
+    | "work_experience"
+    | "internship"
+    | "project"
+    | "technical_skill"
+    | "soft_skill"
+    | "certification"
+    | "achievement"
+    | "position_of_responsibility"
+    | "language"
+    | "interest";
+  title: string;
+  organization: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_current: boolean;
+  data: Record<string, any>;
+  verification_status: "unverified" | "user_confirmed" | "source_verified";
+  source_type: "manual" | "resume_import" | "previous_resume" | "github" | "external_source";
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CareerProfile {
   id: string;
   user_id: string;
+  phone?: string | null;
+  location?: string | null;
+  professional_title?: string | null;
+  professional_summary?: string | null;
+  linkedin_url?: string | null;
+  github_url?: string | null;
+  portfolio_url?: string | null;
   education: EducationEntry[];
   experience: ExperienceEntry[];
   projects: ProjectEntry[];
@@ -120,20 +154,32 @@ export interface Resume {
   original_filename: string | null;
   version: number;
   is_base: boolean;
+  is_primary: boolean;
+  latest_score?: number | null;
   created_at: string;
   updated_at: string;
 }
 
+export interface SkillGroup {
+  id?: string;
+  category: string;
+  skills: string[];
+  order?: number;
+}
+
 export interface ResumeContent {
-  personal_info?: PersonalInfo;
-  summary?: string;
-  experience?: ExperienceEntry[];
+  personal_information?: PersonalInfo;
+  professional_summary?: string;
   education?: EducationEntry[];
-  skills?: SkillsMap;
+  experience?: ExperienceEntry[];
+  skills?: SkillGroup[];
   projects?: ProjectEntry[];
   certifications?: CertificationEntry[];
   achievements?: AchievementEntry[];
-  [key: string]: unknown;
+  positions_of_responsibility?: PositionEntry[];
+  languages?: LanguageEntry[];
+  interests?: string[];
+  section_order?: string[];
 }
 
 export interface PersonalInfo {
@@ -141,9 +187,10 @@ export interface PersonalInfo {
   email: string;
   phone: string;
   location: string;
-  linkedin: string;
-  github: string;
-  website: string;
+  professional_title?: string;
+  linkedin_url?: string;
+  github_url?: string;
+  portfolio_url?: string;
 }
 
 // ─── Analysis ─────────────────────────────────────────────────────────────────
