@@ -112,3 +112,125 @@ async def test_invalid_jwt_sub_claim_returns_401(client: AsyncClient) -> None:
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 401
+
+
+async def test_get_me_endpoint_requires_auth(client: AsyncClient) -> None:
+    """GET /auth/me without token returns 401."""
+    response = await client.get("/api/v1/auth/me")
+    assert response.status_code == 401
+
+
+async def test_get_me_endpoint_returns_user_info(client: AsyncClient) -> None:
+    """GET /auth/me returns details of current authenticated user."""
+    # Register & Login
+    await client.post(
+        "/api/v1/auth/register",
+        json={"full_name": "Ethan Hunt", "email": "ethan@example.com", "password": "Testpass1!"},
+    )
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "ethan@example.com", "password": "Testpass1!"},
+    )
+    access_token = login_res.json()["access_token"]
+
+    # Call me
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "ethan@example.com"
+    assert data["full_name"] == "Ethan Hunt"
+    assert "last_login_at" in data
+    assert data["last_login_at"] is not None
+
+
+async def test_refresh_token_rotation(client: AsyncClient) -> None:
+    """Refreshing works via request payload and rotates token."""
+    # Register & Login
+    await client.post(
+        "/api/v1/auth/register",
+        json={"full_name": "Fiona Gallagher", "email": "fiona@example.com", "password": "Testpass1!"},
+    )
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "fiona@example.com", "password": "Testpass1!"},
+    )
+    refresh_token = login_res.json()["refresh_token"]
+
+    # Call /refresh
+    res = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": refresh_token},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert "access_token" in data
+    assert "refresh_token" in data
+
+
+async def test_expired_access_token_returns_401(client: AsyncClient) -> None:
+    """An expired access token is rejected with 401."""
+    from datetime import datetime, timedelta, timezone
+    from jose import jwt
+    from app.core.config import get_settings
+    settings = get_settings()
+
+    payload = {
+        "sub": "00000000-0000-0000-0000-000000000001",
+        "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+        "type": "access",
+    }
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 401
+
+
+async def test_refresh_token_cannot_access_protected_endpoint(client: AsyncClient) -> None:
+    """A refresh token cannot be used to authenticate access-token endpoints."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={"full_name": "George Weasley", "email": "george@example.com", "password": "Testpass1!"},
+    )
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "george@example.com", "password": "Testpass1!"},
+    )
+    refresh_token = login_res.json()["refresh_token"]
+
+    # Attempt to access protected endpoint using refresh token
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {refresh_token}"},
+    )
+    assert response.status_code == 401
+
+
+async def test_access_token_cannot_be_used_to_refresh(client: AsyncClient) -> None:
+    """An access token cannot be used as a refresh token."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={"full_name": "Harry Potter", "email": "harry@example.com", "password": "Testpass1!"},
+    )
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "harry@example.com", "password": "Testpass1!"},
+    )
+    access_token = login_res.json()["access_token"]
+
+    # Clear cookies so client does not automatically send the valid refresh token cookie
+    client.cookies.clear()
+
+    # Attempt to refresh using access token in request body
+    response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": access_token},
+    )
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "UNAUTHORIZED"
+

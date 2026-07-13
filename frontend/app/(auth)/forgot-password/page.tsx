@@ -36,54 +36,37 @@ export default function ForgotPasswordPage() {
         <CardHeader className="space-y-1.5 text-center">
           <CardTitle className="text-xl font-bold">Reset Password</CardTitle>
           <CardDescription className="text-xs">
-            {isSubmitted
-              ? "We have sent you reset instructions."
-              : "Enter your email address and we'll send you a link to reset your password."}
+            Password recovery is currently unavailable
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isSubmitted ? (
-            <div className="flex flex-col items-center justify-center py-4 space-y-3 text-center">
-              <CheckCircle2 className="w-12 h-12 text-emerald-500 animate-bounce" />
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">Check your inbox</p>
-                <p className="text-xs text-muted-foreground">
-                  We sent a secure password reset link to <strong className="text-foreground">{email}</strong>.
-                </p>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3.5 text-amber-600 dark:text-amber-400 text-xs flex flex-col gap-2.5 mb-4">
+            <p className="font-semibold">Email Delivery Infrastructure Pending</p>
+            <p className="leading-relaxed">
+              The email notification service is currently under development. Password reset requests cannot be processed automatically at this time.
+            </p>
+          </div>
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-4 opacity-50 cursor-not-allowed">
+            <div className="space-y-1.5 pointer-events-none">
+              <Label htmlFor="email" className="text-xs font-semibold">
+                Email Address
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  className="pl-9 h-[38px] text-xs"
+                  disabled
+                  required
+                />
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-semibold">
-                  Email Address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9 h-[38px] text-xs"
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full h-[38px] text-xs font-semibold" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-                    Sending link...
-                  </>
-                ) : (
-                  "Send Reset Link"
-                )}
-              </Button>
-            </form>
-          )}
+            <Button type="button" className="w-full h-[38px] text-xs font-semibold pointer-events-none" disabled>
+              Send Reset Link
+            </Button>
+          </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t border-border/50 pt-4">
           <Link

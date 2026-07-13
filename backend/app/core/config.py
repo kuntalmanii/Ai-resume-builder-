@@ -23,6 +23,21 @@ class Settings(BaseSettings):
     # ─── Security ─────────────────────────────────────────────────────────────
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
+
+    @field_validator("SECRET_KEY", mode="after")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if v in ("replace-with-secure-secret", "your-secret-key-change-this-in-production"):
+            import logging
+            logging.getLogger("uvicorn").warning(
+                "SECURITY WARNING: Using a default/insecure SECRET_KEY. Please set a unique, cryptographically strong key in production."
+            )
+        elif len(v) < 32:
+            import logging
+            logging.getLogger("uvicorn").warning(
+                "SECURITY WARNING: SECRET_KEY is too short (under 32 characters). A longer key is recommended to prevent brute-force attacks."
+            )
+        return v
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 

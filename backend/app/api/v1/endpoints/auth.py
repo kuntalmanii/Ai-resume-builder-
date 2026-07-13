@@ -1,5 +1,5 @@
-"""Auth router: register, login, refresh, logout, account deletion."""
-from fastapi import APIRouter, Response, status
+"""Auth router: register, login, refresh, logout, account deletion, and current user info."""
+from fastapi import APIRouter, Response, status, Cookie, Body
 
 from app.api.dependencies import CurrentUser, DBSession
 from app.schemas.auth import (
@@ -23,10 +23,29 @@ async def register(payload: RegisterRequest, db: DBSession) -> UserResponse:
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, db: DBSession) -> TokenResponse:
-    """Authenticate and return access + refresh tokens."""
+async def login(
+    payload: LoginRequest,
+    db: DBSession,
+    response: Response,
+) -> TokenResponse:
+    """Authenticate and return access + refresh tokens, setting secure refresh cookie."""
     user = await auth_service.authenticate_user(db, payload.email, payload.password)
     tokens = auth_service.generate_token_pair(user.id)
+    
+    from app.core.config import get_settings
+    settings = get_settings()
+    is_prod = settings.APP_ENV == "production"
+
+    response.set_cookie(
+        key="refresh_token",
+        value=str(tokens["refresh_token"]),
+        httponly=True,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        expires=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        samesite="lax",
+        secure=is_prod,
+    )
+
     return TokenResponse(
         access_token=tokens["access_token"],  # type: ignore[arg-type]
         refresh_token=tokens["refresh_token"],  # type: ignore[arg-type]
@@ -35,9 +54,34 @@ async def login(payload: LoginRequest, db: DBSession) -> TokenResponse:
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(payload: RefreshRequest, db: DBSession) -> TokenResponse:
-    """Issue a new access token using a valid refresh token."""
-    tokens = await auth_service.refresh_access_token(db, payload.refresh_token)
+async def refresh(
+    db: DBSession,
+    response: Response,
+    payload: RefreshRequest | None = Body(None),
+    refresh_token: str | None = Cookie(None),
+) -> TokenResponse:
+    """Issue a new access token using a valid refresh token from cookie or payload."""
+    token = refresh_token or (payload.refresh_token if payload else None)
+    if not token:
+        from app.core.exceptions import ValidationError
+        raise ValidationError("Refresh token missing")
+
+    tokens = await auth_service.refresh_access_token(db, token)
+
+    from app.core.config import get_settings
+    settings = get_settings()
+    is_prod = settings.APP_ENV == "production"
+
+    response.set_cookie(
+        key="refresh_token",
+        value=str(tokens["refresh_token"]),
+        httponly=True,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        expires=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        samesite="lax",
+        secure=is_prod,
+    )
+
     return TokenResponse(
         access_token=tokens["access_token"],  # type: ignore[arg-type]
         refresh_token=tokens["refresh_token"],  # type: ignore[arg-type]
@@ -46,9 +90,16 @@ async def refresh(payload: RefreshRequest, db: DBSession) -> TokenResponse:
 
 
 @router.post("/logout", response_model=MessageResponse)
-async def logout(current_user: CurrentUser) -> MessageResponse:
-    """Logout — client must discard tokens. Server-side token blacklisting is Sprint 4."""
+async def logout(current_user: CurrentUser, response: Response) -> MessageResponse:
+    """Logout — clear browser cookies and return success."""
+    response.delete_cookie(key="refresh_token", samesite="lax")
     return MessageResponse(message="Logged out successfully")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: CurrentUser) -> UserResponse:
+    """Return the currently authenticated user."""
+    return UserResponse.model_validate(current_user)
 
 
 @router.delete("/account", response_model=MessageResponse, status_code=status.HTTP_200_OK)

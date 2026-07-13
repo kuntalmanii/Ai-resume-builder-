@@ -28,6 +28,7 @@ interface AuthState {
   logout: () => Promise<void>;
   setUser: (user: User) => void;
   clearAuth: () => void;
+  checkSession: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -36,6 +37,36 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+
+      checkSession: async () => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("careeros_at") : null;
+        const rt = typeof window !== "undefined" ? localStorage.getItem("careeros_rt") : null;
+
+        if (!token && !rt) {
+          set({ user: null, isAuthenticated: false, isLoading: false });
+          return;
+        }
+
+        set({ isLoading: true });
+        try {
+          const { authAPI } = await import("@/lib/api");
+          const user = await authAPI.getMe();
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch (error) {
+          try {
+            const freshToken = typeof window !== "undefined" ? localStorage.getItem("careeros_at") : null;
+            if (freshToken && freshToken !== token) {
+              const { authAPI } = await import("@/lib/api");
+              const user = await authAPI.getMe();
+              set({ user, isAuthenticated: true, isLoading: false });
+              return;
+            }
+          } catch {}
+
+          clearTokens();
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        }
+      },
 
       login: async (email, password) => {
         set({ isLoading: true });
@@ -46,8 +77,8 @@ export const useAuthStore = create<AuthState>()(
             setRefreshToken(tokens.refresh_token);
           }
           // Fetch user info after login
-          const { usersAPI } = await import("@/lib/api");
-          const user = await usersAPI.getMe();
+          const { authAPI: authApiImport } = await import("@/lib/api");
+          const user = await authApiImport.getMe();
           set({ user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });

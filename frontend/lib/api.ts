@@ -113,6 +113,9 @@ export const authAPI = {
   logout: (): Promise<{ message: string }> =>
     request<{ message: string }>("/auth/logout", { method: "POST" }),
 
+  getMe: (): Promise<User> =>
+    request<User>("/auth/me"),
+
   deleteAccount: (): Promise<{ message: string }> =>
     request<{ message: string }>("/auth/account", { method: "DELETE" }),
 };

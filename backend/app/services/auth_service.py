@@ -57,11 +57,26 @@ async def register_user(db: AsyncSession, payload: RegisterRequest) -> User:
 
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:
     """Authenticate credentials. Raises UnauthorizedError/ForbiddenError on failure."""
+    # Timing attack protection: run dummy verification if email is not found
+    DUMMY_HASH = "$2b$12$KbR9x8bK.1O/R5Qd5sW0Oe1nN/5Fh/c7Xw/m8j.J7hJ/nU7O7yF9m"
     user = await get_user_by_email(db, email)
-    if not user or not verify_password(password, user.hashed_password):
+    
+    if user:
+        password_verified = verify_password(password, user.hashed_password)
+    else:
+        verify_password(password, DUMMY_HASH)
+        password_verified = False
+
+    if not user or not password_verified:
         raise UnauthorizedError("Incorrect email or password")
     if not user.is_active:
         raise ForbiddenError("Account is disabled")
+
+    # Update last login time
+    user.last_login_at = datetime.now(timezone.utc)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 

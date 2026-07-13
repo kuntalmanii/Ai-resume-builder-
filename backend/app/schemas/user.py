@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_verified: bool
+    last_login_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

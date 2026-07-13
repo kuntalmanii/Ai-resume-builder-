@@ -55,6 +55,7 @@ export async function apiClient<T>(
       method,
       headers,
       body: formData ? formData : bodyData ? JSON.stringify(bodyData) : undefined,
+      credentials: "include",
       ...rest,
     });
   } catch (error) {
@@ -64,44 +65,46 @@ export async function apiClient<T>(
 
   // Handle Token Refresh on 401 Unauthorized
   if (response.status === 401 && authenticated && path !== "/auth/login" && path !== "/auth/refresh") {
-    const refreshToken = localStorage.getItem("careeros_rt");
-    if (refreshToken) {
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
+    const refreshToken = typeof window !== "undefined" ? localStorage.getItem("careeros_rt") : null;
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken || "" }),
+        credentials: "include",
+      });
 
-        if (refreshResponse.ok) {
-          const newTokens = await refreshResponse.json();
+      if (refreshResponse.ok) {
+        const newTokens = await refreshResponse.json();
+        if (typeof window !== "undefined") {
           localStorage.setItem("careeros_at", newTokens.access_token);
           if (newTokens.refresh_token) {
             localStorage.setItem("careeros_rt", newTokens.refresh_token);
           }
+        }
 
-          // Update header and retry the request
-          headers["Authorization"] = `Bearer ${newTokens.access_token}`;
-          response = await fetch(`${API_BASE_URL}${path}`, {
-            method,
-            headers,
-            body: formData ? formData : bodyData ? JSON.stringify(bodyData) : undefined,
-            ...rest,
-          });
-        } else {
-          // Token expired or invalid, clear credentials and redirect
+        // Update header and retry the request
+        headers["Authorization"] = `Bearer ${newTokens.access_token}`;
+        response = await fetch(`${API_BASE_URL}${path}`, {
+          method,
+          headers,
+          body: formData ? formData : bodyData ? JSON.stringify(bodyData) : undefined,
+          credentials: "include",
+          ...rest,
+        });
+      } else {
+        // Token expired or invalid, clear credentials and redirect
+        if (typeof window !== "undefined") {
           localStorage.removeItem("careeros_at");
           localStorage.removeItem("careeros_rt");
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
-          }
-        }
-      } catch {
-        localStorage.removeItem("careeros_at");
-        localStorage.removeItem("careeros_rt");
-        if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
+      }
+    } catch {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("careeros_at");
+        localStorage.removeItem("careeros_rt");
+        window.location.href = "/login";
       }
     }
   }
