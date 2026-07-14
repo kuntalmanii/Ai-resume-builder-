@@ -21,6 +21,7 @@ from app.db.models import (  # noqa: F401
     AISuggestion,
     EvidenceSource,
     CareerEntry,
+    ResumeImportSession,
 )
 
 # this is the Alembic Config object, which provides

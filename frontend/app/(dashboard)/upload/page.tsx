@@ -3,79 +3,91 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UploadDropzone, ParsingProgress, ParsingStep } from "@/components/ui/upload-dropzone";
 import { toast } from "sonner";
-import { ArrowRight, CheckCircle2, FileText, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { resumeImportsAPI } from "@/lib/api";
 
 export default function ResumeUploadPage() {
   const router = useRouter();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isParsing, setIsParsing] = useState(false);
-  const [isDone, setIsDone] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [steps, setSteps] = useState<ParsingStep[]>([
-    { label: "Extracting text", status: "pending" },
-    { label: "Detecting sections", status: "pending" },
-    { label: "Analyzing structure", status: "pending" },
-    { label: "Running ATS check", status: "pending" },
-    { label: "Generating suggestions", status: "pending" },
+    { label: "Validating file metadata", status: "pending" },
+    { label: "Uploading file securely", status: "pending" },
+    { label: "Extracting text content", status: "pending" },
+    { label: "Parsing structured sections", status: "pending" },
   ]);
 
-  const handleFileSelect = (file: File) => {
-    // Basic format check
+  const updateStepStatus = (index: number, status: ParsingStep["status"]) => {
+    setSteps((prev) => {
+      const next = [...prev];
+      if (index >= 0 && index < next.length) {
+        next[index].status = status;
+      }
+      return next;
+    });
+  };
+
+  const handleFileSelect = async (file: File) => {
+    setErrorMsg(null);
+    setUploadedFile(file);
+    setIsUploading(true);
+
+    // Step 1: Client side validation
+    updateStepStatus(0, "progress");
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
     if (extension !== ".pdf" && extension !== ".docx") {
+      updateStepStatus(0, "error");
       setErrorMsg("Supported formats are PDF and DOCX only.");
       toast.error("Unsupported file format");
+      setIsUploading(false);
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
+      updateStepStatus(0, "error");
       setErrorMsg("File size exceeds 10MB limit.");
       toast.error("File is too large");
+      setIsUploading(false);
       return;
     }
+    updateStepStatus(0, "done");
 
-    setErrorMsg(null);
-    setUploadedFile(file);
-    setIsUploading(true);
-    toast.success(`Uploading "${file.name}"...`);
+    // Step 2: Uploading & parsing (Synchronously handled by backend)
+    updateStepStatus(1, "progress");
+    updateStepStatus(2, "progress");
+    updateStepStatus(3, "progress");
 
-    // Simulate upload and parsing step-by-step
-    setTimeout(() => {
+    try {
+      const session = await resumeImportsAPI.upload(file);
+      
+      updateStepStatus(1, "done");
+      updateStepStatus(2, "done");
+      updateStepStatus(3, "done");
+      
+      toast.success("Resume uploaded and parsed successfully!");
+      
+      // Redirect to review page after a brief delay
+      setTimeout(() => {
+        router.push(`/upload/${session.id}/review`);
+      }, 800);
+
+    } catch (err: any) {
+      // Mark active step as error
+      updateStepStatus(1, "error");
+      updateStepStatus(2, "error");
+      updateStepStatus(3, "error");
+
+      const message = err.message || "Failed to process and parse resume.";
+      setErrorMsg(message);
+      toast.error(message);
       setIsUploading(false);
-      setIsParsing(true);
-      runParsingSteps();
-    }, 1200);
-  };
-
-  const runParsingSteps = () => {
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      setSteps((prev) => {
-        const next = [...prev];
-        if (currentStep > 0) {
-          next[currentStep - 1].status = "done";
-        }
-        if (currentStep < next.length) {
-          next[currentStep].status = "progress";
-        }
-        return next;
-      });
-
-      currentStep++;
-
-      if (currentStep > steps.length) {
-        clearInterval(interval);
-        setIsParsing(false);
-        setIsDone(true);
-        toast.success("Resume parsing completed successfully!");
-      }
-    }, 800);
+    }
   };
 
   return (
@@ -87,7 +99,7 @@ export default function ResumeUploadPage() {
       />
 
       <div className="pt-2">
-        {!isParsing && !isDone ? (
+        {!isUploading ? (
           <div className="space-y-4">
             <UploadDropzone
               onFileSelect={handleFileSelect}
@@ -103,43 +115,11 @@ export default function ResumeUploadPage() {
               </div>
             </div>
           </div>
-        ) : isParsing ? (
+        ) : (
           <ParsingProgress
             steps={steps}
             fileName={uploadedFile?.name}
           />
-        ) : (
-          <Card className="border border-border shadow-md bg-card p-6 text-center space-y-5 animate-in fade-in duration-300">
-            <div className="flex flex-col items-center gap-3">
-              <CheckCircle2 className="w-14 h-14 text-emerald-500 animate-bounce" />
-              <h3 className="text-base font-bold text-foreground">Parsing Successfully Completed!</h3>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                Parsed <strong className="text-foreground">"{uploadedFile?.name}"</strong> and created a new draft profile. You can now analyze the score.
-              </p>
-            </div>
-
-            <div className="flex justify-center gap-3 border-t border-border/50 pt-5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 text-xs font-semibold"
-                onClick={() => {
-                  setUploadedFile(null);
-                  setIsDone(false);
-                  setSteps(steps.map(s => ({ ...s, status: "pending" })));
-                }}
-              >
-                Upload another
-              </Button>
-              <Button
-                onClick={() => router.push("/resumes/resume-1/analyze")}
-                className="h-9 text-xs font-semibold gap-1.5"
-              >
-                <span>View score</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </Card>
         )}
       </div>
     </div>

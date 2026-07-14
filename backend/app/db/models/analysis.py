@@ -63,8 +63,13 @@ class ResumeAnalysis(Base):
     grammar_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     evidence_credibility_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    # Scoring metadata
+    resume_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    raw_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    raw_max_score: Mapped[int] = mapped_column(Integer, nullable=False, default=75)
+
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
-    analysis_version: Mapped[str] = mapped_column(String(50), nullable=False, default="v1")
+    analysis_version: Mapped[str] = mapped_column(String(50), nullable=False, default="ats-v1.0")
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

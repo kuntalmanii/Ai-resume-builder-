@@ -33,3 +33,10 @@ class ForbiddenError(CareerOSException):
     """Exceptions raised on access privilege / forbidden checks."""
     def __init__(self, message: str, details: Any = None):
         super().__init__(message, code="FORBIDDEN", details=details)
+
+class FileTooLargeError(ValidationError):
+    """Exceptions raised when an uploaded file is larger than the limit."""
+    def __init__(self, message: str, max_size_mb: int):
+        super().__init__(message, details={"max_size_mb": max_size_mb})
+        self.code = "FILE_TOO_LARGE"
+

@@ -9,6 +9,10 @@ import type {
   ResumeAnalysis,
   TokenResponse,
   User,
+  RunAnalysisResponse,
+  ResumeAnalysisResponse,
+  AnalysisHistoryResponse,
+  ScoringMethodologyResponse,
 } from "@/types";
 
 const BASE_URL =
@@ -297,6 +301,63 @@ export const resumesAPI = {
     }),
 };
 
+// ─── Resume Imports API ────────────────────────────────────────────────────────
+
+export interface ResumeImportSessionResponse {
+  id: string;
+  user_id: string;
+  original_filename: string;
+  document_type: string;
+  status: string;
+  extraction_metadata: Record<string, any>;
+  parsed_document: ResumeContent;
+  parsing_warnings: string[];
+  detected_sections: string[];
+  missing_sections: string[];
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const resumeImportsAPI = {
+  upload: (file: File): Promise<ResumeImportSessionResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<ResumeImportSessionResponse>("/resume-imports", {
+      method: "POST",
+      formData,
+    });
+  },
+
+  get: (id: string): Promise<ResumeImportSessionResponse> =>
+    request<ResumeImportSessionResponse>(`/resume-imports/${id}`),
+
+  updateDocument: (id: string, parsedDocument: ResumeContent): Promise<ResumeImportSessionResponse> =>
+    request<ResumeImportSessionResponse>(`/resume-imports/${id}/document`, {
+      method: "PATCH",
+      body: { parsed_document: parsedDocument },
+    }),
+
+  finalize: (
+    id: string,
+    data: {
+      title?: string;
+      template_id: string;
+      import_to_career_profile: boolean;
+      selected_entries?: string[];
+    }
+  ): Promise<Resume> =>
+    request<Resume>(`/resume-imports/${id}/finalize`, {
+      method: "POST",
+      body: data,
+    }),
+
+  delete: (id: string): Promise<void> =>
+    request<void>(`/resume-imports/${id}`, {
+      method: "DELETE",
+    }),
+};
+
 // ─── Job Descriptions API ─────────────────────────────────────────────────────
 
 export interface JobDescription {
@@ -330,4 +391,49 @@ export const jobDescriptionsAPI = {
 
   delete: (id: string): Promise<void> =>
     request<void>(`/job-descriptions/${id}`, { method: "DELETE" }),
+};
+
+// ─── Analyses API ──────────────────────────────────────────────────────────────
+
+export const analysesAPI = {
+  /**
+   * Run an analysis on a resume.
+   * Returns cached result if same resume version + analysis version exists (unless force=true).
+   */
+  run: (resumeId: string, force = false): Promise<RunAnalysisResponse> =>
+    request<RunAnalysisResponse>(`/resumes/${resumeId}/analyses?force=${force}`, {
+      method: "POST",
+    }),
+
+  /**
+   * Get the latest analysis for a resume.
+   * Includes `is_stale=true` if the resume has been edited since the analysis.
+   * Returns 404 if no analysis exists yet.
+   */
+  getLatest: (resumeId: string): Promise<ResumeAnalysisResponse> =>
+    request<ResumeAnalysisResponse>(`/resumes/${resumeId}/analyses/latest`),
+
+  /**
+   * Get paginated analysis history for a resume.
+   */
+  getHistory: (
+    resumeId: string,
+    page = 1,
+    pageSize = 10
+  ): Promise<AnalysisHistoryResponse> =>
+    request<AnalysisHistoryResponse>(
+      `/resumes/${resumeId}/analyses?page=${page}&page_size=${pageSize}`
+    ),
+
+  /**
+   * Get a specific analysis by ID (with all checks).
+   */
+  getById: (resumeId: string, analysisId: string): Promise<ResumeAnalysisResponse> =>
+    request<ResumeAnalysisResponse>(`/resumes/${resumeId}/analyses/${analysisId}`),
+
+  /**
+   * Get the public scoring methodology (no auth required, cached in browser).
+   */
+  getMethodology: (): Promise<ScoringMethodologyResponse> =>
+    request<ScoringMethodologyResponse>("/scoring/methodology"),
 };

@@ -27,10 +27,13 @@ from app.schemas.resume import (
     ResumeVersionResponse,
 )
 from app.schemas.analysis import (
-    ScoreDeductionSchema,
-    RecommendationSchema,
     AnalysisCheckResponse,
     ResumeAnalysisResponse,
+    AnalysisSummaryResponse,
+    AnalysisHistoryResponse,
+    ScoringMethodologyResponse,
+    TopRecommendationSchema,
+    RunAnalysisResponse,
 )
 from app.schemas.job_description import (
     JobDescriptionCreate,
@@ -66,10 +69,13 @@ __all__ = [
     "ResumeUpdate",
     "ResumeResponse",
     "ResumeVersionResponse",
-    "ScoreDeductionSchema",
-    "RecommendationSchema",
     "AnalysisCheckResponse",
     "ResumeAnalysisResponse",
+    "AnalysisSummaryResponse",
+    "AnalysisHistoryResponse",
+    "ScoringMethodologyResponse",
+    "TopRecommendationSchema",
+    "RunAnalysisResponse",
     "JobDescriptionCreate",
     "JobDescriptionUpdate",
     "JobDescriptionResponse",

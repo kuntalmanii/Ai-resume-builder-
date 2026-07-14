@@ -330,6 +330,128 @@ export interface AnalysisResult {
   categories: AnalysisCategory[];
 }
 
+// ─── Real API Analysis Types (Phase 9) ───────────────────────────────────────
+
+/** A single scored check from the backend scoring engine. */
+export interface ResumeAnalysisCheckResponse {
+  id: string;
+  analysis_id: string;
+  category: string;       // ats | content | completeness | readability | grammar | evidence
+  check_code: string;     // e.g. ATS_CONTACT_INFO
+  title: string;
+  description: string;
+  status: CheckStatus;    // passed | warning | failed
+  points_possible: number;
+  points_awarded: number;
+  points_lost: number;    // convenience: points_possible - points_awarded
+  recommendation: string | null;
+  evidence_data: Record<string, unknown> | null;
+}
+
+/** Prioritized actionable recommendation from a failed/warning check. */
+export interface TopRecommendation {
+  check_code: string;
+  category: string;
+  title: string;
+  recommendation: string;
+  points_possible: number;
+  points_lost: number;
+  status: "failed" | "warning";
+}
+
+/** Per-category score breakdown (0–100 normalized). */
+export interface CategoryBreakdown {
+  category: string;
+  normalized: number;
+  raw_score: number;
+  max_score: number;
+  check_count: number;
+  passed_count: number;
+  failed_count: number;
+  warning_count: number;
+}
+
+/** Full analysis result from POST /resumes/{id}/analyses or GET /resumes/{id}/analyses/latest */
+export interface ResumeAnalysisResponse {
+  id: string;
+  resume_id: string;
+  user_id: string;
+  job_description_id: string | null;
+
+  // Normalized 0–100 scores
+  overall_score: number;
+  ats_score: number;
+  content_score: number;
+  jd_match_score: number | null;
+  completeness_score: number;
+  readability_score: number;
+  grammar_score: number;
+  evidence_credibility_score: number;
+
+  // Raw scoring metadata
+  resume_version: number;
+  raw_score: number;
+  raw_max_score: number;
+
+  // Stale = resume has been edited since this analysis
+  is_stale: boolean;
+
+  // Metadata
+  status: string;
+  analysis_version: string;
+  created_at: string;
+
+  // Expanded details
+  checks: ResumeAnalysisCheckResponse[];
+  top_recommendations: TopRecommendation[];
+  categories: CategoryBreakdown[];
+  potential_score_gain: number;
+}
+
+/** Lightweight summary for history listing. */
+export interface AnalysisSummaryResponse {
+  id: string;
+  resume_id: string;
+  overall_score: number;
+  ats_score: number;
+  content_score: number;
+  analysis_version: string;
+  status: string;
+  created_at: string;
+  is_stale: boolean;
+}
+
+/** Paginated analysis history. */
+export interface AnalysisHistoryResponse {
+  items: AnalysisSummaryResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+/** Response from POST /resumes/{id}/analyses */
+export interface RunAnalysisResponse {
+  analysis: ResumeAnalysisResponse;
+  from_cache: boolean;
+  message: string;
+}
+
+/** Public scoring methodology information. */
+export interface ScoringMethodologyResponse {
+  analysis_version: string;
+  raw_max_score: number;
+  normalized_max_score: number;
+  note_jd_match: string;
+  categories: {
+    category: string;
+    max_points: number;
+    max_normalized: number;
+    description: string;
+    check_count: number;
+  }[];
+  scoring_description: string;
+}
+
 // ─── Keywords Matching ───────────────────────────────────────────────────────
 
 export type KeywordMatchType = "exact_match" | "semantic_match" | "missing" | "optional";

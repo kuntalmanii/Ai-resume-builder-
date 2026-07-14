@@ -60,6 +60,7 @@ async def create_test_tables():
         User, CareerProfile, Resume, ResumeAnalysis,
         ResumeVersion, JobDescription, AnalysisCheck,
         JobMatchResult, AISuggestion, EvidenceSource,
+        ResumeImportSession,
     )
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -10,6 +10,7 @@ from app.db.models.job_match_result import JobMatchResult
 from app.db.models.ai_suggestion import AISuggestion
 from app.db.models.evidence_source import EvidenceSource
 from app.db.models.career_entry import CareerEntry
+from app.db.models.resume_import_session import ResumeImportSession
 
 __all__ = [
     "User",
@@ -23,4 +24,6 @@ __all__ = [
     "AISuggestion",
     "EvidenceSource",
     "CareerEntry",
+    "ResumeImportSession",
 ]
+

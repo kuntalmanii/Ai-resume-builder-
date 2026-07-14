@@ -4,14 +4,18 @@ This document lists all mock/simulated states currently implemented in the front
 
 ---
 
-## 1. Resume Document Upload & Parsing
+## 1. Resume Document Upload & Parsing [RESOLVED]
 
-- **Route:** `/upload`
-- **Component:** `ResumeUploadPage` in [`frontend/app/(dashboard)/upload/page.tsx`](file:///Users/manishkuntal/Desktop/Projects/Ai%20resume%20builder/ai-resume-builder/frontend/app/%28dashboard%29/upload/page.tsx)
-- **UI Element:** `UploadDropzone`, `ParsingProgress`, and `ParsingStep` status tickers.
-- **Current Simulation:** Uses client-side `setTimeout` to progress through mock parsing steps (Extracting text, Detecting sections, Analyzing structure, Running ATS check, Generating suggestions).
-- **Backend Replacement:** `POST /api/v1/resumes/upload`
-- **Replaced in:** Phase 7 (Resume Document Parsing & Text Extraction)
+- **Route:** `/upload` and `/upload/[importId]/review`
+- **Components:** 
+  - `ResumeUploadPage` in [`frontend/app/(dashboard)/upload/page.tsx`](file:///Users/manishkuntal/Desktop/Projects/Ai%20resume%20builder/ai-resume-builder/frontend/app/%28dashboard%29/upload/page.tsx)
+  - `ResumeImportReviewPage` in [`frontend/app/(dashboard)/upload/[importId]/review/page.tsx`](file:///Users/manishkuntal/Desktop/Projects/Ai%20resume%20builder/ai-resume-builder/frontend/app/%28dashboard%29/upload/%5BimportId%5D/review/page.tsx)
+- **Backend Endpoints:**
+  - `POST /api/v1/resume-imports` (Upload/Parse)
+  - `GET /api/v1/resume-imports/{id}` (Get Session)
+  - `PATCH /api/v1/resume-imports/{id}/document` (Save Draft)
+  - `POST /api/v1/resume-imports/{id}/finalize` (Finalize and Import)
+- **Status:** Completed and integrated with production backend services.
 
 ---
 
