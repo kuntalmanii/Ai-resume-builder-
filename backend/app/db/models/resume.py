@@ -65,6 +65,9 @@ class Resume(Base):
     ai_suggestions: Mapped[list["AISuggestion"]] = relationship(  # type: ignore[name-defined]
         "AISuggestion", back_populates="resume", cascade="all, delete-orphan"
     )
+    claims: Mapped[list["ResumeClaim"]] = relationship(  # type: ignore[name-defined]
+        "ResumeClaim", back_populates="resume", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Resume id={self.id} title={self.title}>"

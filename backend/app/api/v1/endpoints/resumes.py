@@ -11,7 +11,10 @@ from app.schemas.resume import (
     ResumeVersionResponse,
     ResumeDocument,
 )
+from app.schemas.evidence import EvidenceMapResponse
 from app.services import resume_service
+from app.services.evidence.claim_extractor import ClaimExtractorService
+from app.services.evidence.credibility_engine import CredibilityEngineService
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
 
@@ -163,3 +166,25 @@ async def restore_version(
     """Restore resume content to a historical snapshot. Current content is saved as a new node."""
     resume = await resume_service.restore_version(db, id, version_number, current_user.id)
     return ResumeResponse.model_validate(resume)
+
+
+@router.post("/{id}/audit", response_model=EvidenceMapResponse)
+async def audit_resume_claims(
+    id: uuid.UUID, current_user: CurrentUser, db: DBSession
+) -> EvidenceMapResponse:
+    """Extracts atomic claims from the resume and computes the credibility map."""
+    # 1. Extract claims
+    await ClaimExtractorService.extract_claims_for_resume(db, id, current_user.id)
+    # 2. Verify claims & compute score
+    claims, score = await CredibilityEngineService.compute_evidence_map(db, id, current_user.id)
+    
+    return EvidenceMapResponse(claims=claims, evidence_credibility_score=score)
+
+
+@router.get("/{id}/claims", response_model=EvidenceMapResponse)
+async def get_resume_claims(
+    id: uuid.UUID, current_user: CurrentUser, db: DBSession
+) -> EvidenceMapResponse:
+    """Retrieves the pre-computed credibility map of resume claims."""
+    claims, score = await CredibilityEngineService.compute_evidence_map(db, id, current_user.id)
+    return EvidenceMapResponse(claims=claims, evidence_credibility_score=score)

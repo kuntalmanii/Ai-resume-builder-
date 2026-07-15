@@ -44,6 +44,12 @@ from app.schemas.job_match import (
     JobMatchResultResponse,
     EvidenceSourceResponse,
     AISuggestionResponse,
+    JobMatchRunRequest,
+    JobMatchMethodologyResponse,
+)
+from app.schemas.job_match_requirements import (
+    JobDescriptionRequirement,
+    JobDescriptionRequirements,
 )
 
 __all__ = [
@@ -82,4 +88,8 @@ __all__ = [
     "JobMatchResultResponse",
     "EvidenceSourceResponse",
     "AISuggestionResponse",
+    "JobMatchRunRequest",
+    "JobMatchMethodologyResponse",
+    "JobDescriptionRequirement",
+    "JobDescriptionRequirements",
 ]

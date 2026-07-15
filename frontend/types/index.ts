@@ -271,9 +271,31 @@ export type SuggestionStatus = "pending" | "accepted" | "rejected" | "edited";
 export interface ClientEvidenceSource {
   id: string;
   label: string;
-  sourceType: "resume" | "profile" | "inference";
+  sourceType: "resume" | "profile" | "inference" | "career_profile" | "resume_content" | "career_profile_user_confirmed" | "clarifying_question";
   sourceReference?: string;
   verified: boolean;
+  support_kind?: string;
+  evidence_strength?: string;
+  verification_status?: string;
+}
+
+export interface ResumeClaim {
+  id: string;
+  resume_id: string;
+  claim_text: string;
+  claim_fingerprint: string;
+  source_section: string;
+  source_entry_id?: string;
+  verification_status: "unverified" | "user_confirmed" | "source_verified" | "inferred" | "contradictory";
+  contradiction_details?: string;
+  evidence_sources: ClientEvidenceSource[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvidenceMapResponse {
+  claims: ResumeClaim[];
+  evidence_credibility_score: number;
 }
 
 export interface ClientAISuggestion {
@@ -474,5 +496,57 @@ export interface ExperienceGap {
   requirement: string;
   details: string;
   gapYears: number;
+}
+
+export interface JobDescription {
+  id: string;
+  user_id: string;
+  title: string;
+  company: string;
+  raw_text: string;
+  source_filename?: string | null;
+  source_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface JobMatchResultResponse {
+  id: string;
+  resume_id: string;
+  job_description_id: string;
+  resume_version: number;
+  matching_version: string;
+  overall_match_percentage: number;
+  exact_match_score: number;
+  semantic_match_score: number;
+  skills_score: number;
+  required_skills_score: number;
+  preferred_skills_score: number;
+  experience_score: number;
+  keyword_score: number;
+  education_certification_score: number;
+  exact_keyword_matches: any[];
+  semantic_matches: any[];
+  missing_keywords: any[];
+  skill_gaps: any[];
+  experience_gaps: any[];
+  hidden_experiences: any[];
+  matched_requirements: any[];
+  missing_requirements: any[];
+  hidden_profile_matches: any[];
+  recommendations: string[];
+  is_stale: boolean;
+  ai_fallback_active: boolean;
+  created_at: string;
+}
+
+export interface JobMatchMethodologyResponse {
+  matching_version: string;
+  categories: {
+    category: string;
+    max_points: number;
+    description: string;
+  }[];
+  scoring_description: string;
 }
 

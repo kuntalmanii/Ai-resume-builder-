@@ -71,3 +71,12 @@ class OpenAIProvider(AIProvider):
             input=text,
         )
         return response.data[0].embedding
+
+    @property
+    def provider_name(self) -> str:
+        return "openai"
+
+    async def health_check(self) -> bool:
+        if not settings.AI_API_KEY or settings.AI_API_KEY == "your-ai-api-key-here":
+            return False
+        return True

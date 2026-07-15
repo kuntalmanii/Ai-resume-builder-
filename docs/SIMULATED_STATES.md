@@ -30,14 +30,17 @@ This document lists all mock/simulated states currently implemented in the front
 
 ---
 
-## 3. Job Description Semantic & Keyword Matching
+## 3. Job Description Semantic & Keyword Matching [RESOLVED]
 
 - **Route:** `/resumes/[id]/match`
-- **Component:** `JobMatchPage` in [`frontend/app/(dashboard)/resumes/[id]/match/page.tsx`](file:///Users/manishkuntal/Desktop/Projects/Ai%20resume%20builder/ai-resume-builder/frontend/app/%28dashboard%29/resumes/%5Bid%5D/match/page.tsx)
-- **Mock Data File:** `mockJobMatchResults` in [`frontend/lib/mock-data/index.ts`](file:///Users/manishkuntal/Desktop/Projects/Ai%20resume%20builder/ai-resume-builder/frontend/lib/mock-data/index.ts)
-- **Current Simulation:** Shows static keyword gaps, semantic similarity percentages, and experience mapping listings.
-- **Backend Replacement:** `POST /api/v1/resumes/{id}/match` returning a typed `JobMatchResultResponse`
-- **Replaced in:** Phase 9 (Job Description Semantic & Keyword Matching)
+- **Component:** `ResumeMatchPage` in [`frontend/app/(dashboard)/resumes/[id]/match/page.tsx`](file:///Users/manishkuntal/Desktop/Projects/Ai resume builder/ai-resume-builder/frontend/app/%28dashboard%29/resumes/%5Bid%5D/match/page.tsx)
+- **Backend Endpoints:**
+  - `POST /api/v1/resumes/{resume_id}/matches` (Run compare)
+  - `GET /api/v1/resumes/{resume_id}/matches/latest` (Get latest result)
+  - `GET /api/v1/resumes/{resume_id}/matches` (List history)
+  - `GET /api/v1/resumes/{resume_id}/matches/{match_id}` (Get match by ID)
+  - `GET /api/v1/matching/methodology` (Get weights and version)
+- **Status:** Completed and integrated with production backend services.
 
 ---
 

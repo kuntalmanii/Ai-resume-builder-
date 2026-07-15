@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.db.types import JSONBType
 
 
 class JobDescription(Base):
@@ -24,6 +25,7 @@ class JobDescription(Base):
     
     source_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source_type: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
+    parsed_requirements: Mapped[dict | None] = mapped_column(JSONBType, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -7,12 +7,19 @@ class JobMatchResultResponse(BaseModel):
     id: uuid.UUID
     resume_id: uuid.UUID
     job_description_id: uuid.UUID
+    resume_version: int
+    matching_version: str
     
     overall_match_percentage: int
+    potential_match_percentage: int
     exact_match_score: int
     semantic_match_score: int
     skills_score: int
+    required_skills_score: int
+    preferred_skills_score: int
     experience_score: int
+    keyword_score: int
+    education_certification_score: int
 
     exact_keyword_matches: list[dict] = Field(default_factory=list)
     semantic_matches: list[dict] = Field(default_factory=list)
@@ -20,9 +27,25 @@ class JobMatchResultResponse(BaseModel):
     skill_gaps: list[dict] = Field(default_factory=list)
     experience_gaps: list[dict] = Field(default_factory=list)
     hidden_experiences: list[dict] = Field(default_factory=list)
+    
+    matched_requirements: list[dict] = Field(default_factory=list)
+    missing_requirements: list[dict] = Field(default_factory=list)
+    hidden_profile_matches: list[dict] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    is_stale: bool = False
+    ai_fallback_active: bool = False
+    
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+class JobMatchRunRequest(BaseModel):
+    job_description_id: uuid.UUID
+
+class JobMatchMethodologyResponse(BaseModel):
+    matching_version: str
+    categories: list[dict]
+    scoring_description: str
 
 class EvidenceSourceResponse(BaseModel):
     id: uuid.UUID

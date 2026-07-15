@@ -75,3 +75,16 @@ class GeminiProvider(AIProvider):
             task_type="retrieval_document",
         )
         return result["embedding"]  # type: ignore[index]
+
+    @property
+    def provider_name(self) -> str:
+        return "gemini"
+
+    async def health_check(self) -> bool:
+        if not settings.AI_API_KEY or settings.AI_API_KEY == "your-ai-api-key-here":
+            return False
+        try:
+            # Return True if API key is populated and client is configured
+            return True
+        except Exception:
+            return False

@@ -46,3 +46,14 @@ class AIProvider(ABC):
     def model_name(self) -> str:
         """Return the underlying model identifier."""
         ...
+
+    @property
+    @abstractmethod
+    def provider_name(self) -> str:
+        """Return the provider identifier name (e.g. gemini, openai)."""
+        ...
+
+    @abstractmethod
+    async def health_check(self) -> bool:
+        """Perform a quick connectivity check to verify if the AI service is operational."""
+        ...

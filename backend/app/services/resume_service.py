@@ -175,35 +175,36 @@ async def update_resume(
     update_data = payload.model_dump(exclude_unset=True)
 
     # Detect if content is changing
-    if "content" in update_data and update_data["content"] is not None:
-        # Check if snapshot for the current version already exists to prevent duplicate key violations
-        existing_snapshot = await db.scalar(
-            select(ResumeVersion).where(
-                ResumeVersion.resume_id == resume.id,
-                ResumeVersion.version_number == resume.version
+    if "content" in update_data:
+        if update_data["content"] is not None:
+            # Check if snapshot for the current version already exists to prevent duplicate key violations
+            existing_snapshot = await db.scalar(
+                select(ResumeVersion).where(
+                    ResumeVersion.resume_id == resume.id,
+                    ResumeVersion.version_number == resume.version
+                )
             )
-        )
-        if not existing_snapshot:
-            snapshot = ResumeVersion(
-                resume_id=resume.id,
-                version_number=resume.version,
-                content_snapshot=resume.content,
-                change_reason=change_reason or "Autosave snapshot",
-            )
-            db.add(snapshot)
-        else:
-            existing_snapshot.content_snapshot = resume.content
-            existing_snapshot.change_reason = change_reason or existing_snapshot.change_reason
-            db.add(existing_snapshot)
-        
-        # Increment active version number
-        resume.version += 1
-        
-        # Dump document back to dictionary format for JSONB column
-        if isinstance(update_data["content"], ResumeDocument):
-            resume.content = update_data["content"].model_dump()
-        else:
-            resume.content = update_data["content"]
+            if not existing_snapshot:
+                snapshot = ResumeVersion(
+                    resume_id=resume.id,
+                    version_number=resume.version,
+                    content_snapshot=resume.content,
+                    change_reason=change_reason or "Autosave snapshot",
+                )
+                db.add(snapshot)
+            else:
+                existing_snapshot.content_snapshot = resume.content
+                existing_snapshot.change_reason = change_reason or existing_snapshot.change_reason
+                db.add(existing_snapshot)
+            
+            # Increment active version number
+            resume.version += 1
+            
+            # Dump document back to dictionary format for JSONB column
+            if isinstance(update_data["content"], ResumeDocument):
+                resume.content = update_data["content"].model_dump()
+            else:
+                resume.content = update_data["content"]
         
         del update_data["content"]
 

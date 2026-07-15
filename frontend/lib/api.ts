@@ -13,6 +13,10 @@ import type {
   ResumeAnalysisResponse,
   AnalysisHistoryResponse,
   ScoringMethodologyResponse,
+  JobMatchResultResponse,
+  JobMatchMethodologyResponse,
+  JobDescription,
+  EvidenceMapResponse,
 } from "@/types";
 
 const BASE_URL =
@@ -299,6 +303,14 @@ export const resumesAPI = {
     request<Resume>(`/resumes/${id}/versions/${versionNumber}/restore`, {
       method: "POST",
     }),
+
+  auditClaims: (id: string): Promise<EvidenceMapResponse> =>
+    request<EvidenceMapResponse>(`/resumes/${id}/audit`, {
+      method: "POST",
+    }),
+
+  getClaims: (id: string): Promise<EvidenceMapResponse> =>
+    request<EvidenceMapResponse>(`/resumes/${id}/claims`),
 };
 
 // ─── Resume Imports API ────────────────────────────────────────────────────────
@@ -360,18 +372,6 @@ export const resumeImportsAPI = {
 
 // ─── Job Descriptions API ─────────────────────────────────────────────────────
 
-export interface JobDescription {
-  id: string;
-  user_id: string;
-  title: string;
-  company: string;
-  raw_text: string;
-  source_filename?: string | null;
-  source_type: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export const jobDescriptionsAPI = {
   list: (): Promise<JobDescription[]> => request<JobDescription[]>("/job-descriptions"),
 
@@ -391,6 +391,30 @@ export const jobDescriptionsAPI = {
 
   delete: (id: string): Promise<void> =>
     request<void>(`/job-descriptions/${id}`, { method: "DELETE" }),
+};
+
+// ─── Job Matches API ─────────────────────────────────────────────────────────
+
+export const jobMatchesAPI = {
+  run: (resumeId: string, jobDescriptionId: string, force = false): Promise<JobMatchResultResponse> =>
+    request<JobMatchResultResponse>(`/resumes/${resumeId}/matches?force=${force}`, {
+      method: "POST",
+      body: { job_description_id: jobDescriptionId }
+    }),
+
+  getLatest: (resumeId: string, jobDescriptionId?: string): Promise<JobMatchResultResponse> => {
+    const query = jobDescriptionId ? `?job_description_id=${jobDescriptionId}` : "";
+    return request<JobMatchResultResponse>(`/resumes/${resumeId}/matches/latest${query}`);
+  },
+
+  getHistory: (resumeId: string, page = 1, pageSize = 10): Promise<JobMatchResultResponse[]> =>
+    request<JobMatchResultResponse[]>(`/resumes/${resumeId}/matches?page=${page}&page_size=${pageSize}`),
+
+  getById: (resumeId: string, matchId: string): Promise<JobMatchResultResponse> =>
+    request<JobMatchResultResponse>(`/resumes/${resumeId}/matches/${matchId}`),
+
+  getMethodology: (): Promise<JobMatchMethodologyResponse> =>
+    request<JobMatchMethodologyResponse>("/matching/methodology"),
 };
 
 // ─── Analyses API ──────────────────────────────────────────────────────────────
@@ -436,4 +460,145 @@ export const analysesAPI = {
    */
   getMethodology: (): Promise<ScoringMethodologyResponse> =>
     request<ScoringMethodologyResponse>("/scoring/methodology"),
+};
+
+// ─── AI Suggestions API ────────────────────────────────────────────────────────
+
+export interface ClaimValidationResult {
+  claim_text: string;
+  claim_type: string;
+  support_status: string;
+  supporting_sources: string[];
+  risk_level: string;
+}
+
+export interface EvidenceSourceResponse {
+  id: string;
+  label: string;
+  source_type: string;
+  source_id?: string | null;
+  source_section?: string | null;
+  source_entry_id?: string | null;
+  source_field?: string | null;
+  excerpt?: string | null;
+  evidence_strength: string;
+  support_kind: string;
+  verification_status?: string | null;
+  created_at: string;
+}
+
+export interface SuggestionResponse {
+  id: string;
+  resume_id: string;
+  job_description_id?: string | null;
+  analysis_id?: string | null;
+  match_result_id?: string | null;
+  source_resume_version: number;
+  suggestion_type: string;
+  target_section: string;
+  target_entry_id?: string | null;
+  target_field: string;
+  target_index?: number | null;
+  original_text: string;
+  suggested_text: string;
+  edited_text?: string | null;
+  rationale?: string | null;
+  risk_level: string;
+  claim_validation: ClaimValidationResult[];
+  expected_score_gain?: number | null;
+  provider_name?: string | null;
+  model_name?: string | null;
+  status: string;
+  applied_at?: string | null;
+  evidence_sources: EvidenceSourceResponse[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIStatusResponse {
+  status: string;
+  provider_name?: string | null;
+  model_name?: string | null;
+}
+
+export const suggestionsAPI = {
+  getHealth: (): Promise<AIStatusResponse> =>
+    request<AIStatusResponse>("/resumes/suggestions/health"),
+
+  list: (resumeId: string, status?: string): Promise<SuggestionResponse[]> => {
+    const query = status ? `?status=${encodeURIComponent(status)}` : "";
+    return request<SuggestionResponse[]>(`/resumes/${resumeId}/suggestions${query}`);
+  },
+
+  generate: (
+    resumeId: string,
+    data: {
+      suggestion_type: string;
+      target_section: string;
+      target_entry_id?: string | null;
+      target_field?: string;
+      target_index?: number | null;
+      job_description_id?: string | null;
+      analysis_id?: string | null;
+      match_result_id?: string | null;
+      instruction?: string | null;
+    }
+  ): Promise<SuggestionResponse> =>
+    request<SuggestionResponse>(`/resumes/${resumeId}/suggestions`, {
+      method: "POST",
+      body: data,
+    }),
+
+  batchGenerate: (
+    resumeId: string,
+    data: {
+      mode: string;
+      job_description_id?: string | null;
+      analysis_id?: string | null;
+      match_result_id?: string | null;
+      max_suggestions?: number;
+    }
+  ): Promise<SuggestionResponse[]> =>
+    request<SuggestionResponse[]>(`/resumes/${resumeId}/suggestions/batch`, {
+      method: "POST",
+      body: data,
+    }),
+
+  get: (resumeId: string, suggestionId: string): Promise<SuggestionResponse> =>
+    request<SuggestionResponse>(`/resumes/${resumeId}/suggestions/${suggestionId}`),
+
+  accept: (resumeId: string, suggestionId: string): Promise<SuggestionResponse> =>
+    request<SuggestionResponse>(`/resumes/${resumeId}/suggestions/${suggestionId}/accept`, {
+      method: "POST",
+    }),
+
+  reject: (resumeId: string, suggestionId: string): Promise<SuggestionResponse> =>
+    request<SuggestionResponse>(`/resumes/${resumeId}/suggestions/${suggestionId}/reject`, {
+      method: "POST",
+    }),
+
+  edit: (
+    resumeId: string,
+    suggestionId: string,
+    suggestedText: string
+  ): Promise<SuggestionResponse> =>
+    request<SuggestionResponse>(`/resumes/${resumeId}/suggestions/${suggestionId}`, {
+      method: "PUT",
+      body: { suggested_text: suggestedText },
+    }),
+
+  answerQuestion: (
+    resumeId: string,
+    suggestionId: string,
+    answer: string
+  ): Promise<SuggestionResponse> =>
+    request<SuggestionResponse>(`/resumes/${resumeId}/suggestions/${suggestionId}/answer`, {
+      method: "POST",
+      body: { answer },
+    }),
+
+  apply: (resumeId: string, suggestionId: string): Promise<Resume> =>
+    request<Resume>(`/resumes/${resumeId}/suggestions/${suggestionId}/apply`, {
+      method: "POST",
+    }),
 };

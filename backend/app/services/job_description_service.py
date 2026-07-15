@@ -38,8 +38,8 @@ async def create_job_description(
     """Create a new job description."""
     jd = JobDescription(
         user_id=user_id,
-        title=payload.title,
-        company=payload.company,
+        title=payload.title or "Untitled Role",
+        company=payload.company or "Target Company",
         raw_text=payload.raw_text,
         source_filename=payload.source_filename,
         source_type=payload.source_type,
