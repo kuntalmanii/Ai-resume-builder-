@@ -237,17 +237,30 @@ export default function DashboardPage() {
             transition={{ delay: 0.2 }}
           >
             {resumes.length === 0 ? (
-              <Card className="bg-card border-border text-foreground shadow-sm">
-                <CardContent className="p-8 text-center space-y-3">
-                  <FileText className="w-8 h-8 mx-auto text-muted-foreground/60" />
-                  <h3 className="font-bold text-sm">No resumes built yet</h3>
-                  <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                    Build your first resume to start optimizing your ATS score with AI suggestions.
-                  </p>
-                  <div className="pt-2">
-                    <Link href="/resumes/new">
-                      <Button size="sm" className="h-8 text-xs font-semibold">
+              <Card className="bg-card border-border text-foreground shadow-sm overflow-hidden relative">
+                {/* Background glow visual element */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+                <CardContent className="p-12 text-center space-y-4">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
+                    <FileText className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-base text-foreground">No Resumes Found</h3>
+                    <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                      You haven't built or uploaded any resumes yet. Start optimizing your career pathway by building your first ATS-optimized profile.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center max-w-xs mx-auto">
+                    <Link href="/resumes/new" className="w-full">
+                      <Button size="sm" className="w-full h-9 text-xs font-semibold bg-primary hover:bg-primary/95 text-white shadow-sm flex items-center justify-center gap-1.5">
+                        <PlusCircle className="w-4 h-4" />
                         Create Resume
+                      </Button>
+                    </Link>
+                    <Link href="/upload" className="w-full">
+                      <Button size="sm" variant="outline" className="w-full h-9 text-xs font-semibold hover:bg-muted/50 border-border">
+                        <Upload className="w-4 h-4 mr-1.5 text-muted-foreground" />
+                        Upload PDF
                       </Button>
                     </Link>
                   </div>

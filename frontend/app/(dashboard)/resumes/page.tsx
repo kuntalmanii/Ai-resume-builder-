@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { resumesAPI } from "@/lib/api";
 import type { Resume } from "@/types";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 const formatDate = (dateStr: string) => {
   try {
@@ -50,6 +51,28 @@ export default function ResumesPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<"date" | "score">("date");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
+
+  useEffect(() => {
+    if (activeMenuId === null) return;
+    
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.resume-menu-container')) {
+        setActiveMenuId(null);
+      }
+    };
+    
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleOutsideClick);
+    }, 0);
+    
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, [activeMenuId]);
 
   const fetchResumes = async () => {
     try {
@@ -237,12 +260,14 @@ export default function ResumesPage() {
             </div>
           ) : viewMode === "grid" ? (
             /* Grid Layout */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {sortedResumes.map((resume) => (
                 <motion.div
                   key={resume.id}
+                  layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
                   className="bg-card border border-border rounded-lg p-4 flex flex-col gap-4 shadow-sm hover:shadow-md hover:border-border-strong group transition-all duration-200 relative"
                 >
                   {/* Rich A4 Styled Thumbnail Preview */}
@@ -288,7 +313,7 @@ export default function ResumesPage() {
                     </div>
 
                     {/* Desktop/Tablet Context Dropdown Trigger */}
-                    <div className="relative">
+                    <div className="relative resume-menu-container">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -297,19 +322,16 @@ export default function ResumesPage() {
                       >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
-
+ 
                       {/* Floating Action Menu dropdown */}
                       <AnimatePresence>
                         {activeMenuId === resume.id && (
-                          <>
-                            {/* Overlay layer to close dropdown when clicking out */}
-                            <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                              className="absolute right-0 top-9 w-40 bg-card border border-border rounded-lg shadow-lg py-1 z-20 font-medium"
-                            >
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                            className="absolute right-0 top-9 w-40 bg-card border border-border rounded-lg shadow-lg py-1 z-20 font-medium"
+                          >
                               <Link href={`/resumes/${resume.id}/edit`}>
                                 <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground">
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -351,29 +373,34 @@ export default function ResumesPage() {
                                 </button>
                               </Link>
                               <button
-                                onClick={() => handleDelete(resume.id, resume.title)}
+                                onClick={() => {
+                                  setDeleteConfirmId(resume.id);
+                                  setDeleteConfirmTitle(resume.title);
+                                  setActiveMenuId(null);
+                                }}
                                 className="w-full text-left px-3 py-2 text-xs hover:bg-red-500/10 text-error flex items-center gap-2 border-t border-border/50 mt-1 pt-1.5"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                                 Delete Draft
                               </button>
                             </motion.div>
-                          </>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           ) : (
             /* List Layout */
-            <div className="space-y-3">
+            <motion.div layout className="space-y-3">
               {sortedResumes.map((resume) => (
                 <motion.div
                   key={resume.id}
+                  layout
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
                   className="bg-card border border-border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-border-strong transition-all shadow-xs"
                 >
                   <div className="flex items-center gap-3">
@@ -431,7 +458,10 @@ export default function ResumesPage() {
                         </Button>
                       )}
                       <Button
-                        onClick={() => handleDelete(resume.id, resume.title)}
+                        onClick={() => {
+                          setDeleteConfirmId(resume.id);
+                          setDeleteConfirmTitle(resume.title);
+                        }}
                         variant="ghost"
                         size="sm"
                         className="h-8 text-xs text-error hover:bg-error-subtle"
@@ -442,10 +472,32 @@ export default function ResumesPage() {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
       )}
+      {/* Confirmation Dialog for Safe Deletions */}
+      <ConfirmDialog
+        isOpen={deleteConfirmId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirmId(null);
+            setDeleteConfirmTitle("");
+          }
+        }}
+        title="Delete Resume Draft"
+        description={`Are you sure you want to delete "${deleteConfirmTitle}"? This draft will be permanently removed. This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => {
+          if (deleteConfirmId) {
+            handleDelete(deleteConfirmId, deleteConfirmTitle);
+            setDeleteConfirmId(null);
+            setDeleteConfirmTitle("");
+          }
+        }}
+        isDestructive={true}
+      />
     </div>
   );
 }

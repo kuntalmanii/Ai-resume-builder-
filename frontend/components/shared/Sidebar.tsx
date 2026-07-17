@@ -36,80 +36,100 @@ import {
   Users,
 } from "lucide-react";
 
-const candidateNavItems = [
+const candidateNavSections = [
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
+    title: "Resume Tools",
+    items: [
+      {
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "My Resumes",
+        href: "/resumes",
+        icon: FileText,
+      },
+      {
+        label: "Create Resume",
+        href: "/resumes/new",
+        icon: PlusCircle,
+      },
+      {
+        label: "Resume Analyzer",
+        href: "/upload",
+        icon: BarChart3,
+      },
+    ]
   },
   {
-    label: "Applications Tracker",
-    href: "/applications",
-    icon: Briefcase,
+    title: "Career Growth",
+    items: [
+      {
+        label: "Applications Tracker",
+        href: "/applications",
+        icon: Briefcase,
+      },
+      {
+        label: "Cover Letters",
+        href: "/cover-letters",
+        icon: MailOpen,
+      },
+      {
+        label: "LinkedIn Optimizer",
+        href: "/linkedin",
+        icon: Globe,
+      },
+      {
+        label: "Portfolio Builder",
+        href: "/portfolio",
+        icon: Globe,
+      },
+      {
+        label: "Interview Prep",
+        href: "/interviews",
+        icon: MessageSquareCode,
+      },
+      {
+        label: "Career Roadmap",
+        href: "/roadmap",
+        icon: Map,
+      },
+      {
+        label: "Career Analytics",
+        href: "/analytics",
+        icon: TrendingUp,
+      },
+    ]
   },
   {
-    label: "My Resumes",
-    href: "/resumes",
-    icon: FileText,
-  },
-  {
-    label: "Create Resume",
-    href: "/resumes/new",
-    icon: PlusCircle,
-  },
-  {
-    label: "Resume Analyzer",
-    href: "/upload",
-    icon: BarChart3,
-  },
-  {
-    label: "Cover Letters",
-    href: "/cover-letters",
-    icon: MailOpen,
-  },
-  {
-    label: "LinkedIn Optimizer",
-    href: "/linkedin",
-    icon: Globe,
-  },
-  {
-    label: "Portfolio Builder",
-    href: "/portfolio",
-    icon: Globe,
-  },
-  {
-    label: "Interview Prep",
-    href: "/interviews",
-    icon: MessageSquareCode,
-  },
-  {
-    label: "Career Roadmap",
-    href: "/roadmap",
-    icon: Map,
-  },
-  {
-    label: "Career Analytics",
-    href: "/analytics",
-    icon: TrendingUp,
-  },
-  {
-    label: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-  },
+    title: "Account",
+    items: [
+      {
+        label: "Notifications",
+        href: "/notifications",
+        icon: Bell,
+      },
+    ]
+  }
 ];
 
-const recruiterNavItems = [
+const recruiterNavSections = [
   {
-    label: "Recruiter Portal",
-    href: "/recruiter",
-    icon: Users,
-  },
-  {
-    label: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-  },
+    title: "Recruiter Portal",
+    items: [
+      {
+        label: "Recruiter Portal",
+        href: "/recruiter",
+        icon: Users,
+      },
+      {
+        label: "Notifications",
+        href: "/notifications",
+        icon: Bell,
+      },
+    ]
+  }
 ];
 
 const footerItems = [
@@ -141,7 +161,7 @@ export function SidebarContent({ onClose }: SidebarContentProps) {
   }, []);
 
   const isRecruiter = mounted && user?.role === "recruiter";
-  const currentNavItems = isRecruiter ? recruiterNavItems : candidateNavItems;
+  const currentNavSections = isRecruiter ? recruiterNavSections : candidateNavSections;
 
   const initials = mounted && user?.full_name
     ? user.full_name
@@ -183,36 +203,45 @@ export function SidebarContent({ onClose }: SidebarContentProps) {
       <Separator className="bg-border/60" />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {currentNavItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && item.href !== "/resumes/new" && pathname.startsWith(item.href));
-          return (
-            <Link key={item.href} href={item.href} onClick={onClose}>
-              <motion.div
-                whileHover={{ x: 2 }}
-                transition={{ duration: 0.15 }}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 border",
-                  isActive
-                    ? "bg-primary-subtle text-primary border-primary/10"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
-                {item.label}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeNav"
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-                  />
-                )}
-              </motion.div>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+        {currentNavSections.map((section) => (
+          <div key={section.title} className="space-y-1.5">
+            <p className="px-3 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50 select-none">
+              {section.title}
+            </p>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/dashboard" && item.href !== "/resumes/new" && pathname.startsWith(item.href));
+                return (
+                  <Link key={item.href} href={item.href} onClick={onClose}>
+                    <motion.div
+                      whileHover={{ x: 2 }}
+                      transition={{ duration: 0.15 }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 border",
+                        isActive
+                          ? "bg-primary-subtle text-primary border-primary/10"
+                          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      {item.label}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeNav"
+                          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                        />
+                      )}
+                    </motion.div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <Separator className="bg-border/60" />

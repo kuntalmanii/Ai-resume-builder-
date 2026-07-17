@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -131,6 +131,20 @@ const itemVariants = {
 
 export default function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrollPercent, setScrollPercent] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY;
+      const percent = (scrollTop / (documentHeight - windowHeight)) * 100;
+      setScrollPercent(percent);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#060608] text-white overflow-x-hidden">
@@ -144,6 +158,13 @@ export default function LandingPage() {
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">CareerOS AI</span>
           </Link>
           
+          {/* Visual Navigation Anchors */}
+          <div className="hidden md:flex items-center gap-6">
+            <a href="#features" className="text-sm font-medium text-white/60 hover:text-white transition-colors">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-white/60 hover:text-white transition-colors">How It Works</a>
+            <a href="#testimonials" className="text-sm font-semibold text-white/60 hover:text-white transition-colors">Reviews</a>
+          </div>
+
           {/* Desktop Nav Actions */}
           <div className="hidden md:flex items-center gap-4">
             <Link href="/login">
@@ -233,7 +254,7 @@ export default function LandingPage() {
           </motion.h1>
 
           <motion.p
-            className="text-base sm:text-lg text-white/50 mb-10 max-w-2xl mx-auto leading-relaxed"
+            className="text-base sm:text-lg text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -274,7 +295,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="relative max-w-5xl mx-auto mt-12 overflow-hidden rounded-xl border border-white/10 bg-[#0E0E12]/80 shadow-2xl backdrop-blur-xl"
+          className="relative max-w-5xl mx-auto mt-12 overflow-hidden rounded-xl border border-white/10 bg-[#0E0E12]/80 shadow-2xl backdrop-blur-xl animate-glow-pulse"
         >
           {/* Mockup Top Bar */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/[0.02]">
@@ -372,7 +393,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/5 bg-gradient-to-b from-[#060608] via-violet-950/5 to-[#060608]">
+      <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/5 bg-gradient-to-b from-[#060608] via-violet-950/5 to-[#060608]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <Badge variant="outline" className="border-violet-500/20 bg-violet-500/10 text-violet-300 px-4 py-1.5 text-xs">
@@ -389,6 +410,9 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {steps.map((item, idx) => (
               <div key={idx} className="relative p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col gap-4">
+                {idx < steps.length - 1 && (
+                  <div className="hidden md:block absolute top-12 -right-6 w-12 border-t border-dashed border-violet-500/35 z-10" />
+                )}
                 <div className="text-3xl font-extrabold text-violet-500/20 font-heading leading-none">
                   {item.step}
                 </div>
@@ -401,7 +425,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features List Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
+      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold mb-3">
@@ -423,8 +447,11 @@ export default function LandingPage() {
               <motion.div
                 key={idx}
                 variants={itemVariants}
-                className="group relative p-6 rounded-2xl bg-[#0E0E12] border border-white/5 hover:border-white/10 hover:bg-white/[0.03] transition-all duration-300"
+                className="group relative p-6 rounded-2xl bg-[#0E0E12] border border-white/5 hover:border-white/10 hover:bg-white/[0.03] transition-all duration-300 overflow-hidden"
               >
+                {/* Visual hover background glow */}
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-violet-500/5 to-transparent pointer-events-none" />
+                
                 <div
                   className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}
                 >
@@ -483,7 +510,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/5">
+      <section id="testimonials" className="py-24 px-4 sm:px-6 lg:px-8 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <Badge variant="outline" className="border-violet-500/20 bg-violet-500/10 text-violet-300 px-4 py-1.5 text-xs">
@@ -511,8 +538,10 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 mt-6 border-t border-white/5 pt-4">
-                  <div className="w-8 h-8 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-xs font-bold font-heading">
-                    {t.avatar}
+                  <div className="w-9 h-9 rounded-full p-[2px] bg-gradient-to-br from-violet-500 to-purple-600 flex-shrink-0 flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-[#0E0E12] flex items-center justify-center text-xs font-bold text-violet-300 font-heading">
+                      {t.avatar}
+                    </div>
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white leading-none">{t.author}</h4>
@@ -539,10 +568,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Final CTA Card with Animated Glowing Border */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[80px] pointer-events-none" />
-        <div className="max-w-3xl mx-auto text-center p-12 rounded-2xl bg-[#0E0E12] border border-violet-500/20 relative">
+        <div className="max-w-3xl mx-auto text-center p-12 rounded-2xl relative cta-card">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 opacity-30 pointer-events-none" />
           <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 font-heading">
             Build your best resume today
@@ -580,25 +608,25 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Product</h4>
-              <ul className="space-y-2 text-[11px] text-white/55">
-                <li><Link href="/register" className="hover:text-white transition-colors">Resume builder</Link></li>
-                <li><Link href="/analyze" className="hover:text-white transition-colors">ATS Scan</Link></li>
-                <li><Link href="/profile" className="hover:text-white transition-colors">Career Profile</Link></li>
+              <ul className="space-y-1 text-xs text-white/55">
+                <li><Link href="/register" className="py-1.5 block hover:text-white transition-colors">Resume builder</Link></li>
+                <li><Link href="/analyze" className="py-1.5 block hover:text-white transition-colors">ATS Scan</Link></li>
+                <li><Link href="/profile" className="py-1.5 block hover:text-white transition-colors">Career Profile</Link></li>
               </ul>
             </div>
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Transparency</h4>
-              <ul className="space-y-2 text-[11px] text-white/55">
-                <li><Link href="/" className="hover:text-white transition-colors">Evidence Mode</Link></li>
-                <li><Link href="/" className="hover:text-white transition-colors">ATS compliance</Link></li>
-                <li><Link href="/" className="hover:text-white transition-colors">Privacy policy</Link></li>
+              <ul className="space-y-1 text-xs text-white/55">
+                <li><Link href="/" className="py-1.5 block hover:text-white transition-colors">Evidence Mode</Link></li>
+                <li><Link href="/" className="py-1.5 block hover:text-white transition-colors">ATS compliance</Link></li>
+                <li><Link href="/" className="py-1.5 block hover:text-white transition-colors">Privacy policy</Link></li>
               </ul>
             </div>
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider">Connect</h4>
-              <ul className="space-y-2 text-[11px] text-white/55">
-                <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
-                <li><Link href="/" className="hover:text-white transition-colors">Contact sales</Link></li>
+              <ul className="space-y-1 text-xs text-white/55">
+                <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" className="py-1.5 block hover:text-white transition-colors">GitHub</a></li>
+                <li><Link href="/" className="py-1.5 block hover:text-white transition-colors">Contact sales</Link></li>
               </ul>
             </div>
           </div>
@@ -615,6 +643,21 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      {/* Back to top button */}
+      <AnimatePresence>
+        {scrollPercent > 15 && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 w-10 h-10 rounded-full bg-violet-600 border border-violet-500/20 text-white flex items-center justify-center shadow-lg shadow-violet-900/40 z-50 hover:bg-violet-500 transition-colors"
+            aria-label="Back to top"
+          >
+            ↑
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

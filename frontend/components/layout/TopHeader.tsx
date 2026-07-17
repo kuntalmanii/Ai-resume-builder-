@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Menu, User, Settings, LogOut, Sparkles } from "lucide-react";
+import { Bell, Menu, User, Settings, LogOut, Sparkles, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthStore } from "@/store/authStore";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import Breadcrumbs from "./Breadcrumbs";
 import { cn } from "@/lib/utils";
@@ -17,12 +18,35 @@ interface TopHeaderProps {
 export default function TopHeader({ onMenuClick }: TopHeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { theme, setTheme } = useTheme();
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowUserDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -60,8 +84,23 @@ export default function TopHeader({ onMenuClick }: TopHeaderProps) {
 
       {/* Right: Notifications & User Menu */}
       <div className="flex items-center gap-2">
+        {/* Theme Toggle Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="h-9 w-9 text-muted-foreground hover:text-foreground rounded-full flex-shrink-0"
+          aria-label="Toggle theme"
+        >
+          {mounted && theme === "dark" ? (
+            <Sun className="w-4.5 h-4.5" />
+          ) : (
+            <Moon className="w-4.5 h-4.5" />
+          )}
+        </Button>
+
         {/* Notifications Popover Trigger */}
-        <div className="relative">
+        <div className="relative" ref={notificationsRef}>
           <Button
             variant="ghost"
             size="icon"
@@ -102,7 +141,7 @@ export default function TopHeader({ onMenuClick }: TopHeaderProps) {
         </div>
 
         {/* User Avatar & Dropdown Menu */}
-        <div className="relative">
+        <div className="relative" ref={userDropdownRef}>
           <button
             onClick={() => {
               setShowUserDropdown(!showUserDropdown);

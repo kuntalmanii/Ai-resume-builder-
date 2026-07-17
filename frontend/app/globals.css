@@ -215,6 +215,35 @@
   );
 }
 
+@keyframes rotate-gradient {
+  0% { --gradient-angle: 0deg; }
+  100% { --gradient-angle: 360deg; }
+}
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.cta-card {
+  --gradient-angle: 0deg;
+  border: 1.5px solid transparent;
+  background: linear-gradient(#0E0E12, #0E0E12) padding-box,
+              conic-gradient(from var(--gradient-angle), var(--primary), #a855f7, var(--primary)) border-box;
+  animation: rotate-gradient 6s linear infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0px 0px rgba(124, 58, 237, 0); }
+  50% { box-shadow: 0 0 35px 2px rgba(124, 58, 237, 0.22); }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+
+
 /* Accessibility & Focus Outlines */
 *:focus-visible {
   outline: 2px solid var(--primary) !important;
