@@ -8,7 +8,6 @@ sqlalchemy>=2.0.36
 asyncpg>=0.30.0
 greenlet>=3.1.0
 alembic>=1.14.0
-# psycopg2-binary — skip; asyncpg is the production driver; build from source fails on py3.14 without pg_config
 
 # ─── Auth & Security ──────────────────────────────────────────────────────────
 bcrypt>=4.2.0
@@ -20,17 +19,20 @@ pydantic-settings>=2.7.0
 email-validator>=2.2.0
 
 # ─── File Parsing ─────────────────────────────────────────────────────────────
-# pymupdf — source build broken in path-with-spaces; install manually if needed
 python-docx>=1.1.2
 
 # ─── PDF Export ───────────────────────────────────────────────────────────────
-# weasyprint — requires system-level pango/cairo; install separately in production
 jinja2>=3.1.4
+playwright>=1.49.0
 
 # ─── AI Providers ─────────────────────────────────────────────────────────────
 google-generativeai>=0.8.0
 openai>=1.40.0
 httpx>=0.27.0
+
+# ─── Caching & Background Workers ────────────────────────────────────────────
+redis>=5.0.0              # async redis client (redis.asyncio)
+rq>=2.0.0                 # Redis Queue — background job processor
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
 python-magic>=0.4.27

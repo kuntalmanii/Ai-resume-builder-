@@ -22,10 +22,10 @@ class JobMatchResult(Base):
     job_description_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("job_descriptions.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    
+
     resume_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     matching_version: Mapped[str] = mapped_column(String(50), nullable=False, default="jd-match-v1.0")
-    
+
     overall_match_percentage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     potential_match_percentage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     exact_match_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -44,7 +44,7 @@ class JobMatchResult(Base):
     skill_gaps: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
     experience_gaps: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
     hidden_experiences: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    
+
     matched_requirements: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
     missing_requirements: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
     hidden_profile_matches: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)

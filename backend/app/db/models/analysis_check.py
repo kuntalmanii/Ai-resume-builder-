@@ -23,7 +23,7 @@ class AnalysisCheck(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(50), nullable=False)  # passed, warning, failed
-    
+
     points_possible: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     points_awarded: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     recommendation: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -1,15 +1,15 @@
 """FastAPI endpoints for Resume Import Sessions."""
 import uuid
-from typing import Annotated
-from fastapi import APIRouter, UploadFile, File, status, Response
+
+from fastapi import APIRouter, File, Response, UploadFile, status
 
 from app.api.dependencies import CurrentUser, DBSession
+from app.schemas.resume import ResumeResponse
 from app.schemas.resume_import import (
+    ResumeImportFinalize,
     ResumeImportSessionResponse,
     ResumeImportUpdate,
-    ResumeImportFinalize,
 )
-from app.schemas.resume import ResumeResponse
 from app.services.parser import import_service
 
 router = APIRouter(prefix="/resume-imports", tags=["Resume Imports"])

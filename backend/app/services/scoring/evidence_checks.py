@@ -17,8 +17,11 @@ from typing import Any
 from app.services.scoring.ats_checks import CheckResult
 from app.services.scoring.config import EVIDENCE_WEIGHTS
 from app.services.scoring.text_metrics import (
-    _get, _get_list, collect_all_bullets,
-    parse_date, has_any_metric,
+    _get,
+    _get_list,
+    collect_all_bullets,
+    has_any_metric,
+    parse_date,
 )
 
 CATEGORY = "evidence"

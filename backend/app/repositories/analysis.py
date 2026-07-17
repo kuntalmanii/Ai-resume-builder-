@@ -1,10 +1,11 @@
 """Resume Analysis Repository class."""
 from uuid import UUID
-from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
+
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.db.models.analysis import ResumeAnalysis
-from app.db.models.analysis_check import AnalysisCheck
 from app.repositories.base import BaseRepository
 
 

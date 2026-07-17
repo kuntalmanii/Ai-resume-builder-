@@ -1,21 +1,20 @@
 """AI Suggestion API routes."""
 import uuid
-from typing import List, Optional
 
 from fastapi import APIRouter, Query, status
 
+from app.ai.gemini_provider import GeminiProvider
 from app.api.dependencies import CurrentUser, DBSession
 from app.schemas.ai_suggestion import (
-    SuggestionResponse,
-    SuggestionGenerateRequest,
+    AchievementAnswerRequest,
+    AIStatusResponse,
     SuggestionBatchGenerateRequest,
     SuggestionEditRequest,
-    AchievementAnswerRequest,
-    AIStatusResponse
+    SuggestionGenerateRequest,
+    SuggestionResponse,
 )
 from app.schemas.resume import ResumeResponse
 from app.services.ai.suggestion_service import AISuggestionService
-from app.ai.gemini_provider import GeminiProvider
 
 router = APIRouter(prefix="/resumes", tags=["suggestions"])
 
@@ -32,13 +31,13 @@ async def get_ai_health() -> AIStatusResponse:
     )
 
 
-@router.get("/{id}/suggestions", response_model=List[SuggestionResponse])
+@router.get("/{id}/suggestions", response_model=list[SuggestionResponse])
 async def list_suggestions(
     id: uuid.UUID,
     db: DBSession,
     current_user: CurrentUser,
-    status: Optional[str] = Query(None, description="Filter suggestions by status")
-) -> List[SuggestionResponse]:
+    status: str | None = Query(None, description="Filter suggestions by status")
+) -> list[SuggestionResponse]:
     """Retrieve suggestions for a specific resume."""
     suggs = await AISuggestionService.get_suggestions(db, id, current_user.id, status)
     return [SuggestionResponse.model_validate(s) for s in suggs]
@@ -56,13 +55,13 @@ async def generate_suggestion(
     return SuggestionResponse.model_validate(sugg)
 
 
-@router.post("/{id}/suggestions/batch", response_model=List[SuggestionResponse], status_code=status.HTTP_201_CREATED)
+@router.post("/{id}/suggestions/batch", response_model=list[SuggestionResponse], status_code=status.HTTP_201_CREATED)
 async def batch_generate_suggestions(
     id: uuid.UUID,
     req: SuggestionBatchGenerateRequest,
     db: DBSession,
     current_user: CurrentUser
-) -> List[SuggestionResponse]:
+) -> list[SuggestionResponse]:
     """Batch generate multiple targeted resume suggestions."""
     suggs = await AISuggestionService.batch_generate_suggestions(
         db=db,

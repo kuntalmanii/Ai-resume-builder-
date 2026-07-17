@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,23 +18,30 @@ class ResumeClaim(Base):
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    
+
     claim_text: Mapped[str] = mapped_column(Text, nullable=False)
     claim_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    
+
     source_section: Mapped[str] = mapped_column(String(50), nullable=False)
     source_entry_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    
+
+    resume_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    claim_type: Mapped[str] = mapped_column(String(50), nullable=False, default="responsibility")
+    normalized_value: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    field_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    bullet_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     verification_status: Mapped[str] = mapped_column(String(50), nullable=False, default="unverified")  # unverified, verified, contradictory
     contradiction_details: Mapped[str | None] = mapped_column(Text, nullable=True)
-    
+
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
         nullable=False,
     )
 

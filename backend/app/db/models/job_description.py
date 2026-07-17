@@ -22,7 +22,7 @@ class JobDescription(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     company: Mapped[str] = mapped_column(String(255), nullable=False)
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
-    
+
     source_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source_type: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
     parsed_requirements: Mapped[dict | None] = mapped_column(JSONBType, nullable=True)

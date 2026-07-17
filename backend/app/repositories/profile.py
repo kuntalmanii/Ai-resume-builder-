@@ -1,9 +1,12 @@
 """Career Profile Repository class."""
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.models.profile import CareerProfile
 from app.repositories.base import BaseRepository
+
 
 class CareerProfileRepository(BaseRepository[CareerProfile]):
     def __init__(self):

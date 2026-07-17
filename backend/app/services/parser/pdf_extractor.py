@@ -1,6 +1,8 @@
 """PDF text extraction using PyMuPDF."""
 import re
+
 import fitz  # PyMuPDF
+
 from app.core.exceptions import ValidationError
 
 

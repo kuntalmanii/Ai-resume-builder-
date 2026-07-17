@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -27,22 +27,23 @@ class EvidenceSource(Base):
     resume_claim_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resume_claims.id", ondelete="CASCADE"), nullable=True, index=True
     )
-    
+
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     source_type: Mapped[str] = mapped_column(String(50), nullable=False)  # resume_content, career_profile_user_confirmed, etc.
-    
+
     source_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     source_section: Mapped[str | None] = mapped_column(String(50), nullable=True)
     source_entry_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     source_field: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    
+
     excerpt: Mapped[str | None] = mapped_column(Text, nullable=True)
     evidence_strength: Mapped[str] = mapped_column(String(50), nullable=False, default="contextual")  # direct, corroborating, contextual, insufficient
     support_kind: Mapped[str] = mapped_column(String(50), nullable=False, default="relevance_context")  # factual_support, relevance_context
     verification_status: Mapped[str | None] = mapped_column(String(50), nullable=True)  # unverified, user_confirmed, source_verified
+    contradiction_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
 
     # Relationships

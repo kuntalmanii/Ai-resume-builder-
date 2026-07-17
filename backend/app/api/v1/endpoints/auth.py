@@ -1,5 +1,5 @@
 """Auth router: register, login, refresh, logout, account deletion, and current user info."""
-from fastapi import APIRouter, Response, status, Cookie, Body
+from fastapi import APIRouter, Body, Cookie, Response, status
 
 from app.api.dependencies import CurrentUser, DBSession
 from app.schemas.auth import (
@@ -31,7 +31,7 @@ async def login(
     """Authenticate and return access + refresh tokens, setting secure refresh cookie."""
     user = await auth_service.authenticate_user(db, payload.email, payload.password)
     tokens = auth_service.generate_token_pair(user.id)
-    
+
     from app.core.config import get_settings
     settings = get_settings()
     is_prod = settings.APP_ENV == "production"

@@ -9,13 +9,17 @@ from typing import Any
 
 from app.services.scoring.ats_checks import CheckResult
 from app.services.scoring.config import (
-    READABILITY_WEIGHTS,
-    MAX_BULLET_WORDS,
     EXCESSIVE_SUMMARY_WORDS,
+    MAX_BULLET_WORDS,
+    READABILITY_WEIGHTS,
 )
 from app.services.scoring.text_metrics import (
-    _get, _get_list, collect_all_bullets,
-    word_count, sentence_count, find_duplicate_bullets,
+    _get,
+    _get_list,
+    collect_all_bullets,
+    find_duplicate_bullets,
+    sentence_count,
+    word_count,
 )
 
 CATEGORY = "readability"

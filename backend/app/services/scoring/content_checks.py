@@ -13,17 +13,20 @@ from typing import Any
 
 from app.services.scoring.ats_checks import CheckResult
 from app.services.scoring.config import (
-    CONTENT_WEIGHTS,
     ACTION_VERB_COVERAGE_THRESHOLD,
-    WEAK_PHRASE_THRESHOLD,
+    CONTENT_WEIGHTS,
     MAX_BULLET_WORDS,
-    IDEAL_BULLET_WORDS_MAX,
     MIN_BULLET_WORDS,
+    WEAK_PHRASE_THRESHOLD,
 )
 from app.services.scoring.text_metrics import (
-    _get_list, collect_all_bullets, starts_with_action_verb,
-    contains_weak_phrase, has_any_metric, find_duplicate_bullets,
-    specificity_score, word_count,
+    collect_all_bullets,
+    contains_weak_phrase,
+    find_duplicate_bullets,
+    has_any_metric,
+    specificity_score,
+    starts_with_action_verb,
+    word_count,
 )
 
 CATEGORY = "content"

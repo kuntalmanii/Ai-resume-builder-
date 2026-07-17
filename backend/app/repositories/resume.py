@@ -1,9 +1,12 @@
 """Resume Repository class."""
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.models.resume import Resume
 from app.repositories.base import BaseRepository
+
 
 class ResumeRepository(BaseRepository[Resume]):
     def __init__(self):

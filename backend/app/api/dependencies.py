@@ -7,8 +7,8 @@ from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
-from app.db.session import get_db
 from app.db.models.user import User
+from app.db.session import get_db
 from app.services import auth_service
 
 

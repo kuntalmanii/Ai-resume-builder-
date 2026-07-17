@@ -14,7 +14,7 @@ from typing import Any
 
 from app.services.scoring.ats_checks import CheckResult
 from app.services.scoring.config import GRAMMAR_WEIGHTS
-from app.services.scoring.text_metrics import _get, collect_all_bullets, collect_all_text
+from app.services.scoring.text_metrics import collect_all_bullets, collect_all_text
 
 CATEGORY = "grammar"
 

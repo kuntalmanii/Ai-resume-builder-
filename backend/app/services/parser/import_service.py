@@ -1,23 +1,23 @@
 """Import service layer - orchestrates upload validation, text extraction, structured parsing, and profile imports."""
-import uuid
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any
+import uuid
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from fastapi import UploadFile
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.resume_import_session import ResumeImportSession
-from app.db.models.resume import Resume
-from app.db.models.resume_version import ResumeVersion
-from app.db.models.career_entry import CareerEntry
-from app.schemas.resume import ResumeDocument
 from app.core.exceptions import ResourceNotFoundError, ValidationError
-from app.services.parser.file_validator import validate_file_metadata, validate_file_content
-from app.services.parser.pdf_extractor import extract_pdf_text
+from app.db.models.career_entry import CareerEntry
+from app.db.models.resume import Resume
+from app.db.models.resume_import_session import ResumeImportSession
+from app.db.models.resume_version import ResumeVersion
+from app.schemas.resume import ResumeDocument
 from app.services.parser.docx_extractor import extract_docx_text
 from app.services.parser.extraction_quality import check_extraction_quality
+from app.services.parser.file_validator import validate_file_content, validate_file_metadata
+from app.services.parser.pdf_extractor import extract_pdf_text
 from app.services.parser.structured_parser import parse_resume_text
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: Uplo
         "text": raw_text  # Kept in short-lived import session for raw_text population in finalize
     }
 
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+    expires_at = datetime.now(UTC) + timedelta(hours=24)
 
     session = ResumeImportSession(
         user_id=user_id,
@@ -121,16 +121,16 @@ async def get_import_session(db: AsyncSession, user_id: uuid.UUID, import_id: uu
 
 
 async def update_import_document(
-    db: AsyncSession, user_id: uuid.UUID, import_id: uuid.UUID, updated_doc: Dict[str, Any]
+    db: AsyncSession, user_id: uuid.UUID, import_id: uuid.UUID, updated_doc: dict[str, Any]
 ) -> ResumeImportSession:
     """Update parsed document draft in import session after review and validation."""
     session = await get_import_session(db, user_id, import_id)
 
     if session.status == "finalized":
         raise ValidationError("Cannot update a finalized import session", details="SESSION_ALREADY_FINALIZED")
-    
-    expires_at = session.expires_at.replace(tzinfo=timezone.utc) if session.expires_at.tzinfo is None else session.expires_at
-    if expires_at < datetime.now(timezone.utc):
+
+    expires_at = session.expires_at.replace(tzinfo=UTC) if session.expires_at.tzinfo is None else session.expires_at
+    if expires_at < datetime.now(UTC):
         session.status = "expired"
         db.add(session)
         await db.commit()
@@ -158,7 +158,7 @@ async def delete_import_session(db: AsyncSession, user_id: uuid.UUID, import_id:
 
 
 # Helper deduplication logic
-def _is_duplicate_edu(edu: Dict[str, Any], existing: List[CareerEntry]) -> bool:
+def _is_duplicate_edu(edu: dict[str, Any], existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type == "education":
             if (entry.organization.lower() == edu.get("institution", "").lower() and
@@ -169,7 +169,7 @@ def _is_duplicate_edu(edu: Dict[str, Any], existing: List[CareerEntry]) -> bool:
     return False
 
 
-def _is_duplicate_exp(exp: Dict[str, Any], existing: List[CareerEntry]) -> bool:
+def _is_duplicate_exp(exp: dict[str, Any], existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type in ["work_experience", "internship"]:
             if (entry.organization.lower() == exp.get("company", "").lower() and
@@ -180,7 +180,7 @@ def _is_duplicate_exp(exp: Dict[str, Any], existing: List[CareerEntry]) -> bool:
     return False
 
 
-def _is_duplicate_proj(proj: Dict[str, Any], existing: List[CareerEntry]) -> bool:
+def _is_duplicate_proj(proj: dict[str, Any], existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type == "project":
             if entry.title.lower() == proj.get("name", "").lower():
@@ -191,7 +191,7 @@ def _is_duplicate_proj(proj: Dict[str, Any], existing: List[CareerEntry]) -> boo
     return False
 
 
-def _is_duplicate_cert(cert: Dict[str, Any], existing: List[CareerEntry]) -> bool:
+def _is_duplicate_cert(cert: dict[str, Any], existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type == "certification":
             ext_cred = entry.data.get("credential_id") or ""
@@ -203,7 +203,7 @@ def _is_duplicate_cert(cert: Dict[str, Any], existing: List[CareerEntry]) -> boo
     return False
 
 
-def _is_duplicate_skill(skill_name: str, existing: List[CareerEntry]) -> bool:
+def _is_duplicate_skill(skill_name: str, existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type in ["technical_skill", "soft_skill"]:
             if entry.title.lower() == skill_name.lower():
@@ -218,16 +218,16 @@ async def finalize_import(
     title: str,
     template_id: str,
     import_to_career_profile: bool,
-    selected_entries: List[str] = None
+    selected_entries: list[str] = None
 ) -> Resume:
     """Finalize import: create Resume, ResumeVersion, and optionally import to Career Profile with deduplication."""
     session = await get_import_session(db, user_id, import_id)
 
     if session.status == "finalized":
         raise ValidationError("This import has already been finalized", details="ALREADY_FINALIZED")
-    
-    expires_at = session.expires_at.replace(tzinfo=timezone.utc) if session.expires_at.tzinfo is None else session.expires_at
-    if expires_at < datetime.now(timezone.utc):
+
+    expires_at = session.expires_at.replace(tzinfo=UTC) if session.expires_at.tzinfo is None else session.expires_at
+    if expires_at < datetime.now(UTC):
         session.status = "expired"
         db.add(session)
         await db.commit()
@@ -457,7 +457,7 @@ async def finalize_import(
 
 async def cleanup_expired_sessions(db: AsyncSession) -> int:
     """Delete expired import sessions from DB."""
-    stmt = delete(ResumeImportSession).where(ResumeImportSession.expires_at < datetime.now(timezone.utc))
+    stmt = delete(ResumeImportSession).where(ResumeImportSession.expires_at < datetime.now(UTC))
     res = await db.execute(stmt)
     await db.commit()
     return res.rowcount

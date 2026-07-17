@@ -1,5 +1,6 @@
 """Integration tests for Career Entries CRUD, confirmation, and immutability rules."""
 import uuid
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import update

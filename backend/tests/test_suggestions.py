@@ -1,17 +1,16 @@
 """Integration tests for AI Resume suggestions and evidence lifecycle."""
 import uuid
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.models.resume import Resume
-from app.db.models.resume_version import ResumeVersion
 from app.db.models.ai_suggestion import AISuggestion
-from app.db.models.evidence_source import EvidenceSource
-from app.services.ai.suggestion_service import LLMSuggestionOutput, LLMClaim, LLMClaimValidationOnly
+from app.db.models.resume_version import ResumeVersion
+from app.services.ai.suggestion_service import LLMClaim, LLMClaimValidationOnly, LLMSuggestionOutput
 
 pytestmark = pytest.mark.asyncio
 
@@ -78,7 +77,7 @@ async def test_generate_single_suggestion(client: AsyncClient, db_session: Async
     """POST /resumes/{id}/suggestions generates grounded suggestion and evidence sources."""
     token = await _register_and_login(client, "gen@example.com", "Gen Tester")
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     resume_data = await _create_test_resume(client, headers)
     resume_id = resume_data["id"]
 
@@ -139,7 +138,7 @@ async def test_edit_suggestion_revalidates_claims(client: AsyncClient) -> None:
     """PUT /resumes/{id}/suggestions/{sugg_id} edits the text and re-runs claim verification."""
     token = await _register_and_login(client, "edit@example.com", "Edit Tester")
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     resume_data = await _create_test_resume(client, headers)
     resume_id = resume_data["id"]
 
@@ -207,7 +206,7 @@ async def test_answer_clarifying_question(client: AsyncClient, db_session: Async
     """POST /resumes/{id}/suggestions/{sugg_id}/answer saves confirmed evidence and regenerates suggestion."""
     token = await _register_and_login(client, "answer@example.com", "Answer Tester")
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     resume_data = await _create_test_resume(client, headers)
     resume_id = resume_data["id"]
 
@@ -272,7 +271,7 @@ async def test_answer_clarifying_question(client: AsyncClient, db_session: Async
         assert data["suggested_text"] == "Built web APIs, improving throughput by 50%."
         assert data["risk_level"] == "low"
         assert data["status"] == "pending"
-        
+
         # Verify the answer is in evidence sources
         has_answer_ev = any("50%" in (ev["excerpt"] or ev["label"] or "") for ev in data["evidence_sources"])
         assert has_answer_ev is True
@@ -282,7 +281,7 @@ async def test_apply_suggestion_occ_and_versioning(client: AsyncClient, db_sessi
     """Applying a suggestion increments version, snapshots content, and enforces OCC."""
     token = await _register_and_login(client, "apply@example.com", "Apply Tester")
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     resume_data = await _create_test_resume(client, headers)
     resume_id = resume_data["id"]
 

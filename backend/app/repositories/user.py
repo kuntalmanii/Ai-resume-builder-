@@ -1,9 +1,10 @@
 """User Repository class."""
-from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.models.user import User
 from app.repositories.base import BaseRepository
+
 
 class UserRepository(BaseRepository[User]):
     def __init__(self):

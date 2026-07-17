@@ -1,30 +1,32 @@
 """Gap analysis module to classify missing skills, keywords, and experience alignments."""
-from typing import List, Dict, Any, Tuple
+from typing import Any
+
 from app.schemas.job_match_requirements import JobDescriptionRequirement
 
+
 def analyze_gaps(
-    requirements: List[JobDescriptionRequirement],
-    matches: List[Dict[str, Any]],
-    profile_opportunities: List[Dict[str, Any]]
-) -> Tuple[List[Dict[str, Any]], List[str]]:
+    requirements: list[JobDescriptionRequirement],
+    matches: list[dict[str, Any]],
+    profile_opportunities: list[dict[str, Any]]
+) -> tuple[list[dict[str, Any]], list[str]]:
     """
     Classify gaps (missing requirements) and generate recommendations.
     Enforces the GENUINE GAP RULE.
     """
-    gaps: List[Dict[str, Any]] = []
-    recommendations: List[str] = []
-    
+    gaps: list[dict[str, Any]] = []
+    recommendations: list[str] = []
+
     matched_req_ids = {m["requirement_id"] for m in matches}
     profile_req_ids = {o["requirement_id"] for o in profile_opportunities}
-    
+
     # Map opportunities by req_id for lookup
     opportunity_map = {o["requirement_id"]: o for o in profile_opportunities}
     # Map matches by req_id for lookup
     matches_map = {m["requirement_id"]: m for m in matches}
-    
+
     for req in requirements:
         req_id = req.id
-        
+
         # Scenario 1: Requirement is matched in the resume
         if req_id in matched_req_ids:
             match = matches_map[req_id]
@@ -39,7 +41,7 @@ def analyze_gaps(
                 })
                 recommendations.append(f"Your resume demonstrates {req.requirement_type.replace('_', ' ')} semantically but doesn't use the phrase '{req.text}'.")
             continue
-            
+
         # Scenario 2: Requirement is missing from resume but found in Career Profile
         if req_id in profile_req_ids:
             opp = opportunity_map[req_id]
@@ -52,7 +54,7 @@ def analyze_gaps(
             })
             recommendations.append(f"Highlight your {opp['title']} project/role because this JD explicitly requires '{req.text}'.")
             continue
-            
+
         # Scenario 3: Genuine Gap (not in resume, not in career profile)
         if req.requirement_type == "required_skill":
             gaps.append({
@@ -63,7 +65,7 @@ def analyze_gaps(
                 "recommendation": f"'{req.text}' is a required skill. Do not add this skill unless you genuinely have experience with it."
             })
             recommendations.append(f"'{req.text}' is a genuine gap based on your current resume and Career Profile. Do not add it unless you have real experience.")
-            
+
         elif req.requirement_type == "preferred_skill":
             gaps.append({
                 "requirement_id": req_id,
@@ -73,7 +75,7 @@ def analyze_gaps(
                 "recommendation": f"Consider learning '{req.text}' or listing it if you have passive/project experience."
             })
             recommendations.append(f"Consider highlighting '{req.text}' if you have passive exposure to this preferred skill.")
-            
+
         elif req.requirement_type == "education":
             gaps.append({
                 "requirement_id": req_id,
@@ -82,7 +84,7 @@ def analyze_gaps(
                 "details": f"Education requirement '{req.text}' is missing.",
                 "recommendation": f"This job description requests: '{req.text}'."
             })
-            
+
         elif req.requirement_type == "certification":
             gaps.append({
                 "requirement_id": req_id,
@@ -91,7 +93,7 @@ def analyze_gaps(
                 "details": f"Certification requirement '{req.text}' is missing.",
                 "recommendation": f"Consider listing '{req.text}' if you are certified."
             })
-            
+
         else:
             # Other general gaps
             gaps.append({
@@ -101,5 +103,5 @@ def analyze_gaps(
                 "details": f"Requirement '{req.text}' not found.",
                 "recommendation": f"Review requirement details: '{req.text}'."
             })
-            
+
     return gaps, recommendations

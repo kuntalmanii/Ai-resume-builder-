@@ -7,16 +7,14 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from datetime import datetime, date
+from datetime import date
 from typing import Any
 
 from app.services.scoring.config import (
     ACTION_VERBS,
-    WEAK_PHRASES,
     METRIC_PATTERNS,
-    DATE_FORMAT_PATTERNS,
+    WEAK_PHRASES,
 )
-
 
 # ─── Safe Field Accessors ─────────────────────────────────────────────────────
 

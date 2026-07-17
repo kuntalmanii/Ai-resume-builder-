@@ -5,7 +5,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-
 # ─── Sub-schemas ──────────────────────────────────────────────────────────────
 
 class EducationEntry(BaseModel):
@@ -81,7 +80,7 @@ class LanguageEntry(BaseModel):
 class CareerProfileResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    
+
     phone: str | None = None
     location: str | None = None
     professional_title: str | None = None

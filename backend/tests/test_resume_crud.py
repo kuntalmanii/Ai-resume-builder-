@@ -2,10 +2,8 @@
 
 All tests run in-memory against SQLite via transactional conftest fixtures.
 """
-import uuid
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
 

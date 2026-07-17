@@ -1,7 +1,9 @@
 """DOCX text extraction using python-docx."""
 import io
 import re
+
 import docx
+
 from app.core.exceptions import ValidationError
 
 

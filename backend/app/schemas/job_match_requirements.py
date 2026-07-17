@@ -1,6 +1,7 @@
 """Pydantic schemas for Job Description requirements and fragments."""
 from pydantic import BaseModel, Field
 
+
 class JobDescriptionRequirement(BaseModel):
     id: str = Field(..., description="Unique ID for this requirement fragment")
     text: str = Field(..., description="Original raw text of the requirement")

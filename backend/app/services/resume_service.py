@@ -1,17 +1,15 @@
 """Resume Service layer — handles core CRUD, ownership checks, version snapshotting, and concurrency control."""
-import uuid
 import copy
-from typing import Any
-from datetime import datetime, timezone
+import uuid
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import ConflictError, ResourceNotFoundError
 from app.db.models.resume import Resume
 from app.db.models.resume_version import ResumeVersion
-from app.schemas.resume import ResumeCreate, ResumeUpdate, ResumeDocument
-from app.core.exceptions import ResourceNotFoundError, ConflictError
+from app.schemas.resume import ResumeCreate, ResumeDocument, ResumeUpdate
 
 
 async def get_resume_by_id_raw(db: AsyncSession, resume_id: uuid.UUID) -> Resume | None:
@@ -196,16 +194,16 @@ async def update_resume(
                 existing_snapshot.content_snapshot = resume.content
                 existing_snapshot.change_reason = change_reason or existing_snapshot.change_reason
                 db.add(existing_snapshot)
-            
+
             # Increment active version number
             resume.version += 1
-            
+
             # Dump document back to dictionary format for JSONB column
             if isinstance(update_data["content"], ResumeDocument):
                 resume.content = update_data["content"].model_dump()
             else:
                 resume.content = update_data["content"]
-        
+
         del update_data["content"]
 
     # Update remaining metadata fields
@@ -287,7 +285,7 @@ async def duplicate_resume(db: AsyncSession, resume_id: uuid.UUID, user_id: uuid
 async def set_primary_resume(db: AsyncSession, resume_id: uuid.UUID, user_id: uuid.UUID) -> Resume:
     """Force sets a single resume as primary and updates any prior primary flags."""
     resume = await get_resume(db, resume_id, user_id)
-    
+
     # Unset previous primary resume
     await db.execute(
         update(Resume)

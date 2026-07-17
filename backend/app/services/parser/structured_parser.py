@@ -1,24 +1,23 @@
 """Structured resume parsing service containing deterministic and AI-assisted layers."""
-import re
 import logging
-from typing import Tuple, Dict, Any, List
+import re
 
-from app.schemas.resume import (
-    ResumeDocument,
-    PersonalInformation,
-    EducationEntry,
-    ExperienceEntry,
-    ProjectEntry,
-    SkillGroup,
-    CertificationEntry,
-    AchievementEntry,
-    PositionOfResponsibilityEntry,
-    LanguageEntry,
-    InterestEntry,
-)
-from app.services.parser.section_detector import segment_text_by_sections
 from app.ai.factory import get_ai_provider
 from app.core.config import get_settings
+from app.schemas.resume import (
+    AchievementEntry,
+    CertificationEntry,
+    EducationEntry,
+    ExperienceEntry,
+    InterestEntry,
+    LanguageEntry,
+    PersonalInformation,
+    PositionOfResponsibilityEntry,
+    ProjectEntry,
+    ResumeDocument,
+    SkillGroup,
+)
+from app.services.parser.section_detector import segment_text_by_sections
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ DATE_RANGE_REGEX = re.compile(
 BULLET_PREFIXES = ('•', '-', '*', 'o', '▪', '◦', '■')
 
 
-def extract_contact_info(text: str) -> Dict[str, str]:
+def extract_contact_info(text: str) -> dict[str, str]:
     """Deterministically extract contact details from text using Regex."""
     emails = EMAIL_REGEX.findall(text)
     phones = PHONE_REGEX.findall(text)
@@ -64,14 +63,14 @@ def extract_contact_info(text: str) -> Dict[str, str]:
     }
 
 
-def parse_deterministic_fallback(text: str, segments: Dict[str, List[str]]) -> Tuple[ResumeDocument, List[str], Dict[str, float]]:
+def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> tuple[ResumeDocument, list[str], dict[str, float]]:
     """Deterministic parser layer (Layer 1) to build a partial ResumeDocument when AI is unavailable."""
     warnings = ["AI parser was unavailable or failed. Downgraded to rule-based fallback parser."]
-    
+
     # 1. Personal Info
     contact = extract_contact_info(text)
     personal_lines = segments.get("personal_information", [])
-    
+
     # Candidate name is usually the first non-empty line
     name = ""
     for line in personal_lines:
@@ -116,26 +115,26 @@ def parse_deterministic_fallback(text: str, segments: Dict[str, List[str]]) -> T
     education = []
     edu_lines = segments.get("education", [])
     current_edu = None
-    
+
     for line in edu_lines:
         line_clean = line.strip()
         # Look for institution keywords
         inst_match = any(kw in line_clean.lower() for kw in ["university", "college", "school", "institute", "academy"])
         # Look for degree keywords
         deg_match = any(kw in line_clean.lower() for kw in ["bachelor", "master", "phd", "b.s", "m.s", "b.tech", "m.tech", "degree", "diploma", "associate"])
-        
+
         date_range = DATE_RANGE_REGEX.search(line_clean)
-        
+
         if inst_match or deg_match or date_range:
             if current_edu:
                 education.append(current_edu)
-            
+
             inst = line_clean if inst_match else ""
             deg = line_clean if deg_match else "Degree"
             start_d, end_d = "", ""
             if date_range:
                 start_d, end_d = date_range.groups()
-                
+
             current_edu = EducationEntry(
                 institution=inst or "Unknown Institution",
                 degree=deg,
@@ -167,7 +166,7 @@ def parse_deterministic_fallback(text: str, segments: Dict[str, List[str]]) -> T
         if not is_bullet and (date_range or any(kw in line_clean.lower() for kw in ["engineer", "developer", "manager", "lead", "analyst", "intern", "associate", "consultant"])):
             if current_job:
                 experience.append(current_job)
-                
+
             start_d, end_d = "", ""
             if date_range:
                 start_d, end_d = date_range.groups()
@@ -208,7 +207,7 @@ def parse_deterministic_fallback(text: str, segments: Dict[str, List[str]]) -> T
         # Split by comma or semicolon
         items = [s.strip() for s in re.split(r'[,;]', line_clean) if s.strip()]
         all_skills.extend(items)
-        
+
     if all_skills:
         skills.append(SkillGroup(category="Skills", skills=all_skills, order=1))
 
@@ -320,14 +319,14 @@ def parse_deterministic_fallback(text: str, segments: Dict[str, List[str]]) -> T
     return doc, warnings, confidence
 
 
-async def parse_resume_text(text: str) -> Tuple[ResumeDocument, List[str], Dict[str, float]]:
+async def parse_resume_text(text: str) -> tuple[ResumeDocument, list[str], dict[str, float]]:
     """Parse text using two layers (AI first, fallback to deterministic regex/rules).
 
     Returns:
         Tuple[ResumeDocument, List[str], Dict[str, float]]: (document, warnings, confidence_scores)
     """
     segments = segment_text_by_sections(text)
-    
+
     # Check if AI provider settings are available
     settings = get_settings()
     has_ai = settings.AI_PROVIDER and settings.AI_API_KEY and settings.AI_API_KEY != "your-ai-api-key-here"
@@ -345,7 +344,7 @@ async def parse_resume_text(text: str) -> Tuple[ResumeDocument, List[str], Dict[
                 "4. Make sure to populate the `section_order` list with keys that represent sections present in the resume.\n\n"
                 f"Resume text to parse:\n{text}"
             )
-            
+
             result: ResumeDocument = await provider.complete(
                 prompt=prompt,
                 system_prompt=(
@@ -384,7 +383,7 @@ async def parse_resume_text(text: str) -> Tuple[ResumeDocument, List[str], Dict[
 
             return result, [], confidence
 
-        except Exception as e:
+        except Exception:
             logger.exception("AI parsing failed. Falling back to deterministic parser.")
             # Call deterministic fallback on failure
 

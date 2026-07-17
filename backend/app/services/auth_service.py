@@ -1,11 +1,16 @@
 """Auth service: registration, login, token refresh, account deletion."""
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    ConflictError,
+    ForbiddenError,
+    UnauthorizedError,
+)
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -16,11 +21,6 @@ from app.core.security import (
 from app.db.models.profile import CareerProfile
 from app.db.models.user import User
 from app.schemas.auth import RegisterRequest
-from app.core.exceptions import (
-    ConflictError,
-    UnauthorizedError,
-    ForbiddenError,
-)
 
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
@@ -60,7 +60,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
     # Timing attack protection: run dummy verification if email is not found
     DUMMY_HASH = "$2b$12$KbR9x8bK.1O/R5Qd5sW0Oe1nN/5Fh/c7Xw/m8j.J7hJ/nU7O7yF9m"
     user = await get_user_by_email(db, email)
-    
+
     if user:
         password_verified = verify_password(password, user.hashed_password)
     else:
@@ -73,7 +73,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
         raise ForbiddenError("Account is disabled")
 
     # Update last login time
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     db.add(user)
     await db.commit()
     await db.refresh(user)

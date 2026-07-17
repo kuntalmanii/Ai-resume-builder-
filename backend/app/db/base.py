@@ -1,9 +1,10 @@
 """SQLAlchemy declarative base and metadata registry."""
-from sqlalchemy.orm import DeclarativeBase, MappedColumn, mapped_column
-from sqlalchemy import func
+import uuid
 from datetime import datetime
 from typing import Annotated
-import uuid
+
+from sqlalchemy import func
+from sqlalchemy.orm import DeclarativeBase, mapped_column
 
 # Reusable annotated types
 intpk = Annotated[int, mapped_column(primary_key=True)]

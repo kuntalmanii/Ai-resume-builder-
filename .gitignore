@@ -36,3 +36,6 @@ temp/
 *.db
 *.db-journal
 *.sqlite
+
+# ─── Local SSL Certificates ───────────────────────────────────────────────────
+nginx/ssl/

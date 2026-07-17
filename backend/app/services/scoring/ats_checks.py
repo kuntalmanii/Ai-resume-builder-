@@ -9,16 +9,18 @@ original-file formatting issues we cannot actually inspect.
 """
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.services.scoring.config import ATS_WEIGHTS
 from app.services.scoring.text_metrics import (
-    _get, _get_list, collect_all_bullets, collect_all_dates,
-    detect_date_format_type, parse_date, special_char_ratio, word_count,
+    _get,
+    _get_list,
+    collect_all_dates,
     collect_all_text,
+    detect_date_format_type,
+    special_char_ratio,
+    word_count,
 )
-
 
 # ─── Check Result ─────────────────────────────────────────────────────────────
 
@@ -278,7 +280,7 @@ def check_content_density(resume: Any) -> CheckResult:
     code = "ATS_CONTENT_DENSITY"
     possible = ATS_WEIGHTS[code]
 
-    from app.services.scoring.config import MIN_TOTAL_WORDS, MAX_TOTAL_WORDS
+    from app.services.scoring.config import MAX_TOTAL_WORDS, MIN_TOTAL_WORDS
     full_text = collect_all_text(resume)
     total_words = word_count(full_text)
 

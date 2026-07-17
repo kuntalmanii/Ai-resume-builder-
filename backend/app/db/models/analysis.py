@@ -53,7 +53,7 @@ class ResumeAnalysis(Base):
     )
 
     overall_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    
+
     # Detailed category scores
     ats_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     content_strength_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

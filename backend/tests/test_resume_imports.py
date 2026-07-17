@@ -1,18 +1,18 @@
 """Integration tests for Resume Import Sessions, secure validation, parsing, and Career Profile imports."""
 import io
 import uuid
-import pytest
-from datetime import datetime, timezone, timedelta
-import fitz
+from datetime import UTC, datetime, timedelta
+
 import docx
+import fitz
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.resume import Resume
-from app.db.models.resume_version import ResumeVersion
 from app.db.models.career_entry import CareerEntry
 from app.db.models.resume_import_session import ResumeImportSession
+from app.db.models.resume_version import ResumeVersion
 
 pytestmark = pytest.mark.asyncio
 
@@ -84,16 +84,16 @@ async def test_valid_pdf_upload_accepted(client: AsyncClient) -> None:
     )
     pdf_bytes = _create_test_pdf_bytes(pdf_text)
     files = {"file": ("my_resume.pdf", pdf_bytes, "application/pdf")}
-    
+
     res = await client.post("/api/v1/resume-imports", headers=headers, files=files)
     assert res.status_code == 201
     data = res.json()
-    
+
     assert data["id"] is not None
     assert data["original_filename"] == "my_resume.pdf"
     assert data["document_type"] == "pdf"
     assert data["status"] == "review_ready"
-    
+
     # Verify parsing output
     doc = data["parsed_document"]
     assert doc["personal_information"]["full_name"] == "John Doe"
@@ -101,7 +101,7 @@ async def test_valid_pdf_upload_accepted(client: AsyncClient) -> None:
     assert doc["personal_information"]["phone"] == "+1-555-555-0199"
     assert doc["personal_information"]["github_url"] == "https://github.com/johndoe"
     assert doc["professional_summary"] == "Experienced software developer."
-    
+
     # Check sections detected
     assert "education" in data["detected_sections"]
     assert "experience" in data["detected_sections"]
@@ -174,7 +174,7 @@ async def test_oversized_file_rejected(client: AsyncClient) -> None:
     large_bytes = b"%PDF" + (b"0" * (11 * 1024 * 1024))
     files = {"file": ("large.pdf", large_bytes, "application/pdf")}
     res = await client.post("/api/v1/resume-imports", headers=headers, files=files)
-    
+
     assert res.status_code == 400
     err = res.json()["error"]
     assert err["code"] == "FILE_TOO_LARGE"
@@ -202,7 +202,7 @@ async def test_ownership_enforcement(client: AsyncClient, db_session: AsyncSessi
     """Verify that users can only get, update, and finalize their own sessions."""
     token1 = await _register_and_login(client, "alice@example.com", "Alice")
     token2 = await _register_and_login(client, "bob@example.com", "Bob")
-    
+
     headers1 = {"Authorization": f"Bearer {token1}"}
     headers2 = {"Authorization": f"Bearer {token2}"}
 
@@ -248,7 +248,7 @@ async def test_expired_session_rejected(client: AsyncClient, db_session: AsyncSe
     stmt = select(ResumeImportSession).where(ResumeImportSession.id == uuid.UUID(import_id))
     db_res = await db_session.execute(stmt)
     session = db_res.scalar_one()
-    session.expires_at = datetime.now(timezone.utc) - timedelta(minutes=10)
+    session.expires_at = datetime.now(UTC) - timedelta(minutes=10)
     db_session.add(session)
     await db_session.commit()
 
@@ -330,7 +330,7 @@ async def test_finalize_creates_resume_version_and_profile_entries(client: Async
     )
     assert res_final.status_code == 200
     resume_data = res_final.json()
-    
+
     assert resume_data["title"] == "My Awesome Resume"
     assert resume_data["template_id"] == "creative"
     assert resume_data["source_type"] == "uploaded_pdf"
@@ -352,7 +352,7 @@ async def test_finalize_creates_resume_version_and_profile_entries(client: Async
     c_stmt = select(CareerEntry).where(CareerEntry.source_type == "resume_import")
     c_res = await db_session.execute(c_stmt)
     entries = c_res.scalars().all()
-    
+
     # Harvard (edu) + Google (experience) + Go, C++, Java (3 skills) = 5 entries
     assert len(entries) == 5
     for entry in entries:

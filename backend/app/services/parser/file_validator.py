@@ -3,10 +3,11 @@ import io
 import os
 import re
 import zipfile
+
 from fastapi import UploadFile
 
 from app.core.config import get_settings
-from app.core.exceptions import ValidationError, FileTooLargeError
+from app.core.exceptions import FileTooLargeError, ValidationError
 
 settings = get_settings()
 

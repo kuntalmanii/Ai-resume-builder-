@@ -7,46 +7,45 @@ Tests cover:
 - engine orchestration (score normalization, invariants, caching)
 - recommendations builder
 """
-import pytest
-from datetime import date, datetime
+from datetime import date
 
-from app.services.scoring.config import (
-    ANALYSIS_VERSION, CATEGORY_MAX, RAW_MAX_SCORE,
-    ATS_WEIGHTS, CONTENT_WEIGHTS,
-)
-from app.services.scoring.text_metrics import (
-    collect_all_bullets, collect_all_text, collect_all_dates,
-    parse_date, starts_with_action_verb, contains_weak_phrase,
-    has_any_metric, find_duplicate_bullets, word_count, sentence_count,
-    specificity_score, detect_metrics,
-)
 from app.services.scoring.ats_checks import (
-    check_contact_info, check_section_naming, check_section_structure,
-    check_date_format, check_bullet_structure, check_special_chars,
-    check_content_density, check_template_safety, run_ats_checks,
-)
-from app.services.scoring.content_checks import (
-    check_action_verbs, check_specificity, check_measurable_impact,
-    check_conciseness, check_repetition, check_weak_phrases,
+    check_contact_info,
+    check_section_structure,
+    check_template_safety,
 )
 from app.services.scoring.completeness_checks import (
-    check_personal_info, check_foundation, check_skills, check_evidence,
-    check_summary, check_credibility_sections,
+    check_evidence,
+    check_personal_info,
+    check_skills,
 )
-from app.services.scoring.readability_checks import (
-    check_bullet_length, check_sentence_complexity, check_excessive_paragraphs,
+from app.services.scoring.config import (
+    ANALYSIS_VERSION,
+    ATS_WEIGHTS,
+    CATEGORY_MAX,
+    RAW_MAX_SCORE,
 )
+from app.services.scoring.content_checks import (
+    check_action_verbs,
+    check_measurable_impact,
+    check_weak_phrases,
+)
+from app.services.scoring.engine import _clamp, _normalize, run_resume_analysis
 from app.services.scoring.grammar_checks import (
-    check_repeated_punctuation, check_excessive_capitalization,
-    check_missing_spaces, check_duplicate_words, check_bullet_ending_consistency,
+    check_bullet_ending_consistency,
+    check_duplicate_words,
+    check_repeated_punctuation,
 )
-from app.services.scoring.evidence_checks import (
-    check_internal_consistency, check_timeline_consistency, check_profile_consistency,
-    check_numeric_awareness, check_verification_transparency,
+from app.services.scoring.text_metrics import (
+    collect_all_bullets,
+    contains_weak_phrase,
+    find_duplicate_bullets,
+    has_any_metric,
+    parse_date,
+    sentence_count,
+    starts_with_action_verb,
+    word_count,
 )
-from app.services.scoring.engine import run_resume_analysis, _normalize, _clamp
-from app.services.scoring.recommendations import build_recommendations
-
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 

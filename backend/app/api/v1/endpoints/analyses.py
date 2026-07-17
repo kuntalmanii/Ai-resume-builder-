@@ -12,32 +12,33 @@ All resume-scoped endpoints enforce user ownership (404 on unauthorized access).
 from __future__ import annotations
 
 import uuid
+from datetime import UTC
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Query, status
 
 from app.api.dependencies import CurrentUser, DBSession
 from app.core.exceptions import ResourceNotFoundError
 from app.db.models.analysis import ResumeAnalysis
 from app.db.models.analysis_check import AnalysisCheck
 from app.repositories.analysis import analysis_repository
+from app.schemas.analysis import (
+    AnalysisCheckResponse,
+    AnalysisHistoryResponse,
+    AnalysisSummaryResponse,
+    CategoryBreakdownSchema,
+    CategoryWeightSchema,
+    ResumeAnalysisResponse,
+    RunAnalysisResponse,
+    ScoringMethodologyResponse,
+    TopRecommendationSchema,
+)
 from app.services import resume_service
 from app.services.scoring import run_resume_analysis
 from app.services.scoring.config import (
     ANALYSIS_VERSION,
     CATEGORY_MAX,
     RAW_MAX_SCORE,
-)
-from app.schemas.analysis import (
-    AnalysisCheckResponse,
-    AnalysisHistoryResponse,
-    AnalysisSummaryResponse,
-    CategoryBreakdownSchema,
-    ResumeAnalysisResponse,
-    RunAnalysisResponse,
-    ScoringMethodologyResponse,
-    CategoryWeightSchema,
-    TopRecommendationSchema,
 )
 
 router = APIRouter(tags=["Analyses"])
@@ -245,8 +246,8 @@ async def run_analysis(
             check_rows.append(check_row)
 
         # Update resume.last_analyzed_at
-        from datetime import datetime, timezone
-        resume.last_analyzed_at = datetime.now(timezone.utc)
+        from datetime import datetime
+        resume.last_analyzed_at = datetime.now(UTC)
         db.add(resume)
 
         await db.flush()
@@ -288,7 +289,7 @@ async def get_latest_analysis(
 
     # Ownership check (defense-in-depth)
     if analysis.user_id != current_user.id:
-        raise ResourceNotFoundError(f"Analysis not found.")
+        raise ResourceNotFoundError("Analysis not found.")
 
     return _build_response(analysis, resume.version)
 

@@ -1,16 +1,17 @@
 """Profile router: CRUD operations for Career Profile metadata and structured entries."""
 import uuid
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query, status
+
+from fastapi import APIRouter, Query, status
 
 from app.api.dependencies import CurrentUser, DBSession
-from app.schemas.profile import CareerProfileResponse, CareerProfileUpdate
 from app.schemas.career_entry import (
     CareerEntryCreate,
-    CareerEntryUpdate,
     CareerEntryResponse,
+    CareerEntryUpdate,
 )
-from app.services import profile_service, career_entry_service
+from app.schemas.profile import CareerProfileResponse, CareerProfileUpdate
+from app.services import career_entry_service, profile_service
 
 router = APIRouter(prefix="/career-profile", tags=["Career Profile"])
 
@@ -39,7 +40,7 @@ async def update_profile_metadata(
     payload.interests = None
 
     await profile_service.update_profile(db, current_user.id, payload)
-    
+
     # Return refreshed combined dictionary
     profile_data = await profile_service.get_combined_profile(db, current_user.id)
     return CareerProfileResponse.model_validate(profile_data)

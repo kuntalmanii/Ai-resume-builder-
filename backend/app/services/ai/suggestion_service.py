@@ -1,28 +1,25 @@
 """AI Suggestion Service implementation."""
-import uuid
 import copy
-import asyncio
+import uuid
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.db.models.resume import Resume
-from app.db.models.resume_version import ResumeVersion
+from app.ai.gemini_provider import GeminiProvider
+from app.core.exceptions import ConflictError, ResourceNotFoundError
 from app.db.models.ai_suggestion import AISuggestion
-from app.db.models.evidence_source import EvidenceSource
-from app.db.models.profile import CareerProfile
 from app.db.models.career_entry import CareerEntry
+from app.db.models.evidence_source import EvidenceSource
 from app.db.models.job_description import JobDescription
 from app.db.models.job_match_result import JobMatchResult
-from app.db.models.analysis import ResumeAnalysis
-
-from app.schemas.ai_suggestion import SuggestionGenerateRequest, ClaimValidationResult
-from app.ai.gemini_provider import GeminiProvider
-from app.core.exceptions import ResourceNotFoundError, ConflictError
+from app.db.models.profile import CareerProfile
+from app.db.models.resume import Resume
+from app.db.models.resume_version import ResumeVersion
+from app.schemas.ai_suggestion import SuggestionGenerateRequest
 
 
 # Schemas for structured LLM completions
@@ -30,20 +27,20 @@ class LLMClaim(BaseModel):
     claim_text: str = Field(..., description="The factual claim made in the suggestion")
     claim_type: str = Field(..., description="Type: metric, technology, scope, responsibility, role")
     support_status: str = Field(..., description="supported, partially_supported, unsupported, contradictory, user_confirmation_required")
-    supporting_sources: List[str] = Field(default_factory=list, description="List of source facts supporting this claim")
+    supporting_sources: list[str] = Field(default_factory=list, description="List of source facts supporting this claim")
     risk_level: str = Field(..., description="low, medium, high, blocked")
 
 class LLMSuggestionOutput(BaseModel):
     suggested_text: str = Field(..., description="The proposed text for the resume")
     rationale: str = Field(..., description="Why this suggestion improves the resume")
     risk_level: str = Field(..., description="Overall risk level: low, medium, high, blocked")
-    claims: List[LLMClaim] = Field(default_factory=list, description="List of claims extracted from the suggested text")
-    questions: List[str] = Field(default_factory=list, description="Clarifying questions if achievement metrics are missing")
+    claims: list[LLMClaim] = Field(default_factory=list, description="List of claims extracted from the suggested text")
+    questions: list[str] = Field(default_factory=list, description="Clarifying questions if achievement metrics are missing")
     expected_score_gain: int = Field(0, description="Estimated ATS score gain (0-10)")
 
 class LLMClaimValidationOnly(BaseModel):
     risk_level: str
-    claims: List[LLMClaim]
+    claims: list[LLMClaim]
 
 
 class AISuggestionService:
@@ -52,11 +49,11 @@ class AISuggestionService:
         """Helper to safely extract the original text from a ResumeDocument dict."""
         if section in ["professional_summary", "summary"]:
             return doc.get("professional_summary") or doc.get("summary") or ""
-        
+
         items = doc.get(section, [])
         if not isinstance(items, list):
             return ""
-        
+
         for item in items:
             if item.get("id") == entry_id or str(item.get("id")) == str(entry_id):
                 val = item.get(field)
@@ -71,13 +68,13 @@ class AISuggestionService:
     def _apply_text_to_doc(doc: dict, section: str, entry_id: str | None, field: str, index: int | None, new_text: str) -> dict:
         """Helper to safely return a modified copy of a ResumeDocument dict with the new text."""
         new_doc = copy.deepcopy(doc)
-        
+
         if section in ["professional_summary", "summary"]:
             new_doc["professional_summary"] = new_text
             if "summary" in new_doc:
                 new_doc["summary"] = new_text
             return new_doc
-            
+
         items = new_doc.get(section, [])
         for item in items:
             if item.get("id") == entry_id or str(item.get("id")) == str(entry_id):
@@ -99,7 +96,7 @@ class AISuggestionService:
         resume_id: uuid.UUID,
         req: SuggestionGenerateRequest,
         user_id: uuid.UUID,
-        answers: Optional[List[Dict[str, Any]]] = None
+        answers: list[dict[str, Any]] | None = None
     ) -> AISuggestion:
         """Generate a grounded AI resume suggestion."""
         # 1. Fetch Resume and verify ownership
@@ -120,7 +117,7 @@ class AISuggestionService:
         # 3. Retrieve Career Profile and Career Entries as Ground Truth Facts
         profile_stmt = select(CareerProfile).where(CareerProfile.user_id == user_id)
         profile = await db.scalar(profile_stmt)
-        
+
         entries_stmt = select(CareerEntry).where(CareerEntry.user_id == user_id)
         entries_res = await db.scalars(entries_stmt)
         entries = list(entries_res)
@@ -135,7 +132,7 @@ class AISuggestionService:
                 facts.append(f"Experience at {exp.get('company')} ({exp.get('position')}): {', '.join(exp.get('bullets', []))}")
             for proj in profile.projects:
                 facts.append(f"Project {proj.get('name')}: {', '.join(proj.get('bullets', []))}")
-        
+
         for ent in entries:
             facts.append(f"Career Entry ({ent.entry_type}): {ent.content.get('company') or ent.content.get('name')} - {ent.content.get('position') or ''}: {ent.content.get('description') or ''}")
 
@@ -265,11 +262,11 @@ class AISuggestionService:
         resume_id: uuid.UUID,
         mode: str,
         user_id: uuid.UUID,
-        job_description_id: Optional[uuid.UUID] = None,
-        analysis_id: Optional[uuid.UUID] = None,
-        match_result_id: Optional[uuid.UUID] = None,
+        job_description_id: uuid.UUID | None = None,
+        analysis_id: uuid.UUID | None = None,
+        match_result_id: uuid.UUID | None = None,
         max_suggestions: int = 5
-    ) -> List[AISuggestion]:
+    ) -> list[AISuggestion]:
         """Batch generate multiple suggestions based on targeted audit modes."""
         # 1. Fetch Resume
         resume = await db.get(Resume, resume_id)
@@ -290,7 +287,7 @@ class AISuggestionService:
                         req.get("name") if isinstance(req, dict) else str(req)
                         for req in mr.missing_requirements
                     ]
-            
+
             # If missing requirements found, create JD-targeted rephrase requests for summary or experience bullets
             # We construct requests to inject these keywords/skills
             keywords_chunk = ", ".join(missing_keywords[:5])
@@ -366,8 +363,8 @@ class AISuggestionService:
         db: AsyncSession,
         resume_id: uuid.UUID,
         user_id: uuid.UUID,
-        status: Optional[str] = None
-    ) -> List[AISuggestion]:
+        status: str | None = None
+    ) -> list[AISuggestion]:
         """Retrieve suggestions for a resume."""
         # Check ownership
         resume = await db.get(Resume, resume_id)
@@ -383,7 +380,7 @@ class AISuggestionService:
         if status:
             query = query.where(AISuggestion.status == status)
         query = query.order_by(AISuggestion.created_at.desc())
-        
+
         res = await db.scalars(query)
         return list(res)
 
@@ -444,7 +441,7 @@ class AISuggestionService:
         # Re-validate edited text claims using LLM
         profile_stmt = select(CareerProfile).where(CareerProfile.user_id == user_id)
         profile = await db.scalar(profile_stmt)
-        
+
         facts = []
         if profile:
             for exp in profile.experience:
@@ -487,7 +484,7 @@ class AISuggestionService:
     ) -> AISuggestion:
         """Provide an answer to an achievement clarifying question and regenerate the suggestion."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
-        
+
         # 1. Save the answer as a user_confirmed EvidenceSource
         question_text = ""
         clarifying_ev = None
@@ -496,7 +493,7 @@ class AISuggestionService:
                 question_text = ev.excerpt or ev.label
                 clarifying_ev = ev
                 break
-        
+
         if not question_text:
             question_text = "Missing metric clarification"
 
@@ -511,7 +508,7 @@ class AISuggestionService:
             excerpt=answer
         )
         db.add(answer_ev)
-        
+
         # Remove or resolve the clarifying question evidence
         if clarifying_ev:
             await db.delete(clarifying_ev)
@@ -521,7 +518,7 @@ class AISuggestionService:
         # 2. Retrieve Career Profile and Career Entries as Ground Truth Facts
         profile_stmt = select(CareerProfile).where(CareerProfile.user_id == user_id)
         profile = await db.scalar(profile_stmt)
-        
+
         entries_stmt = select(CareerEntry).where(CareerEntry.user_id == user_id)
         entries_res = await db.scalars(entries_stmt)
         entries = list(entries_res)
@@ -536,7 +533,7 @@ class AISuggestionService:
                 facts.append(f"Experience at {exp.get('company')} ({exp.get('position')}): {', '.join(exp.get('bullets', []))}")
             for proj in profile.projects:
                 facts.append(f"Project {proj.get('name')}: {', '.join(proj.get('bullets', []))}")
-        
+
         for ent in entries:
             facts.append(f"Career Entry ({ent.entry_type}): {ent.content.get('company') or ent.content.get('name')} - {ent.content.get('position') or ''}: {ent.content.get('description') or ''}")
 
@@ -643,7 +640,7 @@ class AISuggestionService:
     ) -> Resume:
         """Apply a suggestion to the active resume. Implements version control & OCC checks."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
-        
+
         if sugg.status in ["applied", "invalidated"]:
             raise ConflictError(f"Suggestion has already been {sugg.status}")
 
@@ -658,6 +655,96 @@ class AISuggestionService:
             raise ConflictError(
                 f"Version conflict: The resume has been modified (version {resume.version}) since this suggestion was generated (version {sugg.source_resume_version}).",
                 details="RESUME_VERSION_CONFLICT"
+            )
+
+        # Apply-time revalidation: verify newly introduced claims against Career Profile/Entries
+        from app.db.models.resume_claim import ResumeClaim
+        from app.services.evidence.claim_extractor import ClaimExtractorService
+        from app.services.evidence.credibility_engine import CredibilityEngineService
+
+        facts = await CredibilityEngineService._fetch_user_facts_list(db, user_id)
+        orig_text = sugg.original_text
+        sugg_text = sugg.suggested_text
+
+        mock_orig_content = {
+            sugg.target_section: [
+                {
+                    "id": sugg.target_entry_id,
+                    sugg.target_field: [orig_text] if sugg.target_index is not None else orig_text
+                }
+            ]
+        }
+        mock_sugg_content = {
+            sugg.target_section: [
+                {
+                    "id": sugg.target_entry_id,
+                    sugg.target_field: [sugg_text] if sugg.target_index is not None else sugg_text
+                }
+            ]
+        }
+
+        orig_claims = ClaimExtractorService.deterministic_extract_claims(mock_orig_content)
+        sugg_claims = ClaimExtractorService.deterministic_extract_claims(mock_sugg_content)
+
+        orig_keys = {(c["claim_type"], c["normalized_value"]) for c in orig_claims}
+        blocked_reasons = []
+        claim_validations = []
+
+        for sc in sugg_claims:
+            key = (sc["claim_type"], sc["normalized_value"])
+            # Evidence inheritance: if it was in the original text, skip blocking
+            if key in orig_keys:
+                claim_validations.append({
+                    "claim_text": sc["claim_text"],
+                    "claim_type": sc["claim_type"],
+                    "support_status": "supported",
+                    "reason": "inherited"
+                })
+                continue
+
+            # Check new claim against Career Profile facts
+            temp_claim = ResumeClaim(
+                resume_id=sugg.resume_id,
+                claim_text=sc["claim_text"],
+                claim_fingerprint="temp",
+                source_section=sugg.target_section,
+                source_entry_id=sugg.target_entry_id,
+                claim_type=sc["claim_type"],
+                normalized_value=sc["normalized_value"],
+                field_name=sugg.target_field,
+                original_text=sc["claim_text"]
+            )
+
+            status, contra_details, evidence_list = await CredibilityEngineService.verify_claim_deterministically(temp_claim, facts)
+
+            is_blocked = False
+            reason = ""
+            if status == "contradictory":
+                is_blocked = True
+                reason = f"Contradiction: {contra_details}"
+            elif status in ["unsupported", "insufficient_information"]:
+                if sc["claim_type"] in ["employer", "role", "degree", "certification", "project", "metric", "date"]:
+                    is_blocked = True
+                    reason = f"Unsupported new {sc['claim_type']} claim: '{sc['claim_text']}'"
+
+            claim_validations.append({
+                "claim_text": sc["claim_text"],
+                "claim_type": sc["claim_type"],
+                "support_status": status,
+                "reason": reason
+            })
+
+            if is_blocked:
+                blocked_reasons.append(reason)
+
+        if blocked_reasons:
+            sugg.risk_level = "blocked"
+            sugg.claim_validation = claim_validations
+            sugg.status = "rejected"
+            await db.commit()
+            raise ConflictError(
+                f"Suggestion blocked due to unverified claim(s): {', '.join(blocked_reasons)}",
+                details="SUGGESTION_BLOCKED"
             )
 
         # 1. Create a ResumeVersion snapshot of the current resume content

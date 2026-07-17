@@ -1,56 +1,56 @@
 """Schemas package."""
-from app.schemas.auth import (
-    RegisterRequest,
-    LoginRequest,
-    TokenResponse,
-    RefreshRequest,
-    MessageResponse,
-)
-from app.schemas.user import UserResponse, UserUpdate
-from app.schemas.profile import (
-    CareerProfileResponse,
-    CareerProfileUpdate,
-    ProfileSectionPatch,
-    EducationEntry,
-    ExperienceEntry,
-    ProjectEntry,
-    SkillsMap,
-    CertificationEntry,
-    AchievementEntry,
-    PositionEntry,
-    LanguageEntry,
-)
-from app.schemas.resume import (
-    ResumeCreate,
-    ResumeUpdate,
-    ResumeResponse,
-    ResumeVersionResponse,
-)
 from app.schemas.analysis import (
     AnalysisCheckResponse,
-    ResumeAnalysisResponse,
-    AnalysisSummaryResponse,
     AnalysisHistoryResponse,
+    AnalysisSummaryResponse,
+    ResumeAnalysisResponse,
+    RunAnalysisResponse,
     ScoringMethodologyResponse,
     TopRecommendationSchema,
-    RunAnalysisResponse,
+)
+from app.schemas.auth import (
+    LoginRequest,
+    MessageResponse,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
 )
 from app.schemas.job_description import (
     JobDescriptionCreate,
-    JobDescriptionUpdate,
     JobDescriptionResponse,
+    JobDescriptionUpdate,
 )
 from app.schemas.job_match import (
-    JobMatchResultResponse,
-    EvidenceSourceResponse,
     AISuggestionResponse,
-    JobMatchRunRequest,
+    EvidenceSourceResponse,
     JobMatchMethodologyResponse,
+    JobMatchResultResponse,
+    JobMatchRunRequest,
 )
 from app.schemas.job_match_requirements import (
     JobDescriptionRequirement,
     JobDescriptionRequirements,
 )
+from app.schemas.profile import (
+    AchievementEntry,
+    CareerProfileResponse,
+    CareerProfileUpdate,
+    CertificationEntry,
+    EducationEntry,
+    ExperienceEntry,
+    LanguageEntry,
+    PositionEntry,
+    ProfileSectionPatch,
+    ProjectEntry,
+    SkillsMap,
+)
+from app.schemas.resume import (
+    ResumeCreate,
+    ResumeResponse,
+    ResumeUpdate,
+    ResumeVersionResponse,
+)
+from app.schemas.user import UserResponse, UserUpdate
 
 __all__ = [
     "RegisterRequest",

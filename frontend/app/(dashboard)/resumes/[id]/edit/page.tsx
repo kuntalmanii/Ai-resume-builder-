@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/shared/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,6 +34,7 @@ import { resumesAPI } from "@/lib/api";
 import type { Resume } from "@/types";
 
 export default function ResumeEditPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [activeSection, setActiveSection] = useState<string>("personal");
   
@@ -152,7 +154,7 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
       <Header
         initialTitle={resume?.title || "Untitled Resume"}
         onSave={handleSave}
-        onExport={() => toast.success("Exporting PDF...")}
+        onExport={() => router.push(`/resumes/${params.id}/export`)}
         isSaving={isSaving}
       />
 

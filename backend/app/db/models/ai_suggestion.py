@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, Integer, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,7 +30,7 @@ class AISuggestion(Base):
     )
 
     source_resume_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    
+
     suggestion_type: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g., summary_generation, bullet_enhancement, ats_fix
     target_section: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g., summary, experience, education
     target_entry_id: Mapped[str | None] = mapped_column(String(100), nullable=True)  # References nested JSONB items
@@ -42,14 +42,14 @@ class AISuggestion(Base):
     edited_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
     risk_level: Mapped[str] = mapped_column(String(50), nullable=False, default="low")  # low, medium, high, blocked
-    
+
     # List of claim validation objects
     claim_validation: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
     expected_score_gain: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    
+
     provider_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
     model_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    
+
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")  # pending, accepted, edited, rejected, applied, expired, invalidated
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

@@ -1,149 +1,156 @@
-# CareerOS AI — AI-Powered Resume Builder & Analyzer
+# CareerOS AI — Ultimate Career Intelligence Platform
 
-CareerOS AI is a premium career intelligence platform designed to build, audit, and target resumes using state-of-the-art AI. The platform evaluates resume score indicators, identifies keyword gaps compared to job descriptions, and supports an honest "Evidence Mode" that links AI recommendations directly to career history or explicit user verification.
-
----
-
-## 🚀 Core Features
-1. **AI Resume Analysis**: Explains ATS compatibility scores across 7 distinct categories.
-2. **Job Description Matcher**: Scans target JDs and highlights skill gaps, missing keywords, and profile recommendations.
-3. **Evidence Mode**: Highlights AI inferences with complete sources (e.g. verified profile entries vs. AI inference) to prevent fabrications.
-4. **Smart Career Profile**: Stores details on education, experience, and skills in a unified repository to populate multiple targeted resumes.
+> **CareerOS AI** is a state-of-the-art, end-to-end career platform designed to help candidates land their dream roles. Moving beyond simple resume builders, it offers deep career analytics, automatic application tracking, tailored cover letters, AI-powered interview prep, interactive skill roadmaps, and recruiter tools.
 
 ---
 
-## 💻 Technology Stack
-- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, shadcn/ui components, Framer Motion, TanStack Query, React Hook Form, Zod, Lucide Icons.
-- **Backend**: Python, FastAPI, SQLAlchemy, Alembic migrations, Pydantic validation, PostgreSQL database.
-- **Infrastructure**: Docker Compose, pg_isready healthchecks.
+## 🚀 Key Feature Areas
+
+### 📄 Intelligent Resume Engine
+*   **ATS-Safe Templates:** Premium layouts designed to clear corporate applicant parsing systems.
+*   **Live Preview & PDF Export:** Seamlessly compile and preview resumes, with offline snapshot history.
+*   **Version History:** Dynamic tracking with Optimistic Concurrency Control (OCC) protecting multi-session edits.
+
+### 🔍 Deep Analysis & JD Matching
+*   **Explainable ATS scoring:** Clear diagnostics highlighting critical errors, grammar check-ins, and keyword densities.
+*   **Intelligent JD Matcher:** Paste a target job description and get precise matching analytics.
+*   **Grounded AI Suggestions:** Direct recommendations mapped to concrete, verifiable professional claims.
+
+### 🛡️ Grounded Credibility (Evidence Mode)
+*   **Claims Verification:** Extract and score professional claims for truthfulness, clarity, and impact.
+*   **Credibility Scoring:** An audit engine checking evidence sources, detecting hyperbole, and rating resume trust.
+*   **Evidence Audits:** Seamless mapping of resume statements to verifiable links or internal documents.
+
+### 💼 Career Intelligence Suite (Phase 15/16 additions)
+*   **Application Kanban Board:** Track recruiting pipelines with multi-stage drag-and-drop lists.
+*   **Cover Letter Generator:** Generate personalized, context-aware cover letters for specific job applications.
+*   **LinkedIn Profile Optimizer:** Scan and improve your LinkedIn presence with structured suggestions.
+*   **Portfolio Builder:** Auto-generate gorgeous personal portfolio pages directly from resume snapshots.
+*   **Interactive Q&A Prep:** Practice AI-simulated interview questions with instant grading and audio/text feedback.
+*   **Milestone Roadmaps:** Step-by-step career path projections with target skill checklists.
+*   **Recruiter Portal:** Dedicated workspace allowing recruiters to search, review, and filter top candidates.
 
 ---
 
-## 🏛️ Architecture Overview
-CareerOS AI is organized as a monorepo containing completely isolated frontend and backend folders. Communication is decoupled and runs exclusively via HTTP REST APIs.
+## 🏛️ System Architecture
 
 ```mermaid
 graph TD
-    A[Next.js Client App] <-->|REST API / JSON| B[FastAPI Gateway]
-    B <-->|Async Queries| C[(PostgreSQL Database)]
+    User([User Browser]) -->|HTTPS / WSS| Nginx[Nginx Reverse Proxy]
+    Nginx -->|Proxy Port 3000| Frontend[Next.js App Router]
+    Nginx -->|Proxy Port 8000| Backend[FastAPI Server]
+    
+    subgraph Backend Services
+        Backend -->|SQLAlchemy Async| DB[(PostgreSQL 16)]
+        Backend -->|Cache / Rate Limit| Redis[(Redis 7)]
+        Backend -->|Async Jobs| Worker[RQ Workers]
+        Backend -->|Read/Write| Storage[Local/S3 Storage]
+        Backend -->|AI Prompts| LLM[Gemini / OpenAI API]
+    end
+    
+    Worker --> Redis
+    Worker --> Storage
 ```
+
+### Technology Matrix
+
+| Layer | Technologies | Purpose |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js 16 (App Router), React, TailwindCSS v4, shadcn/ui, Lucide Icons | Premium, responsive Web Interface |
+| **Backend** | FastAPI, Pydantic v2, Uvicorn, Python 3.11+ | High-performance async REST API |
+| **Database** | PostgreSQL 16 (production), SQLite (development), SQLAlchemy ORM, Alembic | Data persistency, schema migrations |
+| **Caching & Jobs** | Redis 7, Redis Queue (RQ) | Rate limiting, async PDF compiles, and task queues |
+| **Storage** | Local filesystem / AWS S3 / Google Cloud Storage | Compiled resume snapshots and exports |
 
 ---
 
-## 📁 Folder Structure
-```
-ai-resume-builder/
-├── frontend/             # Next.js Application
-│   ├── app/              # App Router Pages & Layouts
-│   ├── components/       # Layout, Shared & UI components
-│   ├── lib/              # API clients & validations
-│   ├── providers/        # Context Providers
-│   └── types/            # TypeScript type contracts
-├── backend/              # FastAPI Application
-│   ├── app/
-│   │   ├── api/          # Endpoints & Dependencies
-│   │   ├── core/         # Core config & Security
-│   │   ├── db/           # Session management & ORM Models
-│   │   ├── schemas/      # Pydantic schemas
-│   │   └── services/     # AI matching, scoring & parsing logic
-│   ├── alembic/          # DB Migration scripts
-│   └── tests/            # Integration Pytest files
-├── docker-compose.yml    # Postgres 16 docker config
-└── README.md
-```
+## 🛠️ Quick Start
 
----
+### 1. Clone & Set Up the Workspace
 
-## ⚙️ Setup & Prerequisites
-Ensure you have the following installed locally:
-- **Node.js**: v20+
-- **Python**: v3.10+
-- **Docker & Docker Compose**
-
-### 1. Environment Setup
-
-#### Backend configuration
-Create `backend/.env` based on `backend/.env.example`:
 ```bash
-cp backend/.env.example backend/.env
+# Clone the repository
+git clone https://github.com/your-username/ai-resume-builder.git
+cd ai-resume-builder
 ```
-Fill out required values (e.g. `DATABASE_URL`, `SECRET_KEY`, `AI_API_KEY`).
 
-#### Frontend configuration
-Create `frontend/.env.local` based on `frontend/.env.example`:
+### 2. Run with Docker (Recommended)
+
+To start the entire environment (PostgreSQL, Redis, Backend, Frontend, Nginx) with a single command:
+
 ```bash
-cp frontend/.env.example frontend/.env.local
+# Build and run the stack
+docker compose up --build
 ```
+*   **Frontend UI:** [http://localhost:3000](http://localhost:3000)
+*   **Backend Server:** [http://localhost:8000](http://localhost:8000)
+*   **Interactive Swagger Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### 2. Database Launch (Docker Compose)
-Start the PostgreSQL container:
+### 3. Manual Development Setup
+
+#### Backend:
 ```bash
-docker compose up -d postgres
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Set DATABASE_URL=sqlite+aiosqlite:///./careeros.db for local dev
+
+# Run migrations
+alembic upgrade head
+
+# Seed candidate & recruiter mock data (Demo Mode)
+python scripts/seed_demo.py
+
+# Start Server
+uvicorn app.main:app --reload --port 8000
 ```
-This runs PostgreSQL 16 on port `5432` with username/password `postgres`/`postgres` and database name `careeros`.
+
+#### Frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
-## 🚀 Running Locally
+## 📊 Demo User Credentials
 
-### Backend Development
-1. Navigate to backend:
-   ```bash
-   cd backend
-   ```
-2. Create and activate virtual environment:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Start FastAPI server:
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   ```
-   Server runs at [http://localhost:8000](http://localhost:8000). Interactive Swagger documentation is at `/docs`.
+The database comes pre-seeded with candidate and recruiter workspaces:
 
-### Frontend Development
-1. Navigate to frontend:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Launch Next.js dev server:
-   ```bash
-   npm run dev
-   ```
-   Client app runs at [http://localhost:3000](http://localhost:3000).
+| Role | Username / Email | Password | Details |
+| :--- | :--- | :--- | :--- |
+| **Candidate** | `demo@careeros.ai` | `Demo1234!` | Preloaded with 3 resume versions, tracking board, cover letters, and roadmaps. |
+| **Recruiter** | `recruiter@careeros.ai` | `Recruiter1234!` | Preloaded with candidate lists, resume search indices, and screening pipelines. |
 
 ---
 
-## 🧪 Testing and Validation
+## 🧪 Testing
 
-- **Run Backend Tests**:
-  ```bash
-  pytest
-  ```
-- **Run Frontend Linters & Typecheck**:
-  ```bash
-  npm run lint
-  npm run build
-  ```
+```bash
+cd backend
+source .venv/bin/activate
 
----
+# Run the complete test suite
+pytest
 
-## 🔒 Security Notes
-- JWT authentication is used. Session tokens are short-lived.
-- Database access is fully parameterized using SQLAlchemy ORM to prevent SQL Injection.
-- Access secrets and API keys must never be committed to git or exposed to the client.
+# View test coverage
+pytest --cov=app --cov-report=html
+```
 
 ---
 
-## 📈 Current Implementation Status
-- **Phase 1 & 2**: Core UX logic, dark landing page, time-aware greeting, resume document grid layout, interactive profile tags, and JD matcher forms.
-- **Phase 3**: Clean monorepo foundation, standardized API clients, mobile drawer sheet layout, and FastAPI health checkpoints.
+## 🔒 Production Readiness & Hardening
+
+*   **Security Header Protection:** Configured HSTS, Content Security Policy (CSP), X-Frame-Options, and X-Content-Type-Options.
+*   **Rate Limiting:** Redis-backed rate limiting protects sensitive endpoints (login, register, AI suggestions).
+*   **Database Constraints:** Optimistic Concurrency Control (OCC) handles parallel resume edits gracefully.
+*   **Zero Leakage:** Global exception handler blocks stack traces or SQLAlchemy statements from leaking in API responses.
+
+---
+
+*CareerOS AI — Production Hardening & Launch Readiness 2026*

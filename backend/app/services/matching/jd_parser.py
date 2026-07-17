@@ -1,12 +1,11 @@
 """Job Description parser and requirement extraction service."""
-import re
-import uuid
 import logging
-from typing import Dict, Any, List, Tuple
-from app.schemas.job_match_requirements import JobDescriptionRequirements, JobDescriptionRequirement
-from app.services.matching.skill_taxonomy import TAXONOMY, match_skill_in_text
+import re
+
 from app.ai.factory import get_ai_provider
 from app.core.config import get_settings
+from app.schemas.job_match_requirements import JobDescriptionRequirement, JobDescriptionRequirements
+from app.services.matching.skill_taxonomy import TAXONOMY, match_skill_in_text
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ CERT_KEYWORDS = ["certified", "certification", "pmp", "scrum", "aws", "gcp", "ci
 # Preferred indicator terms
 PREFERRED_INDICATORS = ["preferred", "nice to have", "plus", "bonus", "desired", "option", "advantage", "ideal"]
 
-def split_sentences(text: str) -> List[str]:
+def split_sentences(text: str) -> list[str]:
     """Split text into raw sentences for context analysis."""
     # Split by common sentence endings
     raw_sentences = re.split(r'[.\n;!?]', text)
@@ -33,18 +32,18 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
     Guarantees a valid result even if Gemini is completely unavailable.
     """
     sentences = split_sentences(text)
-    fragments: List[JobDescriptionRequirement] = []
-    
-    req_skills: List[str] = []
-    pref_skills: List[str] = []
-    responsibilities: List[str] = []
+    fragments: list[JobDescriptionRequirement] = []
+
+    req_skills: list[str] = []
+    pref_skills: list[str] = []
+    responsibilities: list[str] = []
     req_exp: str | None = None
     pref_exp: str | None = None
-    edu_reqs: List[str] = []
-    cert_reqs: List[str] = []
-    tools_techs: List[str] = []
-    soft_skills: List[str] = []
-    
+    edu_reqs: list[str] = []
+    cert_reqs: list[str] = []
+    tools_techs: list[str] = []
+    soft_skills: list[str] = []
+
     # 1. Skill taxonomy matching
     for canonical in TAXONOMY.keys():
         # Scan sentences to find occurrence and context
@@ -52,21 +51,21 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
         for s in sentences:
             if match_skill_in_text(canonical, s):
                 matched_sentences.append(s)
-        
+
         if matched_sentences:
             excerpt = matched_sentences[0]
             # Heuristic: is it preferred or required?
             is_pref = any(ind in excerpt.lower() for ind in PREFERRED_INDICATORS)
             importance = "preferred" if is_pref else "required"
             req_type = "preferred_skill" if is_pref else "required_skill"
-            
+
             if is_pref:
                 if canonical not in pref_skills:
                     pref_skills.append(canonical)
             else:
                 if canonical not in req_skills:
                     req_skills.append(canonical)
-            
+
             fragments.append(JobDescriptionRequirement(
                 id=f"det-skill-{len(fragments) + 1}",
                 text=canonical,
@@ -77,7 +76,7 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
                 confidence=0.85,
                 extraction_method="deterministic"
             ))
-            
+
             # Add to tools_and_technologies if it represents technology
             if canonical not in tools_techs:
                 tools_techs.append(canonical)
@@ -90,13 +89,13 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
             is_pref = any(ind in s.lower() for ind in PREFERRED_INDICATORS)
             importance = "preferred" if is_pref else "required"
             req_type = "preferred_experience" if is_pref else "required_experience"
-            
+
             desc = f"{years}+ years of experience required"
             if is_pref:
                 pref_exp = desc
             else:
                 req_exp = desc
-                
+
             fragments.append(JobDescriptionRequirement(
                 id=f"det-exp-{len(fragments) + 1}",
                 text=desc,
@@ -157,7 +156,7 @@ async def parse_jd_text(text: str) -> JobDescriptionRequirements:
     """
     settings = get_settings()
     has_ai = settings.AI_PROVIDER and settings.AI_API_KEY and settings.AI_API_KEY != "your-ai-api-key-here"
-    
+
     if has_ai:
         try:
             provider = get_ai_provider()
@@ -173,7 +172,7 @@ async def parse_jd_text(text: str) -> JobDescriptionRequirements:
                 "4. Assign importance (required, preferred, optional) based on explicit wording.\n\n"
                 f"Job Description text to analyze:\n{text}"
             )
-            
+
             result: JobDescriptionRequirements = await provider.complete(
                 prompt=prompt,
                 system_prompt=(
@@ -182,13 +181,13 @@ async def parse_jd_text(text: str) -> JobDescriptionRequirements:
                 ),
                 response_schema=JobDescriptionRequirements
             )
-            
+
             # Post-process: set extraction method to hybrid/llm
             for frag in result.raw_requirement_fragments:
                 frag.extraction_method = "llm_structured"
-                
+
             return result
-        except Exception as e:
+        except Exception:
             logger.exception("AI Job Description parsing failed. Falling back to deterministic rules.")
 
     # Fallback to local rule-based extractor

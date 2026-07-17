@@ -1,12 +1,13 @@
 """Job Descriptions router: CRUD operations for user-owned JDs."""
 import uuid
+
 from fastapi import APIRouter, status
 
 from app.api.dependencies import CurrentUser, DBSession
 from app.schemas.job_description import (
     JobDescriptionCreate,
-    JobDescriptionUpdate,
     JobDescriptionResponse,
+    JobDescriptionUpdate,
 )
 from app.services import job_description_service
 

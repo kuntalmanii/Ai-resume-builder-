@@ -2,10 +2,8 @@
 
 All tests run against an in-memory SQLite database via the conftest fixtures.
 """
-import uuid
 
 import pytest
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
@@ -13,8 +11,8 @@ pytestmark = pytest.mark.asyncio
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 async def _create_user(db: AsyncSession, email: str = "test@example.com") -> "User":
-    from app.db.models.user import User
     from app.core.security import hash_password
+    from app.db.models.user import User
 
     user = User(
         email=email,
@@ -105,6 +103,7 @@ async def test_resume_created_with_defaults(db_session: AsyncSession) -> None:
 async def test_resume_version_unique_constraint(db_session: AsyncSession) -> None:
     """Two versions with the same (resume_id, version_number) should fail."""
     from sqlalchemy.exc import IntegrityError
+
     from app.db.models.resume import Resume
     from app.db.models.resume_version import ResumeVersion
 
@@ -171,9 +170,9 @@ async def test_resume_cascade_deletes_versions(db_session: AsyncSession) -> None
 # ─── AISuggestion & EvidenceSource ───────────────────────────────────────────
 async def test_ai_suggestion_and_evidence_source(db_session: AsyncSession) -> None:
     """AISuggestion can be created with EvidenceSource children."""
-    from app.db.models.resume import Resume
     from app.db.models.ai_suggestion import AISuggestion
     from app.db.models.evidence_source import EvidenceSource
+    from app.db.models.resume import Resume
 
     user = await _create_user(db_session, email="aisugg@example.com")
     resume = Resume(user_id=user.id, title="AI Test Resume")

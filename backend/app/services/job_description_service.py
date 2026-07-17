@@ -4,9 +4,9 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ResourceNotFoundError
 from app.db.models.job_description import JobDescription
 from app.schemas.job_description import JobDescriptionCreate, JobDescriptionUpdate
-from app.core.exceptions import ResourceNotFoundError, ForbiddenError
 
 
 async def get_job_description(

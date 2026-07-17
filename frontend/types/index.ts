@@ -9,6 +9,7 @@ export interface User {
   id: string;
   email: string;
   full_name: string;
+  role?: string;
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
@@ -277,6 +278,15 @@ export interface ClientEvidenceSource {
   support_kind?: string;
   evidence_strength?: string;
   verification_status?: string;
+  
+  // Backend direct fields
+  source_type?: string;
+  source_id?: string;
+  source_section?: string;
+  source_entry_id?: string;
+  source_field?: string;
+  excerpt?: string;
+  created_at?: string;
 }
 
 export interface ResumeClaim {
@@ -286,11 +296,40 @@ export interface ResumeClaim {
   claim_fingerprint: string;
   source_section: string;
   source_entry_id?: string;
+  claim_type: string;
+  normalized_value: string;
+  field_name?: string;
+  bullet_index?: number;
+  original_text?: string;
   verification_status: "unverified" | "user_confirmed" | "source_verified" | "inferred" | "contradictory";
   contradiction_details?: string;
   evidence_sources: ClientEvidenceSource[];
   created_at: string;
   updated_at: string;
+}
+
+export interface EvidenceAudit {
+  id: string;
+  resume_id: string;
+  resume_version: number;
+  overall_score: number;
+  integrity_score: number;
+  timeline_consistency_score: number;
+  experience_continuity_score: number;
+  metrics_believability_score: number;
+  profile_grounding_score: number;
+  contradiction_count: number;
+  unsupported_count: number;
+  status: string;
+  ai_fallback_active: boolean;
+  summary?: string;
+  created_at: string;
+}
+
+export interface EvidenceMethodology {
+  dimensions: Record<string, { name: string; description: string; weight: number }>;
+  trust_multipliers: Record<string, number>;
+  severity_levels: Record<string, { deduction: number; description: string }>;
 }
 
 export interface EvidenceMapResponse {
@@ -548,5 +587,31 @@ export interface JobMatchMethodologyResponse {
     description: string;
   }[];
   scoring_description: string;
+}
+
+export interface ExportSettings {
+  accent_color: string;
+  paper_size: string;
+  margin_top: string;
+  margin_bottom: string;
+  margin_left: string;
+  margin_right: string;
+  font_scale: number;
+  show_page_numbers: boolean;
+  ats_mode: boolean;
+  section_visibility: Record<string, boolean>;
+  section_ordering?: string[];
+}
+
+export interface ResumeExport {
+  id: string;
+  resume_id: string;
+  resume_version: number;
+  template_id: string;
+  settings: Record<string, any>;
+  page_count: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 

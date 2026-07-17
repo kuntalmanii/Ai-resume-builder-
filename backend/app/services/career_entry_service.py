@@ -1,13 +1,12 @@
 """Career Entry Service layer — handles CRUD, ownership checks, and status confirmation for profile entries."""
 import uuid
-from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ResourceNotFoundError
 from app.db.models.career_entry import CareerEntry
 from app.schemas.career_entry import CareerEntryCreate, CareerEntryUpdate
-from app.core.exceptions import ResourceNotFoundError
 
 
 async def get_career_entry_by_id_raw(db: AsyncSession, entry_id: uuid.UUID) -> CareerEntry | None:
@@ -37,7 +36,7 @@ async def get_career_entries(
     stmt = select(CareerEntry).where(CareerEntry.user_id == user_id)
     if entry_type:
         stmt = stmt.where(CareerEntry.entry_type == entry_type)
-    
+
     stmt = stmt.order_by(CareerEntry.created_at.desc())
     result = await db.execute(stmt)
     return list(result.scalars().all())

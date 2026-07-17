@@ -21,9 +21,8 @@ if _env_test.exists():
 
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -57,10 +56,17 @@ async def create_test_tables():
     """Create all ORM tables once per test session, then drop them."""
     # Import all models so Base.metadata knows about them
     from app.db.models import (  # noqa: F401
-        User, CareerProfile, Resume, ResumeAnalysis,
-        ResumeVersion, JobDescription, AnalysisCheck,
-        JobMatchResult, AISuggestion, EvidenceSource,
+        AISuggestion,
+        AnalysisCheck,
+        CareerProfile,
+        EvidenceSource,
+        JobDescription,
+        JobMatchResult,
+        Resume,
+        ResumeAnalysis,
         ResumeImportSession,
+        ResumeVersion,
+        User,
     )
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -89,8 +95,8 @@ async def db_session(create_test_tables) -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """ASGI test client that injects the test db_session into the app."""
-    from app.main import app
     from app.db.session import get_db
+    from app.main import app
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session

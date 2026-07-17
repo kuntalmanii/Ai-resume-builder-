@@ -1,7 +1,10 @@
 import uuid
 from datetime import datetime
+
 from pydantic import BaseModel, Field, field_validator
+
 from app.schemas.job_match_requirements import JobDescriptionRequirements
+
 
 class JobDescriptionBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)

@@ -63,7 +63,7 @@ def match_skill_in_text(canonical_skill: str, text: str) -> bool:
             if re.search(pattern_str, text, flags):
                 return True
         return False
-    
+
     # Standard matches: compile a regex for all aliases
     aliases = TAXONOMY.get(canonical_skill, [canonical_skill])
     # Escape and join with word boundaries

@@ -20,20 +20,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.services.scoring.ats_checks import CheckResult, run_ats_checks
+from app.services.scoring.completeness_checks import run_completeness_checks
 from app.services.scoring.config import (
     ANALYSIS_VERSION,
     CATEGORY_MAX,
     RAW_MAX_SCORE,
 )
-from app.services.scoring.ats_checks import CheckResult, run_ats_checks
 from app.services.scoring.content_checks import run_content_checks
-from app.services.scoring.completeness_checks import run_completeness_checks
-from app.services.scoring.readability_checks import run_readability_checks
-from app.services.scoring.grammar_checks import run_grammar_checks
 from app.services.scoring.evidence_checks import run_evidence_checks
+from app.services.scoring.grammar_checks import run_grammar_checks
+from app.services.scoring.readability_checks import run_readability_checks
 from app.services.scoring.recommendations import TopRecommendation, build_recommendations
-from app.services.scoring.text_metrics import _get
-
 
 # ─── Result Types ─────────────────────────────────────────────────────────────
 

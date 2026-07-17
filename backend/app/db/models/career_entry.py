@@ -26,7 +26,7 @@ class CareerEntry(Base):
     entry_type: Mapped[str] = mapped_column(String(50), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     organization: Mapped[str] = mapped_column(String(255), nullable=False)
-    
+
     start_date: Mapped[str | None] = mapped_column(String(50), nullable=True)
     end_date: Mapped[str | None] = mapped_column(String(50), nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

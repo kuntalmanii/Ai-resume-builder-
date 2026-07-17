@@ -68,6 +68,12 @@ class Resume(Base):
     claims: Mapped[list["ResumeClaim"]] = relationship(  # type: ignore[name-defined]
         "ResumeClaim", back_populates="resume", cascade="all, delete-orphan"
     )
+    audits: Mapped[list["EvidenceAudit"]] = relationship(  # type: ignore[name-defined]
+        "EvidenceAudit", back_populates="resume", cascade="all, delete-orphan"
+    )
+    exports: Mapped[list["ResumeExport"]] = relationship(  # type: ignore[name-defined]
+        "ResumeExport", back_populates="resume", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Resume id={self.id} title={self.title}>"

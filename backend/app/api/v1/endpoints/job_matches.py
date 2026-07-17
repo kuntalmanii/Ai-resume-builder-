@@ -1,22 +1,22 @@
 """Job Matches router: run comparison, fetch history, check stale state, and view methodology."""
 import uuid
 from typing import Annotated
-from fastapi import APIRouter, Depends, Query, status, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+
+from fastapi import APIRouter, Query, status
+from sqlalchemy import desc, select
 
 from app.api.dependencies import CurrentUser, DBSession
-from app.schemas.job_match import (
-    JobMatchResultResponse,
-    JobMatchRunRequest,
-    JobMatchMethodologyResponse,
-)
-from app.db.models.resume import Resume
+from app.core.exceptions import ForbiddenError, ResourceNotFoundError
 from app.db.models.job_description import JobDescription
 from app.db.models.job_match_result import JobMatchResult
-from app.services.matching import run_job_match, MATCHING_VERSION
+from app.db.models.resume import Resume
+from app.schemas.job_match import (
+    JobMatchMethodologyResponse,
+    JobMatchResultResponse,
+    JobMatchRunRequest,
+)
+from app.services.matching import MATCHING_VERSION, run_job_match
 from app.services.matching.config import CATEGORY_WEIGHTS
-from app.core.exceptions import ResourceNotFoundError, ForbiddenError
 
 router = APIRouter(tags=["Job Matches"])
 
@@ -34,7 +34,7 @@ def check_ai_fallback(result: JobMatchResult) -> bool:
     settings = get_settings()
     if not (settings.AI_PROVIDER and settings.AI_API_KEY and settings.AI_API_KEY != "your-ai-api-key-here"):
         return True
-        
+
     # Check matched/missing requirements for deterministic extraction method
     matched = result.matched_requirements or []
     for r in matched:
@@ -67,14 +67,14 @@ async def run_comparison(
         user_id=current_user.id,
         force=force
     )
-    
+
     # Fetch current objects to check staleness
     resume = await db.get(Resume, resume_id)
     jd = await db.get(JobDescription, payload.job_description_id)
-    
+
     is_stale = check_stale(result, resume, jd) if resume and jd else False
     fallback = check_ai_fallback(result)
-    
+
     resp = JobMatchResultResponse.model_validate(result)
     resp.is_stale = is_stale
     resp.ai_fallback_active = fallback
@@ -97,23 +97,23 @@ async def get_latest_match(
         raise ResourceNotFoundError(f"Resume with id {resume_id} not found")
     if resume.user_id != current_user.id:
         raise ForbiddenError("You do not own this resume")
-        
+
     query = select(JobMatchResult).where(JobMatchResult.resume_id == resume_id)
     if job_description_id:
         query = query.where(JobMatchResult.job_description_id == job_description_id)
-        
+
     query = query.order_by(desc(JobMatchResult.created_at)).limit(1)
-    
+
     res = await db.execute(query)
     match_result = res.scalar_one_or_none()
-    
+
     if not match_result:
         raise ResourceNotFoundError("No match result found for this resume")
-        
+
     jd = await db.get(JobDescription, match_result.job_description_id)
     is_stale = check_stale(match_result, resume, jd) if jd else False
     fallback = check_ai_fallback(match_result)
-    
+
     resp = JobMatchResultResponse.model_validate(match_result)
     resp.is_stale = is_stale
     resp.ai_fallback_active = fallback
@@ -136,7 +136,7 @@ async def get_match_history(
         raise ResourceNotFoundError(f"Resume with id {resume_id} not found")
     if resume.user_id != current_user.id:
         raise ForbiddenError("You do not own this resume")
-        
+
     offset = (page - 1) * page_size
     query = (
         select(JobMatchResult)
@@ -145,10 +145,10 @@ async def get_match_history(
         .offset(offset)
         .limit(page_size)
     )
-    
+
     res = await db.execute(query)
     results = res.scalars().all()
-    
+
     response_list = []
     for r in results:
         jd = await db.get(JobDescription, r.job_description_id)
@@ -158,7 +158,7 @@ async def get_match_history(
         resp.is_stale = is_stale
         resp.ai_fallback_active = fallback
         response_list.append(resp)
-        
+
     return response_list
 
 @router.get(
@@ -177,15 +177,15 @@ async def get_match_by_id(
         raise ResourceNotFoundError(f"Resume with id {resume_id} not found")
     if resume.user_id != current_user.id:
         raise ForbiddenError("You do not own this resume")
-        
+
     match_result = await db.get(JobMatchResult, match_id)
     if not match_result or match_result.resume_id != resume_id:
         raise ResourceNotFoundError("Match result not found")
-        
+
     jd = await db.get(JobDescription, match_result.job_description_id)
     is_stale = check_stale(match_result, resume, jd) if jd else False
     fallback = check_ai_fallback(match_result)
-    
+
     resp = JobMatchResultResponse.model_validate(match_result)
     resp.is_stale = is_stale
     resp.ai_fallback_active = fallback
@@ -204,7 +204,7 @@ async def get_matching_methodology() -> JobMatchMethodologyResponse:
             "max_points": weight,
             "description": f"Evaluates {name.replace('_', ' ')} matching with target Job Description."
         })
-        
+
     return JobMatchMethodologyResponse(
         matching_version=MATCHING_VERSION,
         categories=categories_list,

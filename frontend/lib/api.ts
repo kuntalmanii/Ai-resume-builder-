@@ -17,6 +17,11 @@ import type {
   JobMatchMethodologyResponse,
   JobDescription,
   EvidenceMapResponse,
+  EvidenceAudit,
+  EvidenceMethodology,
+  ResumeClaim,
+  ResumeExport,
+  ExportSettings,
 } from "@/types";
 
 const BASE_URL =
@@ -602,3 +607,247 @@ export const suggestionsAPI = {
       method: "POST",
     }),
 };
+
+export const evidenceAPI = {
+  runAudit: (resumeId: string, force = false): Promise<EvidenceAudit> =>
+    request<EvidenceAudit>(`/resumes/${resumeId}/evidence-audits?force=${force}`, {
+      method: "POST",
+    }),
+
+  getLatestAudit: (resumeId: string): Promise<EvidenceAudit> =>
+    request<EvidenceAudit>(`/resumes/${resumeId}/evidence-audits/latest`),
+
+  listAudits: (resumeId: string): Promise<EvidenceAudit[]> =>
+    request<EvidenceAudit[]>(`/resumes/${resumeId}/evidence-audits`),
+
+  getAudit: (resumeId: string, auditId: string): Promise<EvidenceAudit> =>
+    request<EvidenceAudit>(`/resumes/${resumeId}/evidence-audits/${auditId}`),
+
+  listClaims: (
+    resumeId: string,
+    filters?: {
+      audit_id?: string;
+      section?: string;
+      claim_type?: string;
+      support_status?: string;
+      risk_level?: string;
+    }
+  ): Promise<ResumeClaim[]> => {
+    const params = new URLSearchParams();
+    if (filters) {
+      if (filters.audit_id) params.append("audit_id", filters.audit_id);
+      if (filters.section) params.append("section", filters.section);
+      if (filters.claim_type) params.append("claim_type", filters.claim_type);
+      if (filters.support_status) params.append("support_status", filters.support_status);
+      if (filters.risk_level) params.append("risk_level", filters.risk_level);
+    }
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return request<ResumeClaim[]>(`/resumes/${resumeId}/claims${query}`);
+  },
+
+  getClaim: (resumeId: string, claimId: string): Promise<ResumeClaim> =>
+    request<ResumeClaim>(`/resumes/${resumeId}/claims/${claimId}`),
+
+  confirmClaim: (resumeId: string, claimId: string): Promise<ResumeClaim> =>
+    request<ResumeClaim>(`/resumes/${resumeId}/claims/${claimId}/confirm`, {
+      method: "POST",
+    }),
+
+  linkCareerEntry: (
+    resumeId: string,
+    claimId: string,
+    careerEntryId: string
+  ): Promise<ResumeClaim> =>
+    request<ResumeClaim>(`/resumes/${resumeId}/claims/${claimId}/link-career-entry`, {
+      method: "POST",
+      body: { career_entry_id: careerEntryId },
+    }),
+
+  getMethodology: (): Promise<EvidenceMethodology> =>
+    request<EvidenceMethodology>("/evidence/methodology"),
+};
+
+export const exportsAPI = {
+  create: (resumeId: string, templateId: string, settings?: Partial<ExportSettings>, force?: boolean): Promise<ResumeExport> =>
+    request<ResumeExport>(`/resumes/${resumeId}/exports`, {
+      method: "POST",
+      body: {
+        template_id: templateId,
+        settings,
+        force,
+      },
+    }),
+
+  preview: (resumeId: string, templateId: string, settings?: Partial<ExportSettings>): Promise<any> =>
+    request<any>(`/resumes/${resumeId}/exports/preview`, {
+      method: "POST",
+      body: {
+        template_id: templateId,
+        settings,
+      },
+    }),
+
+  list: (resumeId: string): Promise<ResumeExport[]> =>
+    request<ResumeExport[]>(`/resumes/${resumeId}/exports`),
+
+  get: (exportId: string): Promise<ResumeExport> =>
+    request<ResumeExport>(`/exports/${exportId}`),
+
+  delete: (exportId: string): Promise<{ detail: string }> =>
+    request<{ detail: string }>(`/exports/${exportId}`, {
+      method: "DELETE",
+    }),
+
+  regenerate: (exportId: string): Promise<ResumeExport> =>
+    request<ResumeExport>(`/exports/${exportId}/regenerate`, {
+      method: "POST",
+    }),
+
+  getDownloadUrl: (exportId: string): string => {
+    return `${BASE_URL}/exports/${exportId}/download`;
+  },
+};
+
+// ─── Phase 15 Additions ────────────────────────────────────────────────────────
+
+export const applicationsAPI = {
+  list: (status?: string, search?: string): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (status) params.append("status", status);
+    if (search) params.append("search", search);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return request<any[]>(`/applications${query}`);
+  },
+  get: (id: string): Promise<any> => request<any>(`/applications/${id}`),
+  create: (data: {
+    company: string;
+    role: string;
+    location?: string;
+    status: string;
+    salary_min?: number;
+    salary_max?: number;
+    currency?: string;
+    recruiter_name?: string;
+    recruiter_email?: string;
+    notes?: string;
+  }): Promise<any> => request<any>("/applications", { method: "POST", body: data }),
+  updateStatus: (id: string, status: string): Promise<any> =>
+    request<any>(`/applications/${id}/status`, { method: "PATCH", body: { status } }),
+  delete: (id: string): Promise<void> => request<void>(`/applications/${id}`, { method: "DELETE" }),
+  scheduleInterview: (
+    appId: string,
+    data: {
+      round_type: string;
+      scheduled_at: string;
+      duration_minutes?: number;
+      location?: string;
+      format?: string;
+      notes?: string;
+    }
+  ): Promise<any> => request<any>(`/applications/${appId}/interviews`, { method: "POST", body: data }),
+  listInterviews: (appId: string): Promise<any[]> => request<any[]>(`/applications/${appId}/interviews`),
+  deleteInterview: (appId: string, interviewId: string): Promise<void> =>
+    request<void>(`/applications/${appId}/interviews/${interviewId}`, { method: "DELETE" }),
+};
+
+export const coverLettersAPI = {
+  generate: (data: {
+    resume_id: string;
+    job_description_text?: string;
+    job_description_id?: string;
+    style_preference?: string;
+  }): Promise<{ content: string; metadata: any }> =>
+    request<{ content: string; metadata: any }>("/cover-letters/generate", { method: "POST", body: data }),
+  create: (data: {
+    resume_id: string;
+    title: string;
+    content: string;
+    job_description_id?: string;
+  }): Promise<any> => request<any>("/cover-letters", { method: "POST", body: data }),
+  list: (): Promise<any[]> => request<any[]>("/cover-letters"),
+  get: (id: string): Promise<any> => request<any>(`/cover-letters/${id}`),
+  update: (id: string, content: string, title?: string): Promise<any> =>
+    request<any>(`/cover-letters/${id}`, { method: "PUT", body: { content, title } }),
+  incrementVersion: (id: string, content: string, title?: string): Promise<any> =>
+    request<any>(`/cover-letters/${id}/versions`, { method: "POST", body: { content, title } }),
+  listVersions: (id: string): Promise<any[]> => request<any[]>(`/cover-letters/${id}/versions`),
+  delete: (id: string): Promise<void> => request<void>(`/cover-letters/${id}`, { method: "DELETE" }),
+  exportPdf: (id: string): Promise<{ export_path: string }> =>
+    request<{ export_path: string }>(`/cover-letters/${id}/export`, { method: "POST" }),
+};
+
+export const linkedinAPI = {
+  optimize: (data: {
+    resume_id: string;
+    target_role?: string;
+    linkedin_url?: string;
+    raw_profile_text?: string;
+  }): Promise<any> => request<any>("/linkedin/optimize", { method: "POST", body: data }),
+  list: (): Promise<any[]> => request<any[]>("/linkedin"),
+};
+
+export const portfolioAPI = {
+  getOrCreate: (): Promise<any> => request<any>("/portfolio"),
+  update: (data: {
+    theme?: string;
+    custom_domain?: string;
+    is_published?: boolean;
+    sections?: any;
+    social_links?: any;
+  }): Promise<any> => request<any>("/portfolio", { method: "PUT", body: data }),
+};
+
+export const interviewsAPI = {
+  generate: (data: {
+    resume_id: string;
+    job_description_id?: string;
+  }): Promise<any> => request<any>("/interview-sessions/generate", { method: "POST", body: data }),
+  get: (id: string): Promise<any> => request<any>(`/interview-sessions/${id}`),
+  list: (): Promise<any[]> => request<any[]>("/interview-sessions"),
+  submitAnswer: (
+    sessionId: string,
+    data: {
+      question_id: string;
+      user_answer: string;
+    }
+  ): Promise<any> => request<any>(`/interview-sessions/${sessionId}/practice`, { method: "POST", body: data }),
+};
+
+export const roadmapsAPI = {
+  generate: (data: {
+    target_role: string;
+    target_company?: string;
+  }): Promise<any> => request<any>("/roadmaps/generate", { method: "POST", body: data }),
+  list: (): Promise<any[]> => request<any[]>("/roadmaps"),
+  get: (id: string): Promise<any> => request<any>(`/roadmaps/${id}`),
+  updateProgress: (id: string, stepIndex: number, isCompleted: boolean): Promise<any> =>
+    request<any>(`/roadmaps/${id}/progress`, {
+      method: "PATCH",
+      body: { step_index: stepIndex, is_completed: isCompleted },
+    }),
+};
+
+export const analyticsAPI = {
+  getSummary: (): Promise<any> => request<any>("/analytics"),
+};
+
+export const notificationsAPI = {
+  list: (skip = 0, limit = 50): Promise<any[]> => request<any[]>(`/notifications?skip=${skip}&limit=${limit}`),
+  unreadCount: (): Promise<number> => request<number>("/notifications/unread-count"),
+  markRead: (id: string): Promise<any> => request<any>(`/notifications/${id}/read`, { method: "PATCH" }),
+  markAllRead: (): Promise<number> => request<number>("/notifications/read-all", { method: "PATCH" }),
+  delete: (id: string): Promise<void> => request<void>(`/notifications/${id}`, { method: "DELETE" }),
+};
+
+export const recruiterAPI = {
+  listCandidates: (search?: string, minScore?: number): Promise<any[]> => {
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (minScore !== undefined) params.append("min_score", String(minScore));
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return request<any[]>(`/recruiter/candidates${query}`);
+  },
+  getCandidateProfile: (userId: string): Promise<any> => request<any>(`/recruiter/candidates/${userId}`),
+  getCandidateAudits: (resumeId: string): Promise<any[]> => request<any[]>(`/recruiter/resumes/${resumeId}/audits`),
+};
+

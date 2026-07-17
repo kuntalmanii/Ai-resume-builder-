@@ -3,6 +3,8 @@
 These run against the in-memory SQLite test database configured in conftest.py.
 No live PostgreSQL is needed.
 """
+from datetime import UTC
+
 import pytest
 from httpx import AsyncClient
 
@@ -19,10 +21,12 @@ async def test_root_health(client: AsyncClient) -> None:
 
 
 async def test_v1_health(client: AsyncClient) -> None:
-    """API v1 /health endpoint should return 200."""
+    """API v1 /health endpoint should return 200 (or 503 in degraded state)."""
     response = await client.get("/api/v1/health")
-    assert response.status_code == 200
-    assert response.json()["api_version"] == "v1"
+    assert response.status_code in (200, 503)
+    body = response.json()
+    assert "status" in body
+    assert "checks" in body
 
 
 async def test_register_creates_user(client: AsyncClient) -> None:
@@ -172,14 +176,16 @@ async def test_refresh_token_rotation(client: AsyncClient) -> None:
 
 async def test_expired_access_token_returns_401(client: AsyncClient) -> None:
     """An expired access token is rejected with 401."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
+
     from jose import jwt
+
     from app.core.config import get_settings
     settings = get_settings()
 
     payload = {
         "sub": "00000000-0000-0000-0000-000000000001",
-        "exp": datetime.now(timezone.utc) - timedelta(minutes=1),
+        "exp": datetime.now(UTC) - timedelta(minutes=1),
         "type": "access",
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)

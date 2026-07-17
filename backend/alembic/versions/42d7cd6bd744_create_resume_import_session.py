@@ -5,18 +5,18 @@ Revises: b3d36b801a2c
 Create Date: 2026-07-14 07:57:20.443450
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-import app.db.types
 
+import app.db.types
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '42d7cd6bd744'
-down_revision: Union[str, Sequence[str], None] = 'b3d36b801a2c'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = 'b3d36b801a2c'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

@@ -1,29 +1,31 @@
 """Deterministic scoring engine for Job Description Matching."""
-from typing import List, Dict, Any, Tuple
-from app.schemas.job_match_requirements import JobDescriptionRequirements, JobDescriptionRequirement
+from typing import Any
+
+from app.schemas.job_match_requirements import JobDescriptionRequirement
 from app.services.matching.config import CATEGORY_WEIGHTS
 
+
 def calculate_match_scores(
-    requirements: List[JobDescriptionRequirement],
-    matches: List[Dict[str, Any]],
-    profile_opportunities: List[Dict[str, Any]],
+    requirements: list[JobDescriptionRequirement],
+    matches: list[dict[str, Any]],
+    profile_opportunities: list[dict[str, Any]],
     current_experience_score: int,
     jd_has_experience: bool
-) -> Tuple[int, int, Dict[str, Any]]:
+) -> tuple[int, int, dict[str, Any]]:
     """
     Calculate current and potential match scores deterministically with dynamic normalization.
     Returns:
         (current_match_score, potential_match_score, scores_breakdown)
     """
     # Group requirements by category
-    cat_reqs: Dict[str, List[JobDescriptionRequirement]] = {
+    cat_reqs: dict[str, list[JobDescriptionRequirement]] = {
         "required_skills": [],
         "preferred_skills": [],
         "responsibilities": [],
         "keywords": [],
         "education_certification": []
     }
-    
+
     for req in requirements:
         if req.requirement_type == "required_skill":
             cat_reqs["required_skills"].append(req)
@@ -35,22 +37,22 @@ def calculate_match_scores(
             cat_reqs["keywords"].append(req)
         elif req.requirement_type in ["education", "certification"]:
             cat_reqs["education_certification"].append(req)
-            
+
     # Build match lookups
     match_map = {m["requirement_id"]: m for m in matches}
     opportunity_map = {o["requirement_id"]: o for o in profile_opportunities}
-    
+
     # Track earned and max points
     earned_current = 0.0
     earned_potential = 0.0
     total_applicable_max = 0.0
-    
-    breakdown: Dict[str, Any] = {}
-    
+
+    breakdown: dict[str, Any] = {}
+
     # 1. Evaluate standard categories
     for cat_name, req_list in cat_reqs.items():
         max_weight = CATEGORY_WEIGHTS[cat_name]
-        
+
         if not req_list:
             # Category has no requirements, it is inactive (not counted towards max)
             breakdown[cat_name] = {
@@ -60,16 +62,16 @@ def calculate_match_scores(
                 "active": False
             }
             continue
-            
+
         total_applicable_max += max_weight
         cat_earned_current = 0.0
         cat_earned_potential = 0.0
-        
+
         req_weight = 1.0 / len(req_list)
-        
+
         for req in req_list:
             req_id = req.id
-            
+
             # Evaluate current score
             if req_id in match_map:
                 m = match_map[req_id]
@@ -82,27 +84,27 @@ def calculate_match_scores(
                     opp = opportunity_map[req_id]
                     if opp["verification_status"] in ["user_confirmed", "source_verified"]:
                         cat_earned_potential += 1.0 # counts fully for potential
-                        
+
         cat_score_curr = cat_earned_current * req_weight * max_weight
         cat_score_pot = cat_earned_potential * req_weight * max_weight
-        
+
         earned_current += cat_score_curr
         earned_potential += cat_score_pot
-        
+
         breakdown[cat_name] = {
             "earned_current": round(cat_score_curr, 1),
             "earned_potential": round(cat_score_pot, 1),
             "max_possible": max_weight,
             "active": True
         }
-        
+
     # 2. Evaluate Experience Category
     exp_max = CATEGORY_WEIGHTS["experience"]
     if jd_has_experience:
         total_applicable_max += exp_max
         # Potential experience score matches current unless Career Profile has confirmed experience to cover gaps
         pot_exp_score = current_experience_score
-        
+
         # Check if there are confirmed career profile opportunities matching experience requirements
         has_confirmed_exp_opp = False
         for opp in profile_opportunities:
@@ -111,13 +113,13 @@ def calculate_match_scores(
                 if opp["verification_status"] in ["user_confirmed", "source_verified"]:
                     has_confirmed_exp_opp = True
                     break
-                    
+
         if has_confirmed_exp_opp:
             pot_exp_score = exp_max # fills the experience gap!
-            
+
         earned_current += current_experience_score
         earned_potential += pot_exp_score
-        
+
         breakdown["experience"] = {
             "earned_current": current_experience_score,
             "earned_potential": pot_exp_score,
@@ -131,7 +133,7 @@ def calculate_match_scores(
             "max_possible": 0,
             "active": False
         }
-        
+
     # 3. Dynamic Normalization
     if total_applicable_max <= 0:
         current_pct = 0
@@ -139,10 +141,10 @@ def calculate_match_scores(
     else:
         current_pct = round((earned_current / total_applicable_max) * 100)
         potential_pct = round((earned_potential / total_applicable_max) * 100)
-        
+
     # Enforce potential score is never below current score
     potential_pct = max(current_pct, potential_pct)
-    
+
     breakdown["overall"] = {
         "raw_earned_current": round(earned_current, 1),
         "raw_earned_potential": round(earned_potential, 1),
@@ -150,5 +152,5 @@ def calculate_match_scores(
         "current_match_percentage": current_pct,
         "potential_match_percentage": potential_pct
     }
-    
+
     return current_pct, potential_pct, breakdown

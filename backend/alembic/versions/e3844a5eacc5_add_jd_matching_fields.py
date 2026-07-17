@@ -5,25 +5,25 @@ Revises: 4fc2755c36e3
 Create Date: 2026-07-15 12:27:39.701549
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
+
+import sqlalchemy as sa
 
 from alembic import op
-import sqlalchemy as sa
 from app.db.types import JSONBType
-
 
 # revision identifiers, used by Alembic.
 revision: str = 'e3844a5eacc5'
-down_revision: Union[str, Sequence[str], None] = '4fc2755c36e3'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = '4fc2755c36e3'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
     # Add columns to job_descriptions
     op.add_column('job_descriptions', sa.Column('parsed_requirements', JSONBType(), nullable=True))
-    
+
     # Add columns to job_match_results
     op.add_column('job_match_results', sa.Column('resume_version', sa.Integer(), nullable=False, server_default='1'))
     op.add_column('job_match_results', sa.Column('matching_version', sa.String(length=50), nullable=False, server_default='jd-match-v1.0'))
@@ -40,7 +40,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     op.drop_column('job_descriptions', 'parsed_requirements')
-    
+
     op.drop_column('job_match_results', 'recommendations')
     op.drop_column('job_match_results', 'hidden_profile_matches')
     op.drop_column('job_match_results', 'missing_requirements')

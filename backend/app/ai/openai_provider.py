@@ -1,5 +1,4 @@
 """OpenAI provider implementation."""
-import json
 from typing import TypeVar
 
 from openai import AsyncOpenAI

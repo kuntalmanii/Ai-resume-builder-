@@ -2,26 +2,27 @@
 import asyncio
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from alembic import context
+
 # Import all models so Alembic can detect them
 from app.db.base import Base
 from app.db.models import (  # noqa: F401
-    User,
+    AISuggestion,
+    AnalysisCheck,
+    CareerEntry,
     CareerProfile,
+    EvidenceSource,
+    JobDescription,
+    JobMatchResult,
     Resume,
     ResumeAnalysis,
-    ResumeVersion,
-    JobDescription,
-    AnalysisCheck,
-    JobMatchResult,
-    AISuggestion,
-    EvidenceSource,
-    CareerEntry,
     ResumeImportSession,
+    ResumeVersion,
+    User,
 )
 
 # this is the Alembic Config object, which provides

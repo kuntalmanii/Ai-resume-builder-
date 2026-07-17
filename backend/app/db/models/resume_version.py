@@ -22,7 +22,7 @@ class ResumeVersion(Base):
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     content_snapshot: Mapped[dict] = mapped_column(JSONBType, nullable=False)
     change_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

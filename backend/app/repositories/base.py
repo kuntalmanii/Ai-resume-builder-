@@ -1,8 +1,10 @@
 """Base repository class with async CRUD operations."""
-from typing import Generic, TypeVar, Any
+from typing import Any, Generic, TypeVar
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)

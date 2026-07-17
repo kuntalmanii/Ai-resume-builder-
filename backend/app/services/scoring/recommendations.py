@@ -10,7 +10,7 @@ Deduplication: only one recommendation per check_code.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from app.services.scoring.ats_checks import CheckResult
 

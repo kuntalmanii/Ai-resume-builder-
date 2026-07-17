@@ -25,7 +25,7 @@ class ResumeImportSession(Base):
 
     # Metadata about extraction (page count, character count, etc.)
     extraction_metadata: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
-    
+
     # The parsed ResumeDocument (Pydantic schema serialized to dict)
     parsed_document: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
 

@@ -1,9 +1,12 @@
 """Job Description Repository class."""
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.models.job_description import JobDescription
 from app.repositories.base import BaseRepository
+
 
 class JobDescriptionRepository(BaseRepository[JobDescription]):
     def __init__(self):

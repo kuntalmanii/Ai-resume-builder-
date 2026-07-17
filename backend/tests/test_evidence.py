@@ -1,7 +1,8 @@
-import pytest
 import uuid
-from httpx import AsyncClient
 from unittest.mock import patch
+
+import pytest
+from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 
@@ -21,7 +22,7 @@ async def test_evidence_map_flow(client: AsyncClient):
     """Test generating and retrieving an Evidence Map."""
     token = await _register_and_login(client, "evidence@example.com", "Evidence User")
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     # 1. Create a dummy resume
     resume_data = {
         "title": "Evidence Test Resume",
@@ -47,7 +48,7 @@ async def test_evidence_map_flow(client: AsyncClient):
     create_res = await client.post("/api/v1/resumes", json=resume_data, headers=headers)
     assert create_res.status_code == 201
     resume_id = create_res.json()["id"]
-    
+
     # 2. Get claims (should be empty initially)
     get_res = await client.get(f"/api/v1/resumes/{resume_id}/claims", headers=headers)
     assert get_res.status_code == 200
@@ -56,12 +57,16 @@ async def test_evidence_map_flow(client: AsyncClient):
     assert "evidence_credibility_score" in data
     assert data["claims"] == []
     assert data["evidence_credibility_score"] == 100
-    
+
     # 3. Trigger audit (mock the LLM responses)
-    from app.services.evidence.claim_extractor import LLMClaimExtractionOutput, LLMResumeClaim
-    from app.services.evidence.credibility_engine import LLMVerificationBatchOutput, LLMClaimVerification
     import re
-    
+
+    from app.services.evidence.claim_extractor import LLMClaimExtractionOutput, LLMResumeClaim
+    from app.services.evidence.credibility_engine import (
+        LLMClaimVerification,
+        LLMVerificationBatchOutput,
+    )
+
     async def mock_complete(*args, **kwargs):
         schema = kwargs.get("response_schema")
         if schema == LLMClaimExtractionOutput:
@@ -83,14 +88,14 @@ async def test_evidence_map_flow(client: AsyncClient):
                 )
             ])
         return None
-    
+
     with patch("app.services.evidence.claim_extractor.GeminiProvider.complete", side_effect=mock_complete):
         with patch("app.services.evidence.credibility_engine.GeminiProvider.complete", side_effect=mock_complete):
             audit_res = await client.post(f"/api/v1/resumes/{resume_id}/audit", headers=headers)
             assert audit_res.status_code == 200
             audit_data = audit_res.json()
             assert "claims" in audit_data
-    
+
     # 4. Get claims again
     get_res2 = await client.get(f"/api/v1/resumes/{resume_id}/claims", headers=headers)
     assert get_res2.status_code == 200

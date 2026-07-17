@@ -1,6 +1,7 @@
 """Core application exceptions handling."""
 from typing import Any
 
+
 class CareerOSException(Exception):
     """Base exception for CareerOS AI errors."""
     def __init__(self, message: str, code: str = "INTERNAL_SERVER_ERROR", details: Any = None):

@@ -5,18 +5,18 @@ Revises: e3844a5eacc5
 Create Date: 2026-07-15 13:26:51.902894
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
+
+import sqlalchemy as sa
 
 from alembic import op
-import sqlalchemy as sa
 from app.db.types import JSONBType
-
 
 # revision identifiers, used by Alembic.
 revision: str = 'a37282f03a79'
-down_revision: Union[str, Sequence[str], None] = 'e3844a5eacc5'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = 'e3844a5eacc5'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -38,11 +38,11 @@ def upgrade() -> None:
     op.add_column('ai_suggestions', sa.Column('provider_name', sa.String(length=50), nullable=True))
     op.add_column('ai_suggestions', sa.Column('model_name', sa.String(length=50), nullable=True))
     op.add_column('ai_suggestions', sa.Column('applied_at', sa.DateTime(timezone=True), nullable=True))
-    
+
     op.create_index(op.f('ix_ai_suggestions_match_result_id'), 'ai_suggestions', ['match_result_id'], unique=False)
     if op.get_context().dialect.name != 'sqlite':
         op.create_foreign_key('fk_ai_suggestions_match_result', 'ai_suggestions', 'job_match_results', ['match_result_id'], ['id'], ondelete='SET NULL')
-    
+
     with op.batch_alter_table('ai_suggestions') as batch_op:
         batch_op.drop_column('original_content')
         batch_op.drop_column('suggested_content')
@@ -64,7 +64,7 @@ def upgrade() -> None:
     op.add_column('evidence_sources', sa.Column('evidence_strength', sa.String(length=50), nullable=False, server_default='contextual'))
     op.add_column('evidence_sources', sa.Column('support_kind', sa.String(length=50), nullable=False, server_default='relevance_context'))
     op.add_column('evidence_sources', sa.Column('verification_status', sa.String(length=50), nullable=True))
-    
+
     with op.batch_alter_table('evidence_sources') as batch_op:
         batch_op.drop_column('evidence_excerpt')
         batch_op.drop_column('source_reference')
@@ -78,7 +78,7 @@ def downgrade() -> None:
     op.add_column('evidence_sources', sa.Column('verified', sa.BOOLEAN(), nullable=False, server_default='0'))
     op.add_column('evidence_sources', sa.Column('source_reference', sa.VARCHAR(length=255), nullable=True))
     op.add_column('evidence_sources', sa.Column('evidence_excerpt', sa.TEXT(), nullable=True))
-    
+
     with op.batch_alter_table('evidence_sources') as batch_op:
         batch_op.drop_column('verification_status')
         batch_op.drop_column('support_kind')
@@ -88,7 +88,7 @@ def downgrade() -> None:
         batch_op.drop_column('source_entry_id')
         batch_op.drop_column('source_section')
         batch_op.drop_column('source_id')
-        
+
     op.drop_column('job_match_results', 'potential_match_percentage')
 
     op.add_column('ai_suggestions', sa.Column('section_entry_id', sa.VARCHAR(length=100), nullable=True))
@@ -98,11 +98,11 @@ def downgrade() -> None:
     op.add_column('ai_suggestions', sa.Column('confidence', sa.FLOAT(), nullable=False, server_default='0.0'))
     op.add_column('ai_suggestions', sa.Column('suggested_content', sa.TEXT(), nullable=False, server_default=''))
     op.add_column('ai_suggestions', sa.Column('original_content', sa.TEXT(), nullable=False, server_default=''))
-    
+
     if op.get_context().dialect.name != 'sqlite':
         op.drop_constraint('fk_ai_suggestions_match_result', 'ai_suggestions', type_='foreignkey')
     op.drop_index(op.f('ix_ai_suggestions_match_result_id'), table_name='ai_suggestions')
-    
+
     with op.batch_alter_table('ai_suggestions') as batch_op:
         batch_op.drop_column('applied_at')
         batch_op.drop_column('model_name')

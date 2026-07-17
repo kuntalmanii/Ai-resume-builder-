@@ -26,13 +26,26 @@ import {
   Layout,
   Settings,
   HelpCircle,
+  Briefcase,
+  MailOpen,
+  Globe,
+  MessageSquareCode,
+  Map,
+  TrendingUp,
+  Bell,
+  Users,
 } from "lucide-react";
 
-const navItems = [
+const candidateNavItems = [
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Applications Tracker",
+    href: "/applications",
+    icon: Briefcase,
   },
   {
     label: "My Resumes",
@@ -50,19 +63,52 @@ const navItems = [
     icon: BarChart3,
   },
   {
-    label: "JD Matcher",
-    href: "/resumes", // Users select a resume first
-    icon: Target,
+    label: "Cover Letters",
+    href: "/cover-letters",
+    icon: MailOpen,
   },
   {
-    label: "Career Profile",
-    href: "/career-profile",
-    icon: User,
+    label: "LinkedIn Optimizer",
+    href: "/linkedin",
+    icon: Globe,
   },
   {
-    label: "Templates",
-    href: "/templates",
-    icon: Layout,
+    label: "Portfolio Builder",
+    href: "/portfolio",
+    icon: Globe,
+  },
+  {
+    label: "Interview Prep",
+    href: "/interviews",
+    icon: MessageSquareCode,
+  },
+  {
+    label: "Career Roadmap",
+    href: "/roadmap",
+    icon: Map,
+  },
+  {
+    label: "Career Analytics",
+    href: "/analytics",
+    icon: TrendingUp,
+  },
+  {
+    label: "Notifications",
+    href: "/notifications",
+    icon: Bell,
+  },
+];
+
+const recruiterNavItems = [
+  {
+    label: "Recruiter Portal",
+    href: "/recruiter",
+    icon: Users,
+  },
+  {
+    label: "Notifications",
+    href: "/notifications",
+    icon: Bell,
   },
 ];
 
@@ -93,6 +139,9 @@ export function SidebarContent({ onClose }: SidebarContentProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isRecruiter = mounted && user?.role === "recruiter";
+  const currentNavItems = isRecruiter ? recruiterNavItems : candidateNavItems;
 
   const initials = mounted && user?.full_name
     ? user.full_name
@@ -135,7 +184,7 @@ export function SidebarContent({ onClose }: SidebarContentProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {currentNavItems.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/dashboard" && item.href !== "/resumes/new" && pathname.startsWith(item.href));
