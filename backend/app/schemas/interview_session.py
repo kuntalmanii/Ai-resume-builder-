@@ -1,4 +1,5 @@
 """InterviewSession Pydantic schemas."""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -20,7 +21,7 @@ class PracticeAnswerSubmit(BaseModel):
 class PracticeFeedbackResponse(BaseModel):
     question_id: str
     user_answer: str
-    score: float # 0 to 10
+    score: float  # 0 to 10
     feedback: str
     improvement_tips: str
     model_answer: str

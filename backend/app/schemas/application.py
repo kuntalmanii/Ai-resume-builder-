@@ -1,4 +1,5 @@
 """Application Pydantic schemas."""
+
 import uuid
 from datetime import datetime
 
@@ -31,6 +32,7 @@ class InterviewResponse(InterviewBase):
 
 
 # ─── Application Schemas ──────────────────────────────────────────────────────
+
 
 class ApplicationBase(BaseModel):
     company: str

@@ -1,4 +1,5 @@
 """PDF text extraction using PyMuPDF."""
+
 import re
 
 import fitz  # PyMuPDF
@@ -20,8 +21,10 @@ def extract_pdf_text(file_bytes: bytes) -> dict:
     try:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
     except Exception as e:
-        raise ValidationError("Could not open PDF file. It may be corrupt.", details=f"CORRUPT_PDF: {str(e)}")
-
+        raise ValidationError(
+            "Could not open PDF file. It may be corrupt.",
+            details=f"CORRUPT_PDF: {str(e)}",
+        )
     page_count = len(doc)
     pages_text = []
 
@@ -37,7 +40,7 @@ def extract_pdf_text(file_bytes: bytes) -> dict:
             doc.close()
             raise ValidationError(
                 f"Error reading page {page_num + 1} from PDF.",
-                details=f"CORRUPT_PDF_PAGE: {str(e)}"
+                details=f"CORRUPT_PDF_PAGE: {str(e)}",
             )
 
     doc.close()
@@ -51,7 +54,7 @@ def extract_pdf_text(file_bytes: bytes) -> dict:
         # Strip trailing/leading spaces on the line
         cleaned_line = line.strip()
         # Collapse multiple spaces to single spaces
-        cleaned_line = re.sub(r' +', ' ', cleaned_line)
+        cleaned_line = re.sub(r" +", " ", cleaned_line)
         if cleaned_line:
             normalized_lines.append(cleaned_line)
 

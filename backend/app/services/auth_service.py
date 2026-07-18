@@ -1,4 +1,5 @@
 """Auth service: registration, login, token refresh, account deletion."""
+
 import uuid
 from datetime import UTC, datetime
 
@@ -58,13 +59,13 @@ async def register_user(db: AsyncSession, payload: RegisterRequest) -> User:
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:
     """Authenticate credentials. Raises UnauthorizedError/ForbiddenError on failure."""
     # Timing attack protection: run dummy verification if email is not found
-    DUMMY_HASH = "$2b$12$KbR9x8bK.1O/R5Qd5sW0Oe1nN/5Fh/c7Xw/m8j.J7hJ/nU7O7yF9m"
+    dummy_hash = "$2b$12$KbR9x8bK.1O/R5Qd5sW0Oe1nN/5Fh/c7Xw/m8j.J7hJ/nU7O7yF9m"
     user = await get_user_by_email(db, email)
 
     if user:
         password_verified = verify_password(password, user.hashed_password)
     else:
-        verify_password(password, DUMMY_HASH)
+        verify_password(password, dummy_hash)
         password_verified = False
 
     if not user or not password_verified:
@@ -83,6 +84,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> User
 def generate_token_pair(user_id: uuid.UUID) -> dict[str, str | int]:
     """Return access + refresh token dict."""
     from app.core.config import get_settings
+
     settings = get_settings()
     return {
         "access_token": create_access_token(str(user_id)),

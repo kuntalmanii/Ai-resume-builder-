@@ -9,6 +9,7 @@ Routes:
 
 All resume-scoped endpoints enforce user ownership (404 on unauthorized access).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -45,6 +46,7 @@ router = APIRouter(tags=["Analyses"])
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def _check_to_schema(check: AnalysisCheck, analysis_id: uuid.UUID) -> AnalysisCheckResponse:
     """Convert an AnalysisCheck ORM row to its response schema."""
@@ -103,16 +105,18 @@ def _build_response(
         raw = sum(c.points_awarded for c in cat_checks)
         max_p = CATEGORY_MAX.get(cat_name, 20)
         normalized = round((raw / max_p) * 100) if max_p else 0
-        categories.append(CategoryBreakdownSchema(
-            category=cat_name,
-            normalized=min(100, normalized),
-            raw_score=raw,
-            max_score=max_p,
-            check_count=len(cat_checks),
-            passed_count=sum(1 for c in cat_checks if c.status == "passed"),
-            failed_count=sum(1 for c in cat_checks if c.status == "failed"),
-            warning_count=sum(1 for c in cat_checks if c.status == "warning"),
-        ))
+        categories.append(
+            CategoryBreakdownSchema(
+                category=cat_name,
+                normalized=min(100, normalized),
+                raw_score=raw,
+                max_score=max_p,
+                check_count=len(cat_checks),
+                passed_count=sum(1 for c in cat_checks if c.status == "passed"),
+                failed_count=sum(1 for c in cat_checks if c.status == "failed"),
+                warning_count=sum(1 for c in cat_checks if c.status == "warning"),
+            )
+        )
 
     # Potential score gain
     max_recoverable = sum(c.points_lost for c in checks if c.status in ("failed", "warning"))
@@ -154,6 +158,7 @@ async def _get_owned_resume(db, resume_id: uuid.UUID, user_id: uuid.UUID):
 
 # ─── POST /resumes/{id}/analyses ─────────────────────────────────────────────
 
+
 @router.post(
     "/resumes/{id}/analyses",
     response_model=RunAnalysisResponse,
@@ -194,6 +199,7 @@ async def run_analysis(
     career_profile = None
     try:
         from app.repositories.profile import profile_repository
+
         cp = await profile_repository.get_by_user_id(db, current_user.id)
         if cp:
             career_profile = cp.content  # dict
@@ -209,23 +215,26 @@ async def run_analysis(
 
     # ── Persist analysis ─────────────────────────────────────────────────────
     async with db.begin_nested():
-        db_analysis = await analysis_repository.create(db, obj_in={
-            "resume_id": id,
-            "user_id": current_user.id,
-            "resume_version": current_version,
-            "overall_score": result.overall_score,
-            "ats_score": result.ats_score,
-            "content_strength_score": result.content_score,
-            "jd_match_score": None,
-            "completeness_score": result.completeness_score,
-            "readability_score": result.readability_score,
-            "grammar_score": result.grammar_score,
-            "evidence_credibility_score": result.evidence_credibility_score,
-            "raw_score": result.raw_score,
-            "raw_max_score": result.raw_max_score,
-            "status": "completed",
-            "analysis_version": result.analysis_version,
-        })
+        db_analysis = await analysis_repository.create(
+            db,
+            obj_in={
+                "resume_id": id,
+                "user_id": current_user.id,
+                "resume_version": current_version,
+                "overall_score": result.overall_score,
+                "ats_score": result.ats_score,
+                "content_strength_score": result.content_score,
+                "jd_match_score": None,
+                "completeness_score": result.completeness_score,
+                "readability_score": result.readability_score,
+                "grammar_score": result.grammar_score,
+                "evidence_credibility_score": result.evidence_credibility_score,
+                "raw_score": result.raw_score,
+                "raw_max_score": result.raw_max_score,
+                "status": "completed",
+                "analysis_version": result.analysis_version,
+            },
+        )
 
         # Persist individual checks
         check_rows: list[AnalysisCheck] = []
@@ -247,6 +256,7 @@ async def run_analysis(
 
         # Update resume.last_analyzed_at
         from datetime import datetime
+
         resume.last_analyzed_at = datetime.now(UTC)
         db.add(resume)
 
@@ -264,6 +274,7 @@ async def run_analysis(
 
 
 # ─── GET /resumes/{id}/analyses/latest ───────────────────────────────────────
+
 
 @router.get(
     "/resumes/{id}/analyses/latest",
@@ -295,6 +306,7 @@ async def get_latest_analysis(
 
 
 # ─── GET /resumes/{id}/analyses ───────────────────────────────────────────────
+
 
 @router.get(
     "/resumes/{id}/analyses",
@@ -346,6 +358,7 @@ async def list_analyses(
 
 # ─── GET /resumes/{id}/analyses/{analysis_id} ────────────────────────────────
 
+
 @router.get(
     "/resumes/{id}/analyses/{analysis_id}",
     response_model=ResumeAnalysisResponse,
@@ -370,6 +383,7 @@ async def get_analysis_by_id(
 
 
 # ─── GET /scoring/methodology ─────────────────────────────────────────────────
+
 
 @router.get(
     "/scoring/methodology",

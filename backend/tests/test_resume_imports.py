@@ -1,4 +1,6 @@
-"""Integration tests for Resume Import Sessions, secure validation, parsing, and Career Profile imports."""
+"""Integration tests for Resume Import Sessions, secure validation, parsing, and Career
+Profile imports."""
+
 import io
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -54,6 +56,7 @@ def _create_test_docx_bytes(paragraphs: list[tuple[str, str | None]]) -> bytes:
 
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
+
 
 async def test_unauthenticated_upload_rejected(client: AsyncClient) -> None:
     """Upload without bearer token is rejected with 401."""
@@ -124,7 +127,13 @@ async def test_valid_docx_upload_accepted(client: AsyncClient) -> None:
         ("Worked on rocket landing software.", "List Bullet"),
     ]
     docx_bytes = _create_test_docx_bytes(paras)
-    files = {"file": ("resume.docx", docx_bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+    files = {
+        "file": (
+            "resume.docx",
+            docx_bytes,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    }
 
     res = await client.post("/api/v1/resume-imports", headers=headers, files=files)
     assert res.status_code == 201
@@ -147,13 +156,21 @@ async def test_unsupported_extensions_and_fake_signatures_rejected(client: Async
     assert res.json()["error"]["code"] == "VALIDATION_ERROR"
 
     # 2. Fake PDF (PDF extension but random bytes)
-    files = {"file": ("resume.pdf", b"fake pdf bytes that do not start with pdf", "application/pdf")}
+    files = {
+        "file": ("resume.pdf", b"fake pdf bytes that do not start with pdf", "application/pdf")
+    }
     res = await client.post("/api/v1/resume-imports", headers=headers, files=files)
     assert res.status_code == 400
     assert "INVALID_PDF_SIGNATURE" in res.json()["error"]["details"]
 
     # 3. Fake DOCX (DOCX extension but random bytes)
-    files = {"file": ("resume.docx", b"fake zip bytes", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+    files = {
+        "file": (
+            "resume.docx",
+            b"fake zip bytes",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+    }
     res = await client.post("/api/v1/resume-imports", headers=headers, files=files)
     assert res.status_code == 400
     assert "INVALID_DOCX_SIGNATURE" in res.json()["error"]["details"]
@@ -188,7 +205,7 @@ async def test_scanned_pdf_ocr_required(client: AsyncClient) -> None:
 
     # Create PDF page with no text (empty canvas)
     doc = fitz.open()
-    doc.new_page() # no page text
+    doc.new_page()  # no page text
     pdf_bytes = doc.write()
     doc.close()
 
@@ -220,7 +237,7 @@ async def test_ownership_enforcement(client: AsyncClient, db_session: AsyncSessi
     res_patch = await client.patch(
         f"/api/v1/resume-imports/{import_id}/document",
         headers=headers2,
-        json={"parsed_document": res.json()["parsed_document"]}
+        json={"parsed_document": res.json()["parsed_document"]},
     )
     assert res_patch.status_code == 404
 
@@ -228,7 +245,7 @@ async def test_ownership_enforcement(client: AsyncClient, db_session: AsyncSessi
     res_final = await client.post(
         f"/api/v1/resume-imports/{import_id}/finalize",
         headers=headers2,
-        json={"title": "Bob's Resume", "template_id": "modern", "import_to_career_profile": False}
+        json={"title": "Bob's Resume", "template_id": "modern", "import_to_career_profile": False},
     )
     assert res_final.status_code == 404
 
@@ -256,7 +273,11 @@ async def test_expired_session_rejected(client: AsyncClient, db_session: AsyncSe
     res_final = await client.post(
         f"/api/v1/resume-imports/{import_id}/finalize",
         headers=headers,
-        json={"title": "Expired Resume", "template_id": "modern", "import_to_career_profile": False}
+        json={
+            "title": "Expired Resume",
+            "template_id": "modern",
+            "import_to_career_profile": False,
+        },
     )
     assert res_final.status_code == 400
     assert "SESSION_EXPIRED" in res_final.json()["error"]["details"]
@@ -278,10 +299,12 @@ async def test_update_parsed_document_validation(client: AsyncClient) -> None:
     res_patch = await client.patch(
         f"/api/v1/resume-imports/{import_id}/document",
         headers=headers,
-        json={"parsed_document": doc}
+        json={"parsed_document": doc},
     )
     assert res_patch.status_code == 200
-    assert res_patch.json()["parsed_document"]["personal_information"]["full_name"] == "New Valid Name"
+    assert (
+        res_patch.json()["parsed_document"]["personal_information"]["full_name"] == "New Valid Name"
+    )
 
     # Update with invalid structure (missing education structure, etc.)
     invalid_doc = doc.copy()
@@ -289,14 +312,17 @@ async def test_update_parsed_document_validation(client: AsyncClient) -> None:
     res_patch_invalid = await client.patch(
         f"/api/v1/resume-imports/{import_id}/document",
         headers=headers,
-        json={"parsed_document": invalid_doc}
+        json={"parsed_document": invalid_doc},
     )
     assert res_patch_invalid.status_code == 422
     assert res_patch_invalid.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
-async def test_finalize_creates_resume_version_and_profile_entries(client: AsyncClient, db_session: AsyncSession) -> None:
-    """Finalization creates Resume, ResumeVersion snapshot, CareerProfile entries, and prevents double finalization."""
+async def test_finalize_creates_resume_version_and_profile_entries(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Finalization creates Resume, ResumeVersion snapshot, CareerProfile entries, and
+    prevents double finalization."""
     token = await _register_and_login(client, "finalizer@example.com", "Finalizer User")
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -325,8 +351,8 @@ async def test_finalize_creates_resume_version_and_profile_entries(client: Async
             "title": "My Awesome Resume",
             "template_id": "creative",
             "import_to_career_profile": True,
-            "selected_entries": ["education", "experience", "skills"]
-        }
+            "selected_entries": ["education", "experience", "skills"],
+        },
     )
     assert res_final.status_code == 200
     resume_data = res_final.json()
@@ -358,11 +384,12 @@ async def test_finalize_creates_resume_version_and_profile_entries(client: Async
     for entry in entries:
         assert entry.verification_status == "user_confirmed"
 
-    # Verify duplicate prevention: call finalize again (should be rejected since session is finalized)
+    # Verify duplicate prevention: call finalize again (should be rejected since session
+    # is finalized)
     res_double = await client.post(
         f"/api/v1/resume-imports/{import_id}/finalize",
         headers=headers,
-        json={"title": "Second Time", "template_id": "modern", "import_to_career_profile": False}
+        json={"title": "Second Time", "template_id": "modern", "import_to_career_profile": False},
     )
     assert res_double.status_code == 400
     assert "ALREADY_FINALIZED" in res_double.json()["error"]["details"]

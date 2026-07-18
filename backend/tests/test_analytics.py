@@ -1,18 +1,15 @@
 """Tests for Career Analytics dashboard summary."""
+
 import pytest
 from httpx import AsyncClient
 
 
 async def _register_and_login(client: AsyncClient, email: str = "analytics_test@test.com") -> str:
-    await client.post("/api/v1/auth/register", json={
-        "email": email,
-        "password": "Password@123",
-        "full_name": "Analytics User"
-    })
-    res = await client.post("/api/v1/auth/login", json={
-        "email": email,
-        "password": "Password@123"
-    })
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password@123", "full_name": "Analytics User"},
+    )
+    res = await client.post("/api/v1/auth/login", json={"email": email, "password": "Password@123"})
     return res.json()["access_token"]
 
 

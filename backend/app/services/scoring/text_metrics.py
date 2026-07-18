@@ -3,6 +3,7 @@
 All functions are pure (no I/O) and deterministic.
 They accept either a dict (raw JSONB) or a ResumeDocument Pydantic model.
 """
+
 from __future__ import annotations
 
 import re
@@ -17,6 +18,7 @@ from app.services.scoring.config import (
 )
 
 # ─── Safe Field Accessors ─────────────────────────────────────────────────────
+
 
 def _get(obj: Any, *keys: str, default: Any = None) -> Any:
     """Safely traverse nested dict or object attributes."""
@@ -37,6 +39,7 @@ def _get_list(obj: Any, key: str) -> list:
 
 
 # ─── Content Extraction ───────────────────────────────────────────────────────
+
 
 def collect_all_bullets(resume: Any) -> list[str]:
     """Extract every bullet point from experience, projects, and positions."""
@@ -140,13 +143,33 @@ def collect_all_dates(resume: Any) -> list[tuple[str, str]]:
 # ─── Date Parsing ─────────────────────────────────────────────────────────────
 
 _MONTH_ABBR = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 _MONTH_FULL = {
-    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
-    "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12,
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "may": 5,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
 }
 
 
@@ -207,11 +230,12 @@ def detect_date_format_type(date_str: str | None) -> str | None:
 
 # ─── Action Verb Detection ────────────────────────────────────────────────────
 
+
 def starts_with_action_verb(text: str) -> bool:
     """Return True if the text starts with a known action verb (case-insensitive)."""
     if not text:
         return False
-    first_word = re.split(r"[\s,;.]", text.strip())[0].lower().rstrip("sed")  # normalize past tense
+    re.split(r"[\s,;.]", text.strip())[0].lower().rstrip("sed")  # normalize past tense
     # Direct match
     if text.strip().split()[0].lower() in ACTION_VERBS:
         return True
@@ -222,6 +246,7 @@ def starts_with_action_verb(text: str) -> bool:
 
 
 # ─── Weak Phrase Detection ────────────────────────────────────────────────────
+
 
 def contains_weak_phrase(text: str) -> bool:
     """Return True if the text contains a known weak phrase."""
@@ -251,9 +276,9 @@ def has_any_metric(text: str) -> bool:
 
 # Technologies, frameworks, proper nouns, or scope terms add specificity
 _SPECIFICITY_PATTERNS = [
-    r"\b[A-Z][a-zA-Z]+(?:\.[a-zA-Z]+)+\b",    # dotted namespaces (e.g. React.js)
-    r"\b[A-Z]{2,}\b",                           # acronyms (API, SQL, AWS)
-    r"\b\w+(?:JS|\.js|\.py|\.ts|\.go)\b",      # file-extension indicators
+    r"\b[A-Z][a-zA-Z]+(?:\.[a-zA-Z]+)+\b",  # dotted namespaces (e.g. React.js)
+    r"\b[A-Z]{2,}\b",  # acronyms (API, SQL, AWS)
+    r"\b\w+(?:JS|\.js|\.py|\.ts|\.go)\b",  # file-extension indicators
     r"\b(using|with|via|through|leveraging|employing)\s+\w+",  # "using X" patterns
     r"\b\d+\s*(year|month|week|user|team|service|system|endpoint|component|module)\w*\b",
 ]
@@ -272,17 +297,23 @@ def specificity_score(text: str) -> int:
 
 # ─── Special Character Analysis ───────────────────────────────────────────────
 
+
 def special_char_ratio(text: str) -> float:
     """Return ratio of problematic decoration characters to total characters."""
     if not text:
         return 0.0
-    problematic = sum(1 for c in text if unicodedata.category(c) in ("So", "Sm") or c in "█▌▐▄▀■□●○◆◇★☆✓✗→←↑↓")
+    problematic = sum(
+        1 for c in text if unicodedata.category(c) in ("So", "Sm") or c in "█▌▐▄▀■□●○◆◇★☆✓✗→←↑↓"
+    )
     return problematic / len(text)
 
 
 # ─── Duplicate Detection ──────────────────────────────────────────────────────
 
-def find_duplicate_bullets(bullets: list[str], similarity_threshold: float = 0.85) -> list[tuple[int, int]]:
+
+def find_duplicate_bullets(
+    bullets: list[str], similarity_threshold: float = 0.85
+) -> list[tuple[int, int]]:
     """
     Return pairs (i, j) of bullet indices that are near-duplicates.
     Uses simple token Jaccard similarity — deterministic, no ML.
@@ -302,6 +333,7 @@ def find_duplicate_bullets(bullets: list[str], similarity_threshold: float = 0.8
 
 
 # ─── Word Count ───────────────────────────────────────────────────────────────
+
 
 def word_count(text: str) -> int:
     return len(text.split()) if text else 0

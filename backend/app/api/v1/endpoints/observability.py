@@ -6,6 +6,7 @@ Three standard Kubernetes-style probes:
   GET /ready  — readiness: can this instance serve traffic? (checks all deps)
   GET /health — alias for /ready with richer payload
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -62,6 +63,7 @@ async def health() -> JSONResponse:
 
 # ─── Individual checks ────────────────────────────────────────────────────────
 
+
 async def _run_checks() -> dict[str, Any]:
     results = await asyncio.gather(
         _check_database(),
@@ -71,8 +73,8 @@ async def _run_checks() -> dict[str, Any]:
     )
     return {
         "database": results[0] if not isinstance(results[0], Exception) else _err(results[0]),
-        "redis":    results[1] if not isinstance(results[1], Exception) else _err(results[1]),
-        "storage":  results[2] if not isinstance(results[2], Exception) else _err(results[2]),
+        "redis": results[1] if not isinstance(results[1], Exception) else _err(results[1]),
+        "storage": results[2] if not isinstance(results[2], Exception) else _err(results[2]),
     }
 
 
@@ -84,6 +86,7 @@ async def _check_database() -> dict[str, Any]:
     from sqlalchemy import text
 
     from app.db.session import AsyncSessionLocal
+
     try:
         start = time.perf_counter()
         async with AsyncSessionLocal() as session:
@@ -96,6 +99,7 @@ async def _check_database() -> dict[str, Any]:
 
 async def _check_redis() -> dict[str, Any]:
     from app.core.config import get_settings
+
     settings = get_settings()
 
     if not settings.REDIS_ENABLED:
@@ -103,6 +107,7 @@ async def _check_redis() -> dict[str, Any]:
 
     try:
         from app.services.cache import get_cache
+
         start = time.perf_counter()
         cache = await get_cache()
         ok = await cache.ping()
@@ -114,6 +119,7 @@ async def _check_redis() -> dict[str, Any]:
 
 async def _check_storage() -> dict[str, Any]:
     from app.core.config import get_settings
+
     settings = get_settings()
 
     try:

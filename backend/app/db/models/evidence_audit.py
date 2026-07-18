@@ -1,4 +1,5 @@
 """Evidence Audit ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -12,9 +13,7 @@ from app.db.base import Base
 class EvidenceAudit(Base):
     __tablename__ = "evidence_audits"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -36,7 +35,9 @@ class EvidenceAudit(Base):
     contradiction_count: Mapped[int] = mapped_column(Integer, nullable=False)
     unsupported_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="completed")  # completed, stale, failed
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="completed"
+    )  # completed, stale, failed
     ai_fallback_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 

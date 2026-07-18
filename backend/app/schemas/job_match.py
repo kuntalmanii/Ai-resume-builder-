@@ -1,4 +1,5 @@
 """Pydantic schemas for Job Match Results, AI Suggestions, and Evidence."""
+
 import uuid
 from datetime import datetime
 
@@ -41,13 +42,16 @@ class JobMatchResultResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class JobMatchRunRequest(BaseModel):
     job_description_id: uuid.UUID
+
 
 class JobMatchMethodologyResponse(BaseModel):
     matching_version: str
     categories: list[dict]
     scoring_description: str
+
 
 class EvidenceSourceResponse(BaseModel):
     id: uuid.UUID
@@ -60,6 +64,7 @@ class EvidenceSourceResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
 
 class AISuggestionResponse(BaseModel):
     id: uuid.UUID

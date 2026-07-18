@@ -1,4 +1,5 @@
 """Job Description Service layer — handles core CRUD and ownership checks."""
+
 import uuid
 
 from sqlalchemy import select
@@ -69,9 +70,7 @@ async def update_job_description(
     return jd
 
 
-async def delete_job_description(
-    db: AsyncSession, jd_id: uuid.UUID, user_id: uuid.UUID
-) -> None:
+async def delete_job_description(db: AsyncSession, jd_id: uuid.UUID, user_id: uuid.UUID) -> None:
     """Delete job description."""
     jd = await get_job_description(db, jd_id, user_id)
     await db.delete(jd)

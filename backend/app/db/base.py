@@ -1,4 +1,5 @@
 """SQLAlchemy declarative base and metadata registry."""
+
 import uuid
 from datetime import datetime
 from typing import Annotated

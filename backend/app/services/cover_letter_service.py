@@ -1,4 +1,5 @@
 """Cover Letter Service class."""
+
 import json
 import uuid
 
@@ -39,11 +40,15 @@ class CoverLetterService:
         # 3. Grounding prompts
         system_prompt = (
             "You are an expert career advisor and professional resume writer.\n"
-            "Your task is to write a highly compelling, personalized cover letter for the candidate.\n"
+            "Your task is to write a highly compelling, " \
+                "personalized cover letter for the candidate.\n"
             "CRITICAL INSTRUCTIONS:\n"
             "1. NEVER invent any work experiences, projects, credentials, or skills.\n"
             "2. Ground ALL claims and achievements strictly on the provided resume content.\n"
-            "3. If a requirement in the job description is not mentioned in the resume, do not claim the candidate has it; instead focus on transferable skills that ARE in the resume.\n"
+            "3. If a requirement in the job description is " \
+                "not mentioned in the resume, do not claim " \
+                "the candidate has it; instead focus on " \
+                    "transferable skills that ARE in the resume.\n"
             "4. Make the tone matches the requested style (e.g. professional, creative, modern)."
         )
 
@@ -51,24 +56,25 @@ class CoverLetterService:
             f"Candidate Resume Content:\n{resume_content}\n\n"
             f"Target Job Description:\n{jd_text}\n\n"
             f"Style Preference: {request.style_preference}\n\n"
-            "Please write a cover letter. Output ONLY the raw cover letter text. Do not include any chat prefix/suffix."
+            "Please write a cover letter. Output ONLY the raw cover " \
+                "letter text. Do not include any chat prefix/suffix."
         )
 
         ai_provider = get_ai_provider()
         content = await ai_provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.3
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.3
         )
 
         metadata = {
             "style_preference": request.style_preference,
             "resume_version": resume.version,
-            "grounding_source": "resume_claims"
+            "grounding_source": "resume_claims",
         }
         return str(content).strip(), metadata
 
-    async def create(self, db: AsyncSession, *, user_id: uuid.UUID, obj_in: CoverLetterCreate) -> CoverLetter:
+    async def create(
+        self, db: AsyncSession, *, user_id: uuid.UUID, obj_in: CoverLetterCreate
+    ) -> CoverLetter:
         data = obj_in.model_dump()
         data["user_id"] = user_id
         cl_obj = await cover_letter_repository.create(db, obj_in=data)
@@ -81,22 +87,30 @@ class CoverLetterService:
                 type="success",
                 title="Cover Letter Created",
                 body=f"Cover letter '{cl_obj.title}' created successfully.",
-                action_url=f"/cover-letters/{cl_obj.id}"
-            )
+                action_url=f"/cover-letters/{cl_obj.id}",
+            ),
         )
         return cl_obj
 
     async def get_by_user_id(self, db: AsyncSession, user_id: uuid.UUID) -> list[CoverLetter]:
         return await cover_letter_repository.get_by_user_id(db, user_id)
 
-    async def get_by_id(self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID) -> CoverLetter | None:
+    async def get_by_id(
+        self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID
+    ) -> CoverLetter | None:
         cl = await cover_letter_repository.get(db, id)
         if cl and cl.user_id == user_id:
             return cl
         return None
 
     async def create_new_version(
-        self, db: AsyncSession, *, root_id: uuid.UUID, user_id: uuid.UUID, content: str, title: str | None = None
+        self,
+        db: AsyncSession,
+        *,
+        root_id: uuid.UUID,
+        user_id: uuid.UUID,
+        content: str,
+        title: str | None = None,
     ) -> CoverLetter:
         """Create a new version increment of a cover letter."""
         root = await cover_letter_repository.get(db, root_id)
@@ -116,20 +130,30 @@ class CoverLetterService:
             version=next_ver,
             parent_id=root_id,
             is_grounded=root.is_grounded,
-            generation_metadata=root.generation_metadata
+            generation_metadata=root.generation_metadata,
         )
         db.add(new_cl)
         await db.flush()
         return new_cl
 
-    async def get_versions(self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID) -> list[CoverLetter]:
+    async def get_versions(
+        self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID
+    ) -> list[CoverLetter]:
         cl = await cover_letter_repository.get(db, id)
         if not cl or cl.user_id != user_id:
             return []
         root_id = cl.parent_id if cl.parent_id else cl.id
         return await cover_letter_repository.get_versions(db, root_id)
 
-    async def update(self, db: AsyncSession, *, id: uuid.UUID, user_id: uuid.UUID, content: str, title: str | None = None) -> CoverLetter | None:
+    async def update(
+        self,
+        db: AsyncSession,
+        *,
+        id: uuid.UUID,
+        user_id: uuid.UUID,
+        content: str,
+        title: str | None = None,
+    ) -> CoverLetter | None:
         cl = await cover_letter_repository.get(db, id)
         if not cl or cl.user_id != user_id:
             return None
@@ -184,6 +208,7 @@ class CoverLetterService:
 
         # Save pdf bytes using Storage Factory
         from app.services.storage.storage_factory import get_storage
+
         storage = get_storage()
         filename = f"cover_letter_{cl.id}.pdf"
         file_path = await storage.save(filename, pdf_bytes)

@@ -6,6 +6,7 @@ from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 
+
 async def _register_and_login(client: AsyncClient, email: str, name: str) -> str:
     """Helper to register and login a user, returning their access token."""
     await client.post(
@@ -17,6 +18,7 @@ async def _register_and_login(client: AsyncClient, email: str, name: str) -> str
         json={"email": email, "password": "Testpass1!"},
     )
     return res.json()["access_token"]
+
 
 async def test_evidence_map_flow(client: AsyncClient):
     """Test generating and retrieving an Evidence Map."""
@@ -36,14 +38,20 @@ async def test_evidence_map_flow(client: AsyncClient):
                     "id": str(uuid.uuid4()),
                     "company": "Tech Corp",
                     "position": "Software Engineer",
-                    "bullets": ["Increased performance by 20%"]
+                    "bullets": ["Increased performance by 20%"],
                 }
             ],
             "skills": [],
             "certifications": [],
             "achievements": [],
-            "section_order": ["personal_information", "professional_summary", "education", "experience", "skills"]
-        }
+            "section_order": [
+                "personal_information",
+                "professional_summary",
+                "education",
+                "experience",
+                "skills",
+            ],
+        },
     }
     create_res = await client.post("/api/v1/resumes", json=resume_data, headers=headers)
     assert create_res.status_code == 201
@@ -70,23 +78,33 @@ async def test_evidence_map_flow(client: AsyncClient):
     async def mock_complete(*args, **kwargs):
         schema = kwargs.get("response_schema")
         if schema == LLMClaimExtractionOutput:
-            return LLMClaimExtractionOutput(claims=[
-                LLMResumeClaim(claim_text="Increased performance by 20%", source_section="experience", claim_type="metric")
-            ])
+            return LLMClaimExtractionOutput(
+                claims=[
+                    LLMResumeClaim(
+                        claim_text="Increased performance by 20%",
+                        source_section="experience",
+                        claim_type="metric",
+                    )
+                ]
+            )
         elif schema == LLMVerificationBatchOutput:
             prompt = kwargs.get("prompt", "")
             # Find the ID in the prompt
-            match = re.search(r"ID:\s*([0-9a-fA-F-]+)\s*\|\s*Claim:\s*Increased performance by 20%", prompt)
+            match = re.search(
+                r"ID:\s*([0-9a-fA-F-]+)\s*\|\s*Claim:\s*Increased performance by 20%", prompt
+            )
             claim_id = match.group(1) if match else "12345"
-            return LLMVerificationBatchOutput(verifications=[
-                LLMClaimVerification(
-                    claim_id=claim_id,
-                    claim_text="Increased performance by 20%",
-                    verification_status="user_confirmed",
-                    reasoning="Matches profile",
-                    confidence_score=95
-                )
-            ])
+            return LLMVerificationBatchOutput(
+                verifications=[
+                    LLMClaimVerification(
+                        claim_id=claim_id,
+                        claim_text="Increased performance by 20%",
+                        verification_status="user_confirmed",
+                        reasoning="Matches profile",
+                        confidence_score=95,
+                    )
+                ]
+            )
         return None
 
     with patch("app.ai.gemini_provider.GeminiProvider.complete", side_effect=mock_complete):

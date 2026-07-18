@@ -1,20 +1,20 @@
 """Tests for Application Tracker and Interview schedules."""
+
 import pytest
 from httpx import AsyncClient
 
 
-async def _register_and_login(client: AsyncClient, email: str = "tracker@test.com", role: str = "user") -> str:
+async def _register_and_login(
+    client: AsyncClient, email: str = "tracker@test.com", role: str = "user"
+) -> str:
     # Register
-    await client.post("/api/v1/auth/register", json={
-        "email": email,
-        "password": "Password@123",
-        "full_name": "Tracker User"
-    })
-    # We need to manually set the role if it's recruiter in the DB, but for user we can login directly
-    res = await client.post("/api/v1/auth/login", json={
-        "email": email,
-        "password": "Password@123"
-    })
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password@123", "full_name": "Tracker User"},
+    )
+    # We need to manually set the role if it's recruiter in the DB, but for user we can
+    # login directly
+    res = await client.post("/api/v1/auth/login", json={"email": email, "password": "Password@123"})
     return res.json()["access_token"]
 
 
@@ -33,7 +33,7 @@ async def test_application_lifecycle(client: AsyncClient) -> None:
         "salary_max": 200000,
         "currency": "USD",
         "recruiter_name": "Sarah",
-        "notes": "Referral from John."
+        "notes": "Referral from John.",
     }
     res = await client.post("/api/v1/applications", json=payload, headers=headers)
     assert res.status_code == 201
@@ -50,9 +50,7 @@ async def test_application_lifecycle(client: AsyncClient) -> None:
 
     # 3. Update Status (Move column)
     res = await client.patch(
-        f"/api/v1/applications/{app_id}/status",
-        json={"status": "Applied"},
-        headers=headers
+        f"/api/v1/applications/{app_id}/status", json={"status": "Applied"}, headers=headers
     )
     assert res.status_code == 200
     assert res.json()["status"] == "Applied"
@@ -63,9 +61,11 @@ async def test_application_lifecycle(client: AsyncClient) -> None:
         "scheduled_at": "2026-08-01T10:00:00Z",
         "duration_minutes": 45,
         "location": "Google Meet",
-        "format": "video"
+        "format": "video",
     }
-    res = await client.post(f"/api/v1/applications/{app_id}/interviews", json=iv_payload, headers=headers)
+    res = await client.post(
+        f"/api/v1/applications/{app_id}/interviews", json=iv_payload, headers=headers
+    )
     assert res.status_code == 201
     iv_body = res.json()
     assert iv_body["round_type"] == "Technical Screening"

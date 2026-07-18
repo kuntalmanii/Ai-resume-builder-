@@ -1,4 +1,5 @@
 """Tests for Recruiter Dashboard role-based access control and read-only candidate views."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import update
@@ -20,7 +21,9 @@ async def _register_and_login(client: AsyncClient, email: str, name: str) -> str
 
 
 @pytest.mark.asyncio
-async def test_recruiter_endpoint_role_verification(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_recruiter_endpoint_role_verification(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
     # 1. Register candidate user (default role = 'user')
     cand_token = await _register_and_login(client, "cand@test.com", "Cand User")
     cand_headers = {"Authorization": f"Bearer {cand_token}"}

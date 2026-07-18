@@ -1,4 +1,5 @@
 """AI provider factory — resolves provider from config."""
+
 from functools import lru_cache
 
 from app.ai.provider import AIProvider
@@ -12,9 +13,11 @@ def get_ai_provider() -> AIProvider:
 
     if settings.AI_PROVIDER == "gemini":
         from app.ai.gemini_provider import GeminiProvider
+
         return GeminiProvider()
     elif settings.AI_PROVIDER == "openai":
         from app.ai.openai_provider import OpenAIProvider
+
         return OpenAIProvider()
     else:
         raise ValueError(f"Unsupported AI_PROVIDER: {settings.AI_PROVIDER}")

@@ -5,6 +5,7 @@ Middleware added here:
 2. SecurityHeadersMiddleware — injects all security HTTP headers
 3. RateLimiterMiddleware  — Redis-backed (or in-memory) sliding window rate limiter
 """
+
 from __future__ import annotations
 
 import logging
@@ -21,6 +22,7 @@ logger = logging.getLogger("careeros.access")
 
 
 # ─── 1. Request ID + Structured Access Logging ────────────────────────────────
+
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     """Inject a unique X-Request-ID and emit a structured access log per request."""
@@ -95,7 +97,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._extra: dict[str, str] = {}
         if enable_hsts:
-            self._extra["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+            self._extra["Strict-Transport-Security"] = (
+                "max-age=63072000; includeSubDomains; preload"
+            )
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
@@ -131,6 +135,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         from app.core.config import get_settings
+
         settings = get_settings()
 
         if not settings.RATE_LIMIT_ENABLED:
@@ -149,10 +154,10 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
                 break
 
         limit_map = {
-            "auth":    settings.RATE_LIMIT_AUTH,
-            "ai":      settings.RATE_LIMIT_AI,
-            "export":  settings.RATE_LIMIT_EXPORT,
-            "upload":  settings.RATE_LIMIT_UPLOAD,
+            "auth": settings.RATE_LIMIT_AUTH,
+            "ai": settings.RATE_LIMIT_AI,
+            "export": settings.RATE_LIMIT_EXPORT,
+            "upload": settings.RATE_LIMIT_UPLOAD,
             "default": settings.RATE_LIMIT_DEFAULT,
         }
         limit = limit_map.get(bucket, settings.RATE_LIMIT_DEFAULT)
@@ -163,6 +168,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
         try:
             from app.services.cache import get_cache
+
             cache = await get_cache()
             count, exceeded = await cache.rate_limit_check(identifier, limit, window)
         except Exception:
@@ -173,7 +179,10 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         if exceeded:
             logger.warning(
                 "Rate limit exceeded: ip=%s bucket=%s count=%d limit=%d",
-                client_ip, bucket, count, limit,
+                client_ip,
+                bucket,
+                count,
+                limit,
             )
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,

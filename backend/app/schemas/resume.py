@@ -1,4 +1,5 @@
 """Pydantic schemas for Resume."""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -6,6 +7,7 @@ from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 # ─── Sub-schemas for strongly validated sections ──────────────────────────────
+
 
 class PersonalInformation(BaseModel):
     full_name: str | None = ""
@@ -111,6 +113,7 @@ class InterestEntry(BaseModel):
 
 # ─── Strong Resume Document Schema ───────────────────────────────────────────
 
+
 class ResumeDocument(BaseModel):
     personal_information: PersonalInformation = Field(default_factory=PersonalInformation)
     professional_summary: str = ""
@@ -167,6 +170,7 @@ class ResumeDocument(BaseModel):
 
 # ─── Resume Main Request/Response Schemas ─────────────────────────────────────
 
+
 class ResumeBase(BaseModel):
     title: str = Field("Untitled Resume", max_length=255)
     template_id: str = Field("modern", max_length=50)
@@ -220,7 +224,9 @@ class ResumeResponse(ResumeBase):
         if hasattr(obj, "__dict__") and "analyses" in obj.__dict__:
             analyses = obj.__dict__["analyses"]
             if analyses:
-                sorted_analyses = sorted(analyses, key=lambda a: a.created_at or datetime.min, reverse=True)
+                sorted_analyses = sorted(
+                    analyses, key=lambda a: a.created_at or datetime.min, reverse=True
+                )
                 if sorted_analyses:
                     instance.latest_score = sorted_analyses[0].overall_score
         return instance

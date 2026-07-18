@@ -1,4 +1,5 @@
 """Job Description parser and requirement extraction service."""
+
 import logging
 import re
 
@@ -11,20 +12,42 @@ logger = logging.getLogger(__name__)
 
 # Experience and Education Regexes
 EXP_REGEX = re.compile(
-    r'\b(\d{1,2})\+?\s*(?:to\s*\d{1,2}\s*)?(?:year|yr)s?\s*(?:of\s*)?(?:experience|exp)\b',
-    re.IGNORECASE
+    r"\b(\d{1,2})\+?\s*(?:to\s*\d{1,2}\s*)?(?:year|yr)s?\s*(?:of\s*)?(?:experience|exp)\b",
+    re.IGNORECASE,
 )
-DEGREE_KEYWORDS = ["bachelor", "master", "phd", "degree", "bs", "ms", "b.tech", "m.tech", "diploma", "associate"]
+DEGREE_KEYWORDS = [
+    "bachelor",
+    "master",
+    "phd",
+    "degree",
+    "bs",
+    "ms",
+    "b.tech",
+    "m.tech",
+    "diploma",
+    "associate",
+]
 CERT_KEYWORDS = ["certified", "certification", "pmp", "scrum", "aws", "gcp", "cissp", "ccna"]
 
 # Preferred indicator terms
-PREFERRED_INDICATORS = ["preferred", "nice to have", "plus", "bonus", "desired", "option", "advantage", "ideal"]
+PREFERRED_INDICATORS = [
+    "preferred",
+    "nice to have",
+    "plus",
+    "bonus",
+    "desired",
+    "option",
+    "advantage",
+    "ideal",
+]
+
 
 def split_sentences(text: str) -> list[str]:
     """Split text into raw sentences for context analysis."""
     # Split by common sentence endings
-    raw_sentences = re.split(r'[.\n;!?]', text)
+    raw_sentences = re.split(r"[.\n;!?]", text)
     return [s.strip() for s in raw_sentences if s.strip()]
+
 
 def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
     """
@@ -66,16 +89,18 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
                 if canonical not in req_skills:
                     req_skills.append(canonical)
 
-            fragments.append(JobDescriptionRequirement(
-                id=f"det-skill-{len(fragments) + 1}",
-                text=canonical,
-                normalized_value=canonical,
-                requirement_type=req_type,
-                importance=importance,
-                source_excerpt=excerpt[:255],
-                confidence=0.85,
-                extraction_method="deterministic"
-            ))
+            fragments.append(
+                JobDescriptionRequirement(
+                    id=f"det-skill-{len(fragments) + 1}",
+                    text=canonical,
+                    normalized_value=canonical,
+                    requirement_type=req_type,
+                    importance=importance,
+                    source_excerpt=excerpt[:255],
+                    confidence=0.85,
+                    extraction_method="deterministic",
+                )
+            )
 
             # Add to tools_and_technologies if it represents technology
             if canonical not in tools_techs:
@@ -96,46 +121,52 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
             else:
                 req_exp = desc
 
-            fragments.append(JobDescriptionRequirement(
-                id=f"det-exp-{len(fragments) + 1}",
-                text=desc,
-                normalized_value=f"{years}_years",
-                requirement_type=req_type,
-                importance=importance,
-                source_excerpt=s[:255],
-                confidence=0.90,
-                extraction_method="deterministic"
-            ))
-            break # limit to first matching experience sentence
+            fragments.append(
+                JobDescriptionRequirement(
+                    id=f"det-exp-{len(fragments) + 1}",
+                    text=desc,
+                    normalized_value=f"{years}_years",
+                    requirement_type=req_type,
+                    importance=importance,
+                    source_excerpt=s[:255],
+                    confidence=0.90,
+                    extraction_method="deterministic",
+                )
+            )
+            break  # limit to first matching experience sentence
 
     # 3. Education and Certifications Heuristic
     for s in sentences:
         # Check degree
         if any(kw in s.lower() for kw in DEGREE_KEYWORDS):
             edu_reqs.append(s)
-            fragments.append(JobDescriptionRequirement(
-                id=f"det-edu-{len(fragments) + 1}",
-                text=s[:100],
-                normalized_value=None,
-                requirement_type="education",
-                importance="required",
-                source_excerpt=s[:255],
-                confidence=0.75,
-                extraction_method="deterministic"
-            ))
+            fragments.append(
+                JobDescriptionRequirement(
+                    id=f"det-edu-{len(fragments) + 1}",
+                    text=s[:100],
+                    normalized_value=None,
+                    requirement_type="education",
+                    importance="required",
+                    source_excerpt=s[:255],
+                    confidence=0.75,
+                    extraction_method="deterministic",
+                )
+            )
         # Check certifications
         if any(kw in s.lower() for kw in CERT_KEYWORDS):
             cert_reqs.append(s)
-            fragments.append(JobDescriptionRequirement(
-                id=f"det-cert-{len(fragments) + 1}",
-                text=s[:100],
-                normalized_value=None,
-                requirement_type="certification",
-                importance="preferred",
-                source_excerpt=s[:255],
-                confidence=0.75,
-                extraction_method="deterministic"
-            ))
+            fragments.append(
+                JobDescriptionRequirement(
+                    id=f"det-cert-{len(fragments) + 1}",
+                    text=s[:100],
+                    normalized_value=None,
+                    requirement_type="certification",
+                    importance="preferred",
+                    source_excerpt=s[:255],
+                    confidence=0.75,
+                    extraction_method="deterministic",
+                )
+            )
 
     return JobDescriptionRequirements(
         required_skills=req_skills,
@@ -147,39 +178,54 @@ def parse_jd_deterministic(text: str) -> JobDescriptionRequirements:
         certification_requirements=cert_reqs,
         tools_and_technologies=tools_techs,
         soft_skills=soft_skills,
-        raw_requirement_fragments=fragments
+        raw_requirement_fragments=fragments,
     )
+
 
 async def parse_jd_text(text: str) -> JobDescriptionRequirements:
     """
-    Parse JD text using two layers (Gemini Structured first, fallback to deterministic regex/taxonomy).
+    Parse JD text using two layers (Gemini Structured first, fallback to
+    deterministic regex/taxonomy).
     """
     settings = get_settings()
-    has_ai = settings.AI_PROVIDER and settings.AI_API_KEY and settings.AI_API_KEY != "your-ai-api-key-here"
+    has_ai = (
+        settings.AI_PROVIDER
+        and settings.AI_API_KEY
+        and settings.AI_API_KEY != "your-ai-api-key-here"
+    )
 
     if has_ai:
         try:
             provider = get_ai_provider()
             prompt = (
-                "You are a professional Job Description Requirement Extractor. Analyze the provided job description "
-                "text and map all extracted details into the JobDescriptionRequirements JSON schema.\n"
+                "You are a professional Job Description Requirement " \
+                    "Extractor. Analyze the provided job description "
+                "text and map all extracted details into the " \
+                    "JobDescriptionRequirements JSON schema.\n"
                 "Strict Guidelines:\n"
-                "1. NEVER fabricate or hallucinate any requirements. Extract only what is present in the text.\n"
-                "2. Classify each requirement fragment under raw_requirement_fragments. Each fragment must match one of "
-                "the requirement_type values (required_skill, preferred_skill, responsibility, required_experience, "
-                "preferred_experience, education, certification, domain_keyword, tool, soft_skill).\n"
+                "1. NEVER fabricate or hallucinate any requirements. " \
+                    "Extract only what is present in the text.\n"
+                "2. Classify each requirement fragment under " \
+                    "raw_requirement_fragments. Each fragment must match one of "
+                "the requirement_type values (required_skill, " \
+                    "preferred_skill, responsibility, required_experience, "
+                "preferred_experience, education, certification, " \
+                    "domain_keyword, tool, soft_skill).\n"
                 "3. Preserve the exact source_excerpt from the text to verify where it came from.\n"
-                "4. Assign importance (required, preferred, optional) based on explicit wording.\n\n"
+                "4. Assign importance (required, preferred, " \
+                    "optional) based on explicit wording.\n\n"
                 f"Job Description text to analyze:\n{text}"
             )
 
             result: JobDescriptionRequirements = await provider.complete(
                 prompt=prompt,
                 system_prompt=(
-                    "You are a precise, logical requirement parser. Map natural language requirements into structured "
-                    "entities. Maintain absolute fidelity to the source text without exaggerating or inferring missing skills."
+                    "You are a precise, logical requirement parser. " \
+                        "Map natural language requirements into structured "
+                    "entities. Maintain absolute fidelity to the source " \
+                        "text without exaggerating or inferring missing skills."
                 ),
-                response_schema=JobDescriptionRequirements
+                response_schema=JobDescriptionRequirements,
             )
 
             # Post-process: set extraction method to hybrid/llm

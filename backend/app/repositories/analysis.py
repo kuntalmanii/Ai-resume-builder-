@@ -1,4 +1,5 @@
 """Resume Analysis Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import and_, select

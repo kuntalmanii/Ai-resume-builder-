@@ -8,6 +8,7 @@ Priority order:
 
 Deduplication: only one recommendation per check_code.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -54,22 +55,26 @@ def build_recommendations(
         if points_lost <= 0:
             continue
 
-        actionable.append(TopRecommendation(
-            check_code=check.check_code,
-            category=check.category,
-            title=check.title,
-            recommendation=check.recommendation,
-            points_possible=check.points_possible,
-            points_lost=points_lost,
-            status=check.status,
-        ))
+        actionable.append(
+            TopRecommendation(
+                check_code=check.check_code,
+                category=check.category,
+                title=check.title,
+                recommendation=check.recommendation,
+                points_possible=check.points_possible,
+                points_lost=points_lost,
+                status=check.status,
+            )
+        )
 
     # Sort by: points_lost desc, status priority asc, check_code asc
-    actionable.sort(key=lambda r: (
-        -r.points_lost,
-        _STATUS_PRIORITY.get(r.status, 2),
-        r.check_code,
-    ))
+    actionable.sort(
+        key=lambda r: (
+            -r.points_lost,
+            _STATUS_PRIORITY.get(r.status, 2),
+            r.check_code,
+        )
+    )
 
     # Deduplicate by check_code (shouldn't happen, but defensive)
     seen_codes: set[str] = set()

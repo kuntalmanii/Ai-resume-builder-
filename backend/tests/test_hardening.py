@@ -12,6 +12,7 @@ Covers:
   - Background queue abstraction (InMemoryQueue)
   - Ownership enforcement on exports
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -22,41 +23,53 @@ from httpx import AsyncClient
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
+
 async def _register_and_login(client: AsyncClient) -> str:
     """Register a test user and return the Bearer access token."""
     import uuid
+
     suffix = uuid.uuid4().hex[:8]
-    await client.post("/api/v1/auth/register", json={
-        "email": f"hardening_{suffix}@test.com",
-        "password": "Hardening@123",
-        "full_name": "Hardening User",
-    })
-    res = await client.post("/api/v1/auth/login", json={
-        "email": f"hardening_{suffix}@test.com",
-        "password": "Hardening@123",
-    })
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": f"hardening_{suffix}@test.com",
+            "password": "Hardening@123",
+            "full_name": "Hardening User",
+        },
+    )
+    res = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": f"hardening_{suffix}@test.com",
+            "password": "Hardening@123",
+        },
+    )
     assert res.status_code == 200
     return res.json()["access_token"]
 
 
 # ─── Configuration Tests ──────────────────────────────────────────────────────
 
+
 class TestConfigurationValidation:
     def test_settings_load_successfully_in_test_env(self) -> None:
         """Settings should load without error in the test environment."""
         from app.core.config import get_settings
+
         settings = get_settings()
         assert settings.APP_ENV in ("development", "testing", "staging", "production")
         assert settings.DATABASE_URL != ""
 
     def test_redis_settings_have_defaults(self) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         assert settings.REDIS_URL.startswith("redis://")
         assert settings.REDIS_CACHE_TTL > 0
 
     def test_rate_limit_settings_have_sensible_defaults(self) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         assert settings.RATE_LIMIT_DEFAULT >= 10
         assert settings.RATE_LIMIT_AUTH >= 5
@@ -65,16 +78,19 @@ class TestConfigurationValidation:
 
     def test_storage_provider_is_valid(self) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         assert settings.STORAGE_PROVIDER in ("local", "s3", "gcs", "azure")
 
     def test_max_upload_size_bytes_property(self) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         assert settings.max_upload_size_bytes == settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
 
 # ─── Security Header Tests ─────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_security_headers_are_present(client: AsyncClient) -> None:
@@ -101,6 +117,7 @@ async def test_request_id_header_is_injected(client: AsyncClient) -> None:
 
 
 # ─── Error Envelope Tests ──────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_404_returns_standard_error_envelope(client: AsyncClient) -> None:
@@ -132,6 +149,7 @@ async def test_401_returns_standard_auth_envelope(client: AsyncClient) -> None:
 
 # ─── Observability Endpoint Tests ─────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_liveness_probe(client: AsyncClient) -> None:
     resp = await client.get("/api/v1/live")
@@ -161,9 +179,11 @@ async def test_readiness_probe(client: AsyncClient) -> None:
 
 # ─── Cache Service Tests ───────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_cache_set_and_get() -> None:
     from app.services.cache import CacheService, _InMemoryFallback
+
     cache = CacheService(_InMemoryFallback())
 
     await cache.set("ats", "resume_abc", {"score": 88}, version=1)
@@ -174,6 +194,7 @@ async def test_cache_set_and_get() -> None:
 @pytest.mark.asyncio
 async def test_cache_miss_returns_none() -> None:
     from app.services.cache import CacheService, _InMemoryFallback
+
     cache = CacheService(_InMemoryFallback())
 
     result = await cache.get("ats", "nonexistent", version=99)
@@ -183,6 +204,7 @@ async def test_cache_miss_returns_none() -> None:
 @pytest.mark.asyncio
 async def test_cache_invalidate_resume() -> None:
     from app.services.cache import CacheService, _InMemoryFallback
+
     cache = CacheService(_InMemoryFallback())
 
     await cache.set("ats", "resume_xyz", {"score": 75}, version=1)
@@ -197,6 +219,7 @@ async def test_cache_invalidate_resume() -> None:
 @pytest.mark.asyncio
 async def test_rate_limit_counter_increments() -> None:
     from app.services.cache import CacheService, _InMemoryFallback
+
     cache = CacheService(_InMemoryFallback())
 
     count, exceeded = await cache.rate_limit_check("test_ip_1", limit=5, window=60)
@@ -216,10 +239,12 @@ async def test_rate_limit_counter_increments() -> None:
 
 # ─── Storage Factory Tests ────────────────────────────────────────────────────
 
+
 def test_storage_factory_returns_local_by_default() -> None:
     import app.services.storage.storage_factory as sf
     from app.services.storage.local import LocalStorage
     from app.services.storage.storage_factory import get_storage
+
     # Reset singleton
     sf._storage_instance = None
 
@@ -232,6 +257,7 @@ def test_storage_factory_returns_local_by_default() -> None:
 
 
 # ─── Background Queue Tests ───────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_in_memory_queue_enqueues_and_runs() -> None:
@@ -256,6 +282,7 @@ async def test_in_memory_queue_enqueues_and_runs() -> None:
 @pytest.mark.asyncio
 async def test_in_memory_queue_unknown_task_does_not_raise() -> None:
     from app.services.queue.queue import InMemoryQueue
+
     q = InMemoryQueue()
     task_id = await q.enqueue("unknown.task", some_param="x")
     assert task_id  # Should not raise
@@ -264,16 +291,18 @@ async def test_in_memory_queue_unknown_task_does_not_raise() -> None:
 @pytest.mark.asyncio
 async def test_in_memory_queue_ping() -> None:
     from app.services.queue.queue import InMemoryQueue
+
     q = InMemoryQueue()
     assert await q.ping() is True
 
 
 # ─── Rate Limiting Header Tests ────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_rate_limit_headers_present_on_api_response(client: AsyncClient) -> None:
     """Public endpoints should include X-RateLimit-* headers."""
-    resp = await client.get("/api/v1/live")
+    await client.get("/api/v1/live")
     # Health probes skip rate limiting — check a regular endpoint
     resp2 = await client.get("/api/v1/resumes")
     # Headers are present on non-exempt endpoints when rate limit not exceeded
@@ -282,6 +311,7 @@ async def test_rate_limit_headers_present_on_api_response(client: AsyncClient) -
 
 
 # ─── Ownership Enforcement Tests ──────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_export_ownership_enforced(client: AsyncClient) -> None:

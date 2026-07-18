@@ -1,4 +1,5 @@
 """Job Description Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -13,8 +14,13 @@ class JobDescriptionRepository(BaseRepository[JobDescription]):
         super().__init__(JobDescription)
 
     async def get_by_user_id(self, db: AsyncSession, user_id: UUID) -> list[JobDescription]:
-        query = select(JobDescription).where(JobDescription.user_id == user_id).order_by(JobDescription.created_at.desc())
+        query = (
+            select(JobDescription)
+            .where(JobDescription.user_id == user_id)
+            .order_by(JobDescription.created_at.desc())
+        )
         result = await db.execute(query)
         return list(result.scalars().all())
+
 
 job_description_repository = JobDescriptionRepository()

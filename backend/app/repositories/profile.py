@@ -1,4 +1,5 @@
 """Career Profile Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -16,5 +17,6 @@ class CareerProfileRepository(BaseRepository[CareerProfile]):
         query = select(CareerProfile).where(CareerProfile.user_id == user_id)
         result = await db.execute(query)
         return result.scalars().first()
+
 
 profile_repository = CareerProfileRepository()

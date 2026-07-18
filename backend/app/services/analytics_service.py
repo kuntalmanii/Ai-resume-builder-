@@ -1,4 +1,5 @@
 """Analytics Service class."""
+
 import uuid
 from datetime import date, timedelta
 
@@ -18,7 +19,9 @@ from app.schemas.analytics import (
 
 
 class AnalyticsService:
-    async def get_summary(self, db: AsyncSession, *, user_id: uuid.UUID) -> AnalyticsSummaryResponse:
+    async def get_summary(
+        self, db: AsyncSession, *, user_id: uuid.UUID
+    ) -> AnalyticsSummaryResponse:
         # 1. Basic Counts
         apps_query = select(Application).where(Application.user_id == user_id)
         apps_res = await db.execute(apps_query)
@@ -60,10 +63,26 @@ class AnalyticsService:
         # Funnel representation
         funnel = [
             FunnelStage(stage="Wishlist", count=wishlist_count, conversion_rate=100.0),
-            FunnelStage(stage="Applied", count=applied_count, conversion_rate=round(applied_count/total_apps*100, 2) if total_apps>0 else 0.0),
-            FunnelStage(stage="OA", count=oa_count, conversion_rate=round(oa_count/total_apps*100, 2) if total_apps>0 else 0.0),
-            FunnelStage(stage="Interview", count=interview_stage_count, conversion_rate=round(interview_stage_count/total_apps*100, 2) if total_apps>0 else 0.0),
-            FunnelStage(stage="Offer", count=offers_count, conversion_rate=offer_rate)
+            FunnelStage(
+                stage="Applied",
+                count=applied_count,
+                conversion_rate=round(applied_count / total_apps * 100, 2)
+                if total_apps > 0
+                else 0.0,
+            ),
+            FunnelStage(
+                stage="OA",
+                count=oa_count,
+                conversion_rate=round(oa_count / total_apps * 100, 2) if total_apps > 0 else 0.0,
+            ),
+            FunnelStage(
+                stage="Interview",
+                count=interview_stage_count,
+                conversion_rate=round(interview_stage_count / total_apps * 100, 2)
+                if total_apps > 0
+                else 0.0,
+            ),
+            FunnelStage(stage="Offer", count=offers_count, conversion_rate=offer_rate),
         ]
 
         # 2. Resumes Performance
@@ -74,20 +93,24 @@ class AnalyticsService:
         resume_metrics = []
         for r in resumes:
             # Query match results
-            match_query = select(func.avg(JobMatchResult.overall_score)).where(JobMatchResult.resume_id == r.id)
+            match_query = select(func.avg(JobMatchResult.overall_score)).where(
+                JobMatchResult.resume_id == r.id
+            )
             match_res = await db.execute(match_query)
             avg_match = match_res.scalar() or 0.0
 
             # Count applications using this resume
-            app_cnt = sum(1 for a in apps if a.resume_version_id == r.id or a.job_description_id == r.id) # approximate reference
+            app_cnt = sum(
+                1 for a in apps if a.resume_version_id == r.id or a.job_description_id == r.id
+            )  # approximate reference
 
             resume_metrics.append(
                 ResumePerformanceMetric(
                     resume_id=str(r.id),
                     title=r.title,
-                    average_ats_score=75.0, # default placeholder score
+                    average_ats_score=75.0,  # default placeholder score
                     average_jd_match=round(float(avg_match) * 100, 2),
-                    application_count=app_cnt
+                    application_count=app_cnt,
                 )
             )
 
@@ -97,16 +120,21 @@ class AnalyticsService:
         profile = profile_res.scalars().first()
         user_skills = set(profile.skills if profile and profile.skills else [])
 
-        common_jds_skills = ["Python", "SQL", "React", "Docker", "AWS", "Kubernetes", "System Design", "TypeScript"]
+        common_jds_skills = [
+            "Python",
+            "SQL",
+            "React",
+            "Docker",
+            "AWS",
+            "Kubernetes",
+            "System Design",
+            "TypeScript",
+        ]
         skill_gaps = []
         for s in common_jds_skills:
             has = s in user_skills or s.lower() in [us.lower() for us in user_skills]
             skill_gaps.append(
-                SkillGapMetric(
-                    skill=s,
-                    frequency_in_jds=5 if not has else 8,
-                    has_skill=has
-                )
+                SkillGapMetric(skill=s, frequency_in_jds=5 if not has else 8, has_skill=has)
             )
 
         # 4. Applications trend
@@ -132,7 +160,7 @@ class AnalyticsService:
             resumes_performance=resume_metrics,
             skill_gaps=skill_gaps,
             weekly_application_trends=trends,
-            evidence_score_trend=evidence_trend
+            evidence_score_trend=evidence_trend,
         )
 
 

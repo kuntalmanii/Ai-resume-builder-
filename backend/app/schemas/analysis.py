@@ -4,6 +4,7 @@ All schemas are read-optimized (no user-submitted analysis data).
 The scoring engine produces the values; users can only trigger analysis
 and read results.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -14,18 +15,20 @@ from pydantic import BaseModel, Field
 
 # ─── Analysis Check ───────────────────────────────────────────────────────────
 
+
 class AnalysisCheckResponse(BaseModel):
     """A single scored check within an analysis."""
+
     id: uuid.UUID
     analysis_id: uuid.UUID
-    category: str           # ats | content | completeness | readability | grammar | evidence
-    check_code: str         # e.g. ATS_CONTACT_INFO
+    category: str  # ats | content | completeness | readability | grammar | evidence
+    check_code: str  # e.g. ATS_CONTACT_INFO
     title: str
     description: str
-    status: str             # passed | warning | failed
+    status: str  # passed | warning | failed
     points_possible: int
     points_awarded: int
-    points_lost: int        # convenience: points_possible - points_awarded
+    points_lost: int  # convenience: points_possible - points_awarded
     recommendation: str | None = None
     evidence_data: dict[str, Any] | None = None
 
@@ -34,8 +37,10 @@ class AnalysisCheckResponse(BaseModel):
 
 # ─── Top Recommendation ───────────────────────────────────────────────────────
 
+
 class TopRecommendationSchema(BaseModel):
     """A prioritized recommendation derived from failed/warning checks."""
+
     check_code: str
     category: str
     title: str
@@ -47,10 +52,12 @@ class TopRecommendationSchema(BaseModel):
 
 # ─── Category Breakdown ───────────────────────────────────────────────────────
 
+
 class CategoryBreakdownSchema(BaseModel):
     """Per-category score breakdown."""
+
     category: str
-    normalized: int     # 0–100
+    normalized: int  # 0–100
     raw_score: int
     max_score: int
     check_count: int
@@ -61,8 +68,10 @@ class CategoryBreakdownSchema(BaseModel):
 
 # ─── Full Analysis Response ───────────────────────────────────────────────────
 
+
 class ResumeAnalysisResponse(BaseModel):
     """Full analysis result with all checks and recommendations."""
+
     id: uuid.UUID
     resume_id: uuid.UUID
     user_id: uuid.UUID
@@ -111,8 +120,10 @@ class ResumeAnalysisResponse(BaseModel):
 
 # ─── Summary (History List) ───────────────────────────────────────────────────
 
+
 class AnalysisSummaryResponse(BaseModel):
     """Lightweight analysis summary for history listing."""
+
     id: uuid.UUID
     resume_id: uuid.UUID
     overall_score: int
@@ -131,6 +142,7 @@ class AnalysisSummaryResponse(BaseModel):
 
 class AnalysisHistoryResponse(BaseModel):
     """Paginated analysis history for a resume."""
+
     items: list[AnalysisSummaryResponse]
     total: int
     page: int
@@ -138,6 +150,7 @@ class AnalysisHistoryResponse(BaseModel):
 
 
 # ─── Scoring Methodology (Public) ────────────────────────────────────────────
+
 
 class CategoryWeightSchema(BaseModel):
     category: str
@@ -149,9 +162,10 @@ class CategoryWeightSchema(BaseModel):
 
 class ScoringMethodologyResponse(BaseModel):
     """Public description of the scoring methodology."""
+
     analysis_version: str
     raw_max_score: int
-    normalized_max_score: int   # always 100
+    normalized_max_score: int  # always 100
     note_jd_match: str
     categories: list[CategoryWeightSchema]
     scoring_description: str
@@ -159,8 +173,10 @@ class ScoringMethodologyResponse(BaseModel):
 
 # ─── Trigger Schema ───────────────────────────────────────────────────────────
 
+
 class RunAnalysisResponse(BaseModel):
     """Returned when an analysis is triggered or fetched from cache."""
+
     analysis: ResumeAnalysisResponse
     from_cache: bool
     message: str

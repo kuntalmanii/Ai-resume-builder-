@@ -1,4 +1,5 @@
 """Career Analytics dashboard API endpoints."""
+
 from fastapi import APIRouter
 
 from app.api.dependencies import CurrentUser, DBSession

@@ -6,13 +6,14 @@ All tests run against an in-memory SQLite database via the conftest fixtures.
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.user import User
+
 pytestmark = pytest.mark.asyncio
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
-async def _create_user(db: AsyncSession, email: str = "test@example.com") -> "User":
+async def _create_user(db: AsyncSession, email: str = "test@example.com") -> User:
     from app.core.security import hash_password
-    from app.db.models.user import User
 
     user = User(
         email=email,
@@ -112,11 +113,15 @@ async def test_resume_version_unique_constraint(db_session: AsyncSession) -> Non
     db_session.add(resume)
     await db_session.flush()
 
-    v1 = ResumeVersion(resume_id=resume.id, version_number=1, content_snapshot={"data": "v1"})
+    v1 = ResumeVersion(
+        resume_id=resume.id, version_number=1, content_snapshot={"data": "v1"}
+    )
     db_session.add(v1)
     await db_session.flush()
 
-    v1_dup = ResumeVersion(resume_id=resume.id, version_number=1, content_snapshot={"data": "v1-dup"})
+    v1_dup = ResumeVersion(
+        resume_id=resume.id, version_number=1, content_snapshot={"data": "v1-dup"}
+    )
     db_session.add(v1_dup)
     with pytest.raises(IntegrityError):
         await db_session.flush()

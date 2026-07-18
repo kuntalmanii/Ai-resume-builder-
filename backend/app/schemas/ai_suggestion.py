@@ -1,4 +1,5 @@
 """Pydantic schemas for AI Suggestion models."""
+
 import uuid
 from datetime import datetime
 
@@ -8,9 +9,12 @@ from pydantic import BaseModel, Field, field_validator
 class ClaimValidationResult(BaseModel):
     claim_text: str
     claim_type: str  # e.g., metric, technology, scope, responsibility, role
-    support_status: str  # supported, partially_supported, unsupported, contradictory, user_confirmation_required
+    # support_status can be: supported, partially_supported, unsupported,
+    # contradictory, user_confirmation_required
+    support_status: str
     supporting_sources: list[str] = Field(default_factory=list)
     risk_level: str  # low, medium, high, blocked
+
 
 class EvidenceSourceResponse(BaseModel):
     id: uuid.UUID
@@ -28,6 +32,7 @@ class EvidenceSourceResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class SuggestionResponse(BaseModel):
     id: uuid.UUID
@@ -59,8 +64,11 @@ class SuggestionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class SuggestionGenerateRequest(BaseModel):
-    suggestion_type: str  # e.g. bullet_enhancement, summary_generation, ats_fix, jd_targeted_rewrite
+    suggestion_type: (
+        str  # e.g. bullet_enhancement, summary_generation, ats_fix, jd_targeted_rewrite
+    )
     target_section: str  # summary, experience, projects
     target_entry_id: str | None = None
     target_field: str = "content"
@@ -74,14 +82,21 @@ class SuggestionGenerateRequest(BaseModel):
     @classmethod
     def validate_type(cls, v: str) -> str:
         valid_types = [
-            "summary_generation", "summary_rewrite", "bullet_enhancement",
-            "bullet_rewrite", "grammar_correction", "conciseness",
-            "action_verb_improvement", "ats_fix", "jd_targeted_rewrite",
-            "achievement_question"
+            "summary_generation",
+            "summary_rewrite",
+            "bullet_enhancement",
+            "bullet_rewrite",
+            "grammar_correction",
+            "conciseness",
+            "action_verb_improvement",
+            "ats_fix",
+            "jd_targeted_rewrite",
+            "achievement_question",
         ]
         if v not in valid_types:
             raise ValueError(f"Invalid suggestion type. Must be one of: {valid_types}")
         return v
+
 
 class SuggestionBatchGenerateRequest(BaseModel):
     mode: str  # ats_driven, jd_targeted, full_audit
@@ -90,11 +105,14 @@ class SuggestionBatchGenerateRequest(BaseModel):
     match_result_id: uuid.UUID | None = None
     max_suggestions: int = Field(5, ge=1, le=10)
 
+
 class SuggestionEditRequest(BaseModel):
     suggested_text: str = Field(..., min_length=1)
 
+
 class AchievementAnswerRequest(BaseModel):
     answer: str = Field(..., min_length=1)
+
 
 class AIStatusResponse(BaseModel):
     status: str  # available, degraded, unavailable

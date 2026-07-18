@@ -1,4 +1,5 @@
 """Roadmap Service class."""
+
 import json
 import uuid
 
@@ -23,7 +24,8 @@ class RoadmapService:
 
         system_prompt = (
             "You are a professional technical career mentor.\n"
-            "Build a personalized skills development roadmap for a candidate transitioning from their current skills to a target role.\n"
+            "Build a personalized skills development roadmap for a candidate " \
+                "transitioning from their current skills to a target role.\n"
             "Identify the skill gaps and outline a list of 4 concrete milestones.\n"
             "Return EXACTLY a valid JSON object. Do not include chat wraps."
         )
@@ -36,7 +38,7 @@ class RoadmapService:
             "{\n"
             '  "skill_gaps": ["Skill Gap A", "Skill Gap B"],\n'
             '  "plan": [\n'
-            '    {\n'
+            "    {\n"
             '      "id": "m1",\n'
             '      "title": "Milestone Title",\n'
             '      "timeline": "Month 1",\n'
@@ -49,9 +51,7 @@ class RoadmapService:
 
         ai_provider = get_ai_provider()
         raw_resp = await ai_provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.4
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.4
         )
 
         try:
@@ -70,9 +70,9 @@ class RoadmapService:
                         "title": "Master Backend Scaling",
                         "timeline": "Weeks 1-4",
                         "details": "Study distributed databases and caching patterns.",
-                        "resources": ["Designing Data-Intensive Applications"]
+                        "resources": ["Designing Data-Intensive Applications"],
                     }
-                ]
+                ],
             }
 
         # Create Roadmap
@@ -86,8 +86,8 @@ class RoadmapService:
                 "target_skills": {"items": parsed.get("skill_gaps", [])},
                 "plan": {"items": parsed.get("plan", [])},
                 "progress": {"completed": []},
-                "status": "active"
-            }
+                "status": "active",
+            },
         )
 
         # Trigger notification
@@ -97,9 +97,10 @@ class RoadmapService:
                 user_id=user_id,
                 type="success",
                 title="Upskilling Roadmap Created",
-                body=f"Your personalized learning path for '{request.target_role}' has been created.",
-                action_url="/roadmap"
-            )
+                body=f"Your personalized learning path for " \
+                    f"'{request.target_role}' has been created.",
+                action_url="/roadmap",
+            ),
         )
         return roadmap
 
@@ -118,15 +119,17 @@ class RoadmapService:
             if update.milestone_id in completed:
                 completed.remove(update.milestone_id)
 
-        roadmap = await roadmap_repository.update(db, db_obj=roadmap, obj_in={
-            "progress": {"completed": completed}
-        })
+        roadmap = await roadmap_repository.update(
+            db, db_obj=roadmap, obj_in={"progress": {"completed": completed}}
+        )
         return roadmap
 
     async def get_by_user_id(self, db: AsyncSession, user_id: uuid.UUID) -> list[Roadmap]:
         return await roadmap_repository.get_by_user_id(db, user_id)
 
-    async def get_by_id(self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID) -> Roadmap | None:
+    async def get_by_id(
+        self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID
+    ) -> Roadmap | None:
         rm = await roadmap_repository.get(db, id)
         if rm and rm.user_id == user_id:
             return rm

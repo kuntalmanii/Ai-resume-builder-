@@ -1,4 +1,5 @@
 """Resume Import Session ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -13,9 +14,7 @@ from app.db.types import JSONBType
 class ResumeImportSession(Base):
     __tablename__ = "resume_import_sessions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )

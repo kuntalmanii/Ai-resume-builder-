@@ -1,4 +1,5 @@
 """Cover Letter API endpoints."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
@@ -37,9 +38,7 @@ async def create_cover_letter(
 
 
 @router.get("", response_model=list[CoverLetterResponse])
-async def list_cover_letters(
-    current_user: CurrentUser, db: DBSession
-) -> list[CoverLetterResponse]:
+async def list_cover_letters(current_user: CurrentUser, db: DBSession) -> list[CoverLetterResponse]:
     """List cover letters of current user."""
     cls = await cover_letter_service.get_by_user_id(db, user_id=current_user.id)
     return [CoverLetterResponse.model_validate(c) for c in cls]
@@ -73,7 +72,9 @@ async def update_cover_letter(
     return CoverLetterResponse.model_validate(updated)
 
 
-@router.post("/{id}/versions", response_model=CoverLetterResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{id}/versions", response_model=CoverLetterResponse, status_code=status.HTTP_201_CREATED
+)
 async def increment_version(
     id: uuid.UUID, payload: CoverLetterUpdate, current_user: CurrentUser, db: DBSession
 ) -> CoverLetterResponse:
@@ -96,9 +97,7 @@ async def list_versions(
 
 
 @router.post("/{id}/export")
-async def export_pdf(
-    id: uuid.UUID, current_user: CurrentUser, db: DBSession
-) -> dict:
+async def export_pdf(id: uuid.UUID, current_user: CurrentUser, db: DBSession) -> dict:
     """Export cover letter as PDF."""
     path = await cover_letter_service.export_pdf(db, id=id, user_id=current_user.id)
     await db.commit()
@@ -106,9 +105,7 @@ async def export_pdf(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_cover_letter(
-    id: uuid.UUID, current_user: CurrentUser, db: DBSession
-) -> None:
+async def delete_cover_letter(id: uuid.UUID, current_user: CurrentUser, db: DBSession) -> None:
     """Delete a cover letter."""
     success = await cover_letter_service.remove(db, id=id, user_id=current_user.id)
     if not success:

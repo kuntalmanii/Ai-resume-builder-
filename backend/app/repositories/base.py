@@ -1,4 +1,5 @@
 """Base repository class with async CRUD operations."""
+
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
+
 
 class BaseRepository(Generic[ModelType]):
     def __init__(self, model: type[ModelType]):

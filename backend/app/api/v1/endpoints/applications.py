@@ -1,4 +1,5 @@
 """Application and Interview API routes."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
@@ -87,9 +88,7 @@ async def update_application_status(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_application(
-    id: uuid.UUID, current_user: CurrentUser, db: DBSession
-) -> None:
+async def delete_application(id: uuid.UUID, current_user: CurrentUser, db: DBSession) -> None:
     """Delete job application tracker."""
     app_obj = await application_service.get_by_id(db, id)
     if not app_obj or app_obj.user_id != current_user.id:
@@ -99,6 +98,7 @@ async def delete_application(
 
 
 # ─── Interview Endpoints ──────────────────────────────────────────────────────
+
 
 @router.post(
     "/{id}/interviews",

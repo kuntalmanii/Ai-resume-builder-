@@ -1,4 +1,5 @@
 """FastAPI application entry point."""
+
 from __future__ import annotations
 
 import logging
@@ -35,7 +36,10 @@ _LOG_CONFIG = {
     "formatters": {
         "json": {
             "()": "logging.Formatter",
-            "fmt": '{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":%(message)s}',
+            "fmt": (
+                '{"time":"%(asctime)s","level":"%(levelname)s",'
+                '"logger":"%(name)s","msg":%(message)s}'
+            ),
             "datefmt": "%Y-%m-%dT%H:%M:%S",
         },
         "standard": {
@@ -54,7 +58,10 @@ _LOG_CONFIG = {
     },
     "loggers": {
         "careeros": {"level": settings.LOG_LEVEL, "propagate": True},
-        "uvicorn.access": {"level": "WARNING", "propagate": False},  # suppressed; our middleware logs instead
+        "uvicorn.access": {
+            "level": "WARNING",
+            "propagate": False,
+        },  # suppressed; our middleware logs instead
     },
 }
 logging.config.dictConfig(_LOG_CONFIG)
@@ -62,6 +69,7 @@ logger = logging.getLogger(__name__)
 
 
 # ─── Lifespan ─────────────────────────────────────────────────────────────────
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -73,6 +81,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 # ─── Application factory ──────────────────────────────────────────────────────
+
 
 def create_application() -> FastAPI:
     app = FastAPI(
@@ -142,7 +151,13 @@ def create_application() -> FastAPI:
     async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
         return JSONResponse(
             status_code=404,
-            content={"error": {"code": "NOT_FOUND", "message": "The requested resource was not found.", "details": None}},
+            content={
+                "error": {
+                    "code": "NOT_FOUND",
+                    "message": "The requested resource was not found.",
+                    "details": None,
+                }
+            },
         )
 
     @app.exception_handler(HTTPException)
@@ -153,8 +168,11 @@ def create_application() -> FastAPI:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         from fastapi.encoders import jsonable_encoder
+
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
@@ -174,7 +192,13 @@ def create_application() -> FastAPI:
         message = str(exc) if settings.DEBUG else "An unexpected error occurred."
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": {"code": "INTERNAL_SERVER_ERROR", "message": message, "details": None}},
+            content={
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": message,
+                    "details": None,
+                }
+            },
         )
 
     # ─── Routers ──────────────────────────────────────────────────────────────

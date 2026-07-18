@@ -1,4 +1,5 @@
 """Main orchestrator engine for running the Job Description Matching pipeline."""
+
 import logging
 import uuid
 from datetime import datetime
@@ -23,12 +24,13 @@ from app.services.matching.semantic_matcher import run_semantic_matching
 
 logger = logging.getLogger(__name__)
 
+
 async def run_job_match(
     db: AsyncSession,
     resume_id: uuid.UUID,
     job_description_id: uuid.UUID,
     user_id: uuid.UUID,
-    force: bool = False
+    force: bool = False,
 ) -> JobMatchResult:
     """
     Run the complete Job Description Matching pipeline.
@@ -56,7 +58,7 @@ async def run_job_match(
                 JobMatchResult.resume_id == resume_id,
                 JobMatchResult.job_description_id == job_description_id,
                 JobMatchResult.resume_version == resume.version,
-                JobMatchResult.matching_version == MATCHING_VERSION
+                JobMatchResult.matching_version == MATCHING_VERSION,
             )
         )
         cached = cache_res.scalar_one_or_none()
@@ -75,6 +77,7 @@ async def run_job_match(
     else:
         # Load from cache
         from app.schemas.job_match_requirements import JobDescriptionRequirements
+
         requirements_obj = JobDescriptionRequirements.model_validate(jd.parsed_requirements)
 
     # 4. Extract Resume Facts
@@ -96,7 +99,8 @@ async def run_job_match(
 
     # 6. Experience Matcher
     exp_reqs = [
-        r.model_dump() for r in requirements
+        r.model_dump()
+        for r in requirements
         if r.requirement_type in ["required_experience", "preferred_experience"]
     ]
     resume_exp = resume.content.get("experience") or []
@@ -119,7 +123,7 @@ async def run_job_match(
         matches=all_matches,
         profile_opportunities=profile_opportunities,
         current_experience_score=experience_score,
-        jd_has_experience=jd_has_experience
+        jd_has_experience=jd_has_experience,
     )
 
     # Clean prior match results for same version to avoid bloating
@@ -128,13 +132,16 @@ async def run_job_match(
             JobMatchResult.resume_id == resume_id,
             JobMatchResult.job_description_id == job_description_id,
             JobMatchResult.resume_version == resume.version,
-            JobMatchResult.matching_version == MATCHING_VERSION
+            JobMatchResult.matching_version == MATCHING_VERSION,
         )
     )
 
     # 11. Create & Persist Match Result
     # Map all matches to match formats
-    skills_score = breakdown["required_skills"]["earned_current"] + breakdown["preferred_skills"]["earned_current"]
+    skills_score = (
+        breakdown["required_skills"]["earned_current"]
+        + breakdown["preferred_skills"]["earned_current"]
+    )
     required_skills_score = breakdown["required_skills"]["earned_current"]
     preferred_skills_score = breakdown["preferred_skills"]["earned_current"]
     keyword_score = breakdown["keywords"]["earned_current"]
@@ -143,8 +150,12 @@ async def run_job_match(
     # Format matches into lists for json columns
     exact_keyword_matches_list = [m for m in all_matches if m["match_type"] == "exact_match"]
     semantic_matches_list = [m for m in all_matches if m["match_type"] == "semantic_match"]
-    missing_keywords_list = [g for g in gaps if g["gap_type"] in ["missing_required_skill", "missing_preferred_skill"]]
-    skill_gaps_list = [g for g in gaps if g["gap_type"] in ["missing_required_skill", "missing_preferred_skill"]]
+    missing_keywords_list = [
+        g for g in gaps if g["gap_type"] in ["missing_required_skill", "missing_preferred_skill"]
+    ]
+    skill_gaps_list = [
+        g for g in gaps if g["gap_type"] in ["missing_required_skill", "missing_preferred_skill"]
+    ]
     experience_gaps_list = experience_gaps
 
     # hidden_experiences serves as the raw column for profile matches
@@ -157,8 +168,8 @@ async def run_job_match(
         matching_version=MATCHING_VERSION,
         overall_match_percentage=overall_match,
         potential_match_percentage=potential_match,
-        exact_match_score=breakdown["required_skills"]["earned_current"], # mapping
-        semantic_match_score=breakdown["responsibilities"]["earned_current"], # mapping
+        exact_match_score=breakdown["required_skills"]["earned_current"],  # mapping
+        semantic_match_score=breakdown["responsibilities"]["earned_current"],  # mapping
         skills_score=round(skills_score),
         required_skills_score=round(required_skills_score),
         preferred_skills_score=round(preferred_skills_score),
@@ -175,7 +186,7 @@ async def run_job_match(
         missing_requirements=[g for g in gaps],
         hidden_profile_matches=profile_opportunities,
         recommendations=recommendations,
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
 
     db.add(match_result)

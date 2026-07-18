@@ -1,4 +1,5 @@
 """AI Suggestion Service implementation."""
+
 import copy
 import uuid
 from datetime import datetime
@@ -25,18 +26,32 @@ from app.schemas.ai_suggestion import SuggestionGenerateRequest
 # Schemas for structured LLM completions
 class LLMClaim(BaseModel):
     claim_text: str = Field(..., description="The factual claim made in the suggestion")
-    claim_type: str = Field(..., description="Type: metric, technology, scope, responsibility, role")
-    support_status: str = Field(..., description="supported, partially_supported, unsupported, contradictory, user_confirmation_required")
-    supporting_sources: list[str] = Field(default_factory=list, description="List of source facts supporting this claim")
+    claim_type: str = Field(
+        ..., description="Type: metric, technology, scope, responsibility, role"
+    )
+    support_status: str = Field(
+        ...,
+        description="supported, partially_supported, unsupported, " \
+            "contradictory, user_confirmation_required",
+    )
+    supporting_sources: list[str] = Field(
+        default_factory=list, description="List of source facts supporting this claim"
+    )
     risk_level: str = Field(..., description="low, medium, high, blocked")
+
 
 class LLMSuggestionOutput(BaseModel):
     suggested_text: str = Field(..., description="The proposed text for the resume")
     rationale: str = Field(..., description="Why this suggestion improves the resume")
     risk_level: str = Field(..., description="Overall risk level: low, medium, high, blocked")
-    claims: list[LLMClaim] = Field(default_factory=list, description="List of claims extracted from the suggested text")
-    questions: list[str] = Field(default_factory=list, description="Clarifying questions if achievement metrics are missing")
+    claims: list[LLMClaim] = Field(
+        default_factory=list, description="List of claims extracted from the suggested text"
+    )
+    questions: list[str] = Field(
+        default_factory=list, description="Clarifying questions if achievement metrics are missing"
+    )
     expected_score_gain: int = Field(0, description="Estimated ATS score gain (0-10)")
+
 
 class LLMClaimValidationOnly(BaseModel):
     risk_level: str
@@ -45,7 +60,9 @@ class LLMClaimValidationOnly(BaseModel):
 
 class AISuggestionService:
     @staticmethod
-    def _extract_original_text(doc: dict, section: str, entry_id: str | None, field: str, index: int | None) -> str:
+    def _extract_original_text(
+        doc: dict, section: str, entry_id: str | None, field: str, index: int | None
+    ) -> str:
         """Helper to safely extract the original text from a ResumeDocument dict."""
         if section in ["professional_summary", "summary"]:
             return doc.get("professional_summary") or doc.get("summary") or ""
@@ -65,7 +82,9 @@ class AISuggestionService:
         return ""
 
     @staticmethod
-    def _apply_text_to_doc(doc: dict, section: str, entry_id: str | None, field: str, index: int | None, new_text: str) -> dict:
+    def _apply_text_to_doc(
+        doc: dict, section: str, entry_id: str | None, field: str, index: int | None, new_text: str
+    ) -> dict:
         """Helper to safely return a modified copy of a ResumeDocument dict with the new text."""
         new_doc = copy.deepcopy(doc)
 
@@ -96,7 +115,7 @@ class AISuggestionService:
         resume_id: uuid.UUID,
         req: SuggestionGenerateRequest,
         user_id: uuid.UUID,
-        answers: list[dict[str, Any]] | None = None
+        answers: list[dict[str, Any]] | None = None,
     ) -> AISuggestion:
         """Generate a grounded AI resume suggestion."""
         # 1. Fetch Resume and verify ownership
@@ -111,7 +130,7 @@ class AISuggestionService:
             req.target_section,
             req.target_entry_id,
             req.target_field,
-            req.target_index
+            req.target_index,
         )
 
         # 3. Retrieve Career Profile and Career Entries as Ground Truth Facts
@@ -129,17 +148,27 @@ class AISuggestionService:
             if profile.skills:
                 facts.append(f"Skills: {profile.skills}")
             for exp in profile.experience:
-                facts.append(f"Experience at {exp.get('company')} ({exp.get('position')}): {', '.join(exp.get('bullets', []))}")
+                facts.append(
+                    f"Experience at {exp.get('company')} ({exp.get('position')}): " \
+                        f"{', '.join(exp.get('bullets', []))}"
+                )
             for proj in profile.projects:
                 facts.append(f"Project {proj.get('name')}: {', '.join(proj.get('bullets', []))}")
 
         for ent in entries:
-            facts.append(f"Career Entry ({ent.entry_type}): {ent.content.get('company') or ent.content.get('name')} - {ent.content.get('position') or ''}: {ent.content.get('description') or ''}")
+            facts.append(
+                f"Career Entry ({ent.entry_type}): " \
+                    f"{ent.content.get('company') or ent.content.get('name')} " \
+                    f"- {ent.content.get('position') or ''}: {ent.content.get('description') or ''}"
+            )
 
         # Add user answers if any
         if answers:
             for ans in answers:
-                facts.append(f"User Confirmed Achievement Fact: Question: '{ans.get('question')}' Answer: '{ans.get('answer')}'")
+                facts.append(
+                    f"User Confirmed Achievement Fact: Question: " \
+                        f"'{ans.get('question')}' Answer: '{ans.get('answer')}'"
+                )
 
         facts_text = "\n".join([f"- {f}" for f in facts]) or "No career facts documented yet."
 
@@ -148,37 +177,52 @@ class AISuggestionService:
         if req.job_description_id:
             jd = await db.get(JobDescription, req.job_description_id)
             if jd:
-                jd_text = f"Job Title: {jd.title}\nCompany: {jd.company}\nRequirements: {jd.raw_text}"
+                jd_text = (
+                    f"Job Title: {jd.title}\nCompany: {jd.company}\nRequirements: {jd.raw_text}"
+                )
 
         # 5. Call LLM for completion
         provider = GeminiProvider()
         system_prompt = (
-            "You are an expert AI career coach and resume optimizer. Your task is to suggest a single high-quality resume improvement "
-            "based strictly on the user's career facts. You must perform strict claim validation on any suggestions.\n\n"
+            "You are an expert AI career coach and resume optimizer. Your " \
+                "task is to suggest a single high-quality resume improvement "
+            "based strictly on the user's career facts. You must " \
+                "perform strict claim validation on any suggestions.\n\n"
             "CRITICAL INSTRUCTIONS FOR GROUNDING AND CLAIMS VALIDATION:\n"
-            "1. You MUST NOT fabricate any facts, metrics, or achievements. All claims in the suggested text must be strictly grounded "
+            "1. You MUST NOT fabricate any facts, metrics, or achievements. " \
+                "All claims in the suggested text must be strictly grounded "
             "in the provided Career Profile Facts or the Original Resume content.\n"
-            "2. If you want to include an achievement metric (e.g., 'improved sales by 40%') but do not see the exact metric in the facts, "
-            "DO NOT make up a number. Instead, write the suggestion using placeholders/qualitative text and add a clarifying question to "
-            "the 'questions' list (e.g., 'By what percentage did you improve sales?'). Set that claim's risk_level to 'user_confirmation_required' "
+            "2. If you want to include an achievement metric (e.g., 'improved " \
+                "sales by 40%') but do not see the exact metric in the facts, "
+            "DO NOT make up a number. Instead, write the suggestion using " \
+                "placeholders/qualitative text and add a clarifying question to "
+            "the 'questions' list (e.g., 'By what percentage did you improve " \
+                "sales?'). Set that claim's risk_level to 'user_confirmation_required' "
             "and the overall risk_level of the suggestion to 'medium'.\n"
-            "3. Extract each atomic claim made in your suggested text. Validate each claim against the provided Career Profile Facts and Original Resume Content:\n"
+            "3. Extract each atomic claim made in your suggested text. Validate each claim " \
+                "against the provided Career Profile Facts and Original Resume Content:\n"
             "   - 'supported': The claim is fully documented in the facts. (risk_level = 'low')\n"
-            "   - 'partially_supported': The claim is partially supported, or requires minor user confirmation. (risk_level = 'medium')\n"
-            "   - 'unsupported': The claim has no supporting facts whatsoever in the user's profile. (risk_level = 'high')\n"
-            "   - 'contradictory': The claim directly contradicts a fact in the user's profile. (risk_level = 'blocked')\n"
-            "4. Set the overall risk_level of the suggestion to the maximum risk of any individual claim."
+            "   - 'partially_supported': The claim is partially supported, " \
+                "or requires minor user confirmation. (risk_level = 'medium')\n"
+            "   - 'unsupported': The claim has no supporting facts " \
+                "whatsoever in the user's profile. (risk_level = 'high')\n"
+            "   - 'contradictory': The claim directly contradicts a " \
+                "fact in the user's profile. (risk_level = 'blocked')\n"
+            "4. Set the overall risk_level of the suggestion " \
+                "to the maximum risk of any individual claim."
         )
 
+        inst = req.instruction or "Optimize for maximum impact, clarity, and ATS compatibility."
         user_prompt = (
-            f"Original Text to Improve:\n\"{original_text}\"\n\n"
+            f'Original Text to Improve:\n"{original_text}"\n\n'
             f"Target Section: {req.target_section}\n"
             f"Target Field: {req.target_field}\n"
             f"Suggestion Type Mode: {req.suggestion_type}\n\n"
             f"Grounded Career Profile Facts (Ground Truth):\n{facts_text}\n\n"
             f"Job Description Context (if any):\n{jd_text}\n\n"
-            f"User Specific Instructions:\n{req.instruction or 'Optimize for maximum impact, clarity, and ATS compatibility.'}\n\n"
-            "Please generate the optimized text, rationale, expected ATS score gain (0-10), list of atomic claims, and any achievement clarifying questions."
+            f"User Specific Instructions:\n{inst}\n\n"
+            "Please generate the optimized text, rationale, expected ATS score gain " \
+                "(0-10), list of atomic claims, and any achievement clarifying questions."
         )
 
         # Execute structured completion
@@ -186,7 +230,7 @@ class AISuggestionService:
             prompt=user_prompt,
             system_prompt=system_prompt,
             response_schema=LLMSuggestionOutput,
-            temperature=0.2
+            temperature=0.2,
         )
 
         # 6. Create AISuggestion record
@@ -209,7 +253,7 @@ class AISuggestionService:
             expected_score_gain=output.expected_score_gain,
             provider_name=provider.provider_name,
             model_name=provider.model_name,
-            status="pending"
+            status="pending",
         )
         db.add(suggestion)
         await db.flush()
@@ -221,10 +265,14 @@ class AISuggestionService:
                     evidence = EvidenceSource(
                         ai_suggestion_id=suggestion.id,
                         label=src,
-                        source_type="career_profile" if "Profile" in src or "Entry" in src else "resume_content",
+                        source_type="career_profile"
+                        if "Profile" in src or "Entry" in src
+                        else "resume_content",
                         support_kind="factual_support",
-                        evidence_strength="direct" if claim.support_status == "supported" else "corborating",
-                        verification_status="source_verified"
+                        evidence_strength="direct"
+                        if claim.support_status == "supported"
+                        else "corborating",
+                        verification_status="source_verified",
                     )
                     db.add(evidence)
             elif claim.support_status == "user_confirmation_required":
@@ -235,7 +283,7 @@ class AISuggestionService:
                     source_type="career_profile_user_confirmed",
                     support_kind="relevance_context",
                     evidence_strength="insufficient",
-                    verification_status="unverified"
+                    verification_status="unverified",
                 )
                 db.add(evidence)
 
@@ -248,7 +296,7 @@ class AISuggestionService:
                 support_kind="relevance_context",
                 evidence_strength="insufficient",
                 verification_status="unverified",
-                excerpt=q
+                excerpt=q,
             )
             db.add(q_evidence)
 
@@ -265,7 +313,7 @@ class AISuggestionService:
         job_description_id: uuid.UUID | None = None,
         analysis_id: uuid.UUID | None = None,
         match_result_id: uuid.UUID | None = None,
-        max_suggestions: int = 5
+        max_suggestions: int = 5,
     ) -> list[AISuggestion]:
         """Batch generate multiple suggestions based on targeted audit modes."""
         # 1. Fetch Resume
@@ -288,7 +336,8 @@ class AISuggestionService:
                         for req in mr.missing_requirements
                     ]
 
-            # If missing requirements found, create JD-targeted rephrase requests for summary or experience bullets
+            # If missing requirements found, create JD-targeted rephrase requests for
+            # summary or experience bullets
             # We construct requests to inject these keywords/skills
             keywords_chunk = ", ".join(missing_keywords[:5])
             if keywords_chunk:
@@ -300,7 +349,7 @@ class AISuggestionService:
                     job_description_id=job_description_id,
                     analysis_id=analysis_id,
                     match_result_id=match_result_id,
-                    instruction=f"Incorporate missing ATS keywords and skills: {keywords_chunk}."
+                    instruction=f"Incorporate missing ATS keywords and skills: {keywords_chunk}.",
                 )
                 suggestions_to_create.append(req)
 
@@ -320,7 +369,8 @@ class AISuggestionService:
                             target_field="bullets",
                             target_index=0,
                             job_description_id=job_description_id,
-                            instruction=f"Rephrase this bullet to target the {jd.title} position requirements."
+                            instruction=f"Rephrase this bullet to target the " \
+                                f"{jd.title} position requirements.",
                         )
                         suggestions_to_create.append(req)
 
@@ -337,7 +387,8 @@ class AISuggestionService:
                         target_entry_id=entry_id,
                         target_field="bullets",
                         target_index=0,
-                        instruction="Enhance this experience bullet using active verbs and metrics."
+                        instruction="Enhance this experience bullet " \
+                            "using active verbs and metrics.",
                     )
                     suggestions_to_create.append(req)
                     if len(suggestions_to_create) >= max_suggestions:
@@ -359,11 +410,7 @@ class AISuggestionService:
 
     @classmethod
     async def get_suggestions(
-        cls,
-        db: AsyncSession,
-        resume_id: uuid.UUID,
-        user_id: uuid.UUID,
-        status: str | None = None
+        cls, db: AsyncSession, resume_id: uuid.UUID, user_id: uuid.UUID, status: str | None = None
     ) -> list[AISuggestion]:
         """Retrieve suggestions for a resume."""
         # Check ownership
@@ -386,10 +433,7 @@ class AISuggestionService:
 
     @classmethod
     async def get_suggestion(
-        cls,
-        db: AsyncSession,
-        suggestion_id: uuid.UUID,
-        user_id: uuid.UUID
+        cls, db: AsyncSession, suggestion_id: uuid.UUID, user_id: uuid.UUID
     ) -> AISuggestion:
         """Retrieve a single suggestion, verifying resume ownership."""
         stmt = (
@@ -397,10 +441,7 @@ class AISuggestionService:
             .options(selectinload(AISuggestion.evidence_sources))
             .execution_options(populate_existing=True)
             .join(Resume)
-            .where(
-                AISuggestion.id == suggestion_id,
-                Resume.user_id == user_id
-            )
+            .where(AISuggestion.id == suggestion_id, Resume.user_id == user_id)
         )
         sugg = await db.scalar(stmt)
         if not sugg:
@@ -408,7 +449,9 @@ class AISuggestionService:
         return sugg
 
     @classmethod
-    async def accept_suggestion(cls, db: AsyncSession, suggestion_id: uuid.UUID, user_id: uuid.UUID) -> AISuggestion:
+    async def accept_suggestion(
+        cls, db: AsyncSession, suggestion_id: uuid.UUID, user_id: uuid.UUID
+    ) -> AISuggestion:
         """Mark a suggestion as accepted."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
         sugg.status = "accepted"
@@ -417,7 +460,9 @@ class AISuggestionService:
         return sugg
 
     @classmethod
-    async def reject_suggestion(cls, db: AsyncSession, suggestion_id: uuid.UUID, user_id: uuid.UUID) -> AISuggestion:
+    async def reject_suggestion(
+        cls, db: AsyncSession, suggestion_id: uuid.UUID, user_id: uuid.UUID
+    ) -> AISuggestion:
         """Mark a suggestion as rejected."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
         sugg.status = "rejected"
@@ -427,11 +472,7 @@ class AISuggestionService:
 
     @classmethod
     async def edit_suggestion(
-        cls,
-        db: AsyncSession,
-        suggestion_id: uuid.UUID,
-        edited_text: str,
-        user_id: uuid.UUID
+        cls, db: AsyncSession, suggestion_id: uuid.UUID, edited_text: str, user_id: uuid.UUID
     ) -> AISuggestion:
         """Edit the suggested text and re-validate claims using LLM."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
@@ -452,11 +493,13 @@ class AISuggestionService:
 
         provider = GeminiProvider()
         system_prompt = (
-            "You are a strict claim verification assistant. Your job is to extract all factual claims from the edited text "
-            "and check them against the provided Ground Truth Facts. Determine if they are supported, unsupported, partially supported, or contradictory."
+            "You are a strict claim verification assistant. Your job " \
+                "is to extract all factual claims from the edited text "
+            "and check them against the provided Ground Truth Facts. Determine if " \
+                "they are supported, unsupported, partially supported, or contradictory."
         )
         user_prompt = (
-            f"Edited Text:\n\"{edited_text}\"\n\n"
+            f'Edited Text:\n"{edited_text}"\n\n'
             f"Ground Truth Facts:\n{facts_text}\n\n"
             "Extract the claims and output the risk level and validation list."
         )
@@ -465,7 +508,7 @@ class AISuggestionService:
             prompt=user_prompt,
             system_prompt=system_prompt,
             response_schema=LLMClaimValidationOnly,
-            temperature=0.1
+            temperature=0.1,
         )
 
         sugg.risk_level = output.risk_level
@@ -476,11 +519,7 @@ class AISuggestionService:
 
     @classmethod
     async def answer_clarifying_question(
-        cls,
-        db: AsyncSession,
-        suggestion_id: uuid.UUID,
-        answer: str,
-        user_id: uuid.UUID
+        cls, db: AsyncSession, suggestion_id: uuid.UUID, answer: str, user_id: uuid.UUID
     ) -> AISuggestion:
         """Provide an answer to an achievement clarifying question and regenerate the suggestion."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
@@ -505,7 +544,7 @@ class AISuggestionService:
             support_kind="factual_support",
             evidence_strength="direct",
             verification_status="user_confirmed",
-            excerpt=answer
+            excerpt=answer,
         )
         db.add(answer_ev)
 
@@ -530,15 +569,24 @@ class AISuggestionService:
             if profile.skills:
                 facts.append(f"Skills: {profile.skills}")
             for exp in profile.experience:
-                facts.append(f"Experience at {exp.get('company')} ({exp.get('position')}): {', '.join(exp.get('bullets', []))}")
+                facts.append(
+                    f"Experience at {exp.get('company')} ({exp.get('position')}): " \
+                        f"{', '.join(exp.get('bullets', []))}"
+                )
             for proj in profile.projects:
                 facts.append(f"Project {proj.get('name')}: {', '.join(proj.get('bullets', []))}")
 
         for ent in entries:
-            facts.append(f"Career Entry ({ent.entry_type}): {ent.content.get('company') or ent.content.get('name')} - {ent.content.get('position') or ''}: {ent.content.get('description') or ''}")
+            facts.append(
+                f"Career Entry ({ent.entry_type}): " \
+                    f"{ent.content.get('company') or ent.content.get('name')} " \
+                    f"- {ent.content.get('position') or ''}: {ent.content.get('description') or ''}"
+            )
 
         # Add the confirmed answer fact
-        facts.append(f"User Confirmed Achievement Fact: Question: '{question_text}' Answer: '{answer}'")
+        facts.append(
+            f"User Confirmed Achievement Fact: Question: '{question_text}' Answer: '{answer}'"
+        )
         facts_text = "\n".join([f"- {f}" for f in facts]) or "No career facts documented yet."
 
         # Fetch Job Description details if provided
@@ -546,36 +594,44 @@ class AISuggestionService:
         if sugg.job_description_id:
             jd = await db.get(JobDescription, sugg.job_description_id)
             if jd:
-                jd_text = f"Job Title: {jd.title}\nCompany: {jd.company}\nRequirements: {jd.raw_text}"
+                jd_text = (
+                    f"Job Title: {jd.title}\nCompany: {jd.company}\nRequirements: {jd.raw_text}"
+                )
 
         # 3. Call LLM for completion
         provider = GeminiProvider()
         system_prompt = (
-            "You are an expert AI career coach and resume optimizer. Your task is to suggest a single high-quality resume improvement "
-            "based strictly on the user's career facts. You must perform strict claim validation on any suggestions.\n\n"
+            "You are an expert AI career coach and resume optimizer. Your " \
+                "task is to suggest a single high-quality resume improvement "
+            "based strictly on the user's career facts. You must " \
+                "perform strict claim validation on any suggestions.\n\n"
             "CRITICAL INSTRUCTIONS FOR GROUNDING AND CLAIMS VALIDATION:\n"
-            "1. You MUST NOT fabricate any facts, metrics, or achievements. All claims in the suggested text must be strictly grounded "
+            "1. You MUST NOT fabricate any facts, metrics, or achievements. " \
+                "All claims in the suggested text must be strictly grounded "
             "in the provided Career Profile Facts or the Original Resume content.\n"
-            "2. Since the user has answered the clarifying question, incorporate their exact answer/metric into the suggested text "
+            "2. Since the user has answered the clarifying question, " \
+                "incorporate their exact answer/metric into the suggested text "
             "and mark that claim as 'supported' and risk_level as 'low'."
         )
 
         user_prompt = (
-            f"Original Text to Improve:\n\"{sugg.original_text}\"\n\n"
+            f'Original Text to Improve:\n"{sugg.original_text}"\n\n'
             f"Target Section: {sugg.target_section}\n"
             f"Target Field: {sugg.target_field}\n"
             f"Suggestion Type Mode: {sugg.suggestion_type}\n\n"
             f"Grounded Career Profile Facts (Ground Truth):\n{facts_text}\n\n"
             f"Job Description Context (if any):\n{jd_text}\n\n"
-            f"User Specific Instructions:\nOptimize the suggestion using the provided answer: '{answer}'.\n\n"
-            "Please generate the optimized text, rationale, expected ATS score gain (0-10), list of atomic claims, and any achievement clarifying questions."
+            f"User Specific Instructions:\nOptimize the suggestion " \
+                f"using the provided answer: '{answer}'.\n\n"
+            "Please generate the optimized text, rationale, expected ATS score gain " \
+                "(0-10), list of atomic claims, and any achievement clarifying questions."
         )
 
         output: LLMSuggestionOutput = await provider.complete(
             prompt=user_prompt,
             system_prompt=system_prompt,
             response_schema=LLMSuggestionOutput,
-            temperature=0.2
+            temperature=0.2,
         )
 
         # 4. Update the suggestion fields
@@ -598,10 +654,14 @@ class AISuggestionService:
                     evidence = EvidenceSource(
                         ai_suggestion_id=sugg.id,
                         label=src,
-                        source_type="career_profile" if "Profile" in src or "Entry" in src else "resume_content",
+                        source_type="career_profile"
+                        if "Profile" in src or "Entry" in src
+                        else "resume_content",
                         support_kind="factual_support",
-                        evidence_strength="direct" if claim.support_status == "supported" else "corborating",
-                        verification_status="source_verified"
+                        evidence_strength="direct"
+                        if claim.support_status == "supported"
+                        else "corborating",
+                        verification_status="source_verified",
                     )
                     db.add(evidence)
             elif claim.support_status == "user_confirmation_required":
@@ -611,7 +671,7 @@ class AISuggestionService:
                     source_type="career_profile_user_confirmed",
                     support_kind="relevance_context",
                     evidence_strength="insufficient",
-                    verification_status="unverified"
+                    verification_status="unverified",
                 )
                 db.add(evidence)
 
@@ -624,7 +684,7 @@ class AISuggestionService:
                 support_kind="relevance_context",
                 evidence_strength="insufficient",
                 verification_status="unverified",
-                excerpt=q
+                excerpt=q,
             )
             db.add(q_evidence)
 
@@ -633,10 +693,7 @@ class AISuggestionService:
 
     @classmethod
     async def apply_suggestion(
-        cls,
-        db: AsyncSession,
-        suggestion_id: uuid.UUID,
-        user_id: uuid.UUID
+        cls, db: AsyncSession, suggestion_id: uuid.UUID, user_id: uuid.UUID
     ) -> Resume:
         """Apply a suggestion to the active resume. Implements version control & OCC checks."""
         sugg = await cls.get_suggestion(db, suggestion_id, user_id)
@@ -653,8 +710,9 @@ class AISuggestionService:
             sugg.status = "invalidated"
             await db.commit()
             raise ConflictError(
-                f"Version conflict: The resume has been modified (version {resume.version}) since this suggestion was generated (version {sugg.source_resume_version}).",
-                details="RESUME_VERSION_CONFLICT"
+                f"Version conflict: The resume has been modified (version {resume.version}) " \
+                    f"since this suggestion was generated (version {sugg.source_resume_version}).",
+                details="RESUME_VERSION_CONFLICT",
             )
 
         # Apply-time revalidation: verify newly introduced claims against Career Profile/Entries
@@ -670,7 +728,7 @@ class AISuggestionService:
             sugg.target_section: [
                 {
                     "id": sugg.target_entry_id,
-                    sugg.target_field: [orig_text] if sugg.target_index is not None else orig_text
+                    sugg.target_field: [orig_text] if sugg.target_index is not None else orig_text,
                 }
             ]
         }
@@ -678,7 +736,7 @@ class AISuggestionService:
             sugg.target_section: [
                 {
                     "id": sugg.target_entry_id,
-                    sugg.target_field: [sugg_text] if sugg.target_index is not None else sugg_text
+                    sugg.target_field: [sugg_text] if sugg.target_index is not None else sugg_text,
                 }
             ]
         }
@@ -694,12 +752,14 @@ class AISuggestionService:
             key = (sc["claim_type"], sc["normalized_value"])
             # Evidence inheritance: if it was in the original text, skip blocking
             if key in orig_keys:
-                claim_validations.append({
-                    "claim_text": sc["claim_text"],
-                    "claim_type": sc["claim_type"],
-                    "support_status": "supported",
-                    "reason": "inherited"
-                })
+                claim_validations.append(
+                    {
+                        "claim_text": sc["claim_text"],
+                        "claim_type": sc["claim_type"],
+                        "support_status": "supported",
+                        "reason": "inherited",
+                    }
+                )
                 continue
 
             # Check new claim against Career Profile facts
@@ -712,10 +772,14 @@ class AISuggestionService:
                 claim_type=sc["claim_type"],
                 normalized_value=sc["normalized_value"],
                 field_name=sugg.target_field,
-                original_text=sc["claim_text"]
+                original_text=sc["claim_text"],
             )
 
-            status, contra_details, evidence_list = await CredibilityEngineService.verify_claim_deterministically(temp_claim, facts)
+            (
+                status,
+                contra_details,
+                evidence_list,
+            ) = await CredibilityEngineService.verify_claim_deterministically(temp_claim, facts)
 
             is_blocked = False
             reason = ""
@@ -723,16 +787,26 @@ class AISuggestionService:
                 is_blocked = True
                 reason = f"Contradiction: {contra_details}"
             elif status in ["unsupported", "insufficient_information"]:
-                if sc["claim_type"] in ["employer", "role", "degree", "certification", "project", "metric", "date"]:
+                if sc["claim_type"] in [
+                    "employer",
+                    "role",
+                    "degree",
+                    "certification",
+                    "project",
+                    "metric",
+                    "date",
+                ]:
                     is_blocked = True
                     reason = f"Unsupported new {sc['claim_type']} claim: '{sc['claim_text']}'"
 
-            claim_validations.append({
-                "claim_text": sc["claim_text"],
-                "claim_type": sc["claim_type"],
-                "support_status": status,
-                "reason": reason
-            })
+            claim_validations.append(
+                {
+                    "claim_text": sc["claim_text"],
+                    "claim_type": sc["claim_type"],
+                    "support_status": status,
+                    "reason": reason,
+                }
+            )
 
             if is_blocked:
                 blocked_reasons.append(reason)
@@ -744,14 +818,13 @@ class AISuggestionService:
             await db.commit()
             raise ConflictError(
                 f"Suggestion blocked due to unverified claim(s): {', '.join(blocked_reasons)}",
-                details="SUGGESTION_BLOCKED"
+                details="SUGGESTION_BLOCKED",
             )
 
         # 1. Create a ResumeVersion snapshot of the current resume content
         existing_snapshot = await db.scalar(
             select(ResumeVersion).where(
-                ResumeVersion.resume_id == resume.id,
-                ResumeVersion.version_number == resume.version
+                ResumeVersion.resume_id == resume.id, ResumeVersion.version_number == resume.version
             )
         )
         if not existing_snapshot:
@@ -759,19 +832,21 @@ class AISuggestionService:
                 resume_id=resume.id,
                 version_number=resume.version,
                 content_snapshot=resume.content,
-                change_reason=f"AI Suggestion applied: {sugg.suggestion_type}"
+                change_reason=f"AI Suggestion applied: {sugg.suggestion_type}",
             )
             db.add(snapshot)
 
         # 2. Apply suggestion text to resume document content
-        text_to_apply = sugg.edited_text if sugg.status == "edited" or sugg.edited_text else sugg.suggested_text
+        text_to_apply = (
+            sugg.edited_text if sugg.status == "edited" or sugg.edited_text else sugg.suggested_text
+        )
         updated_content = cls._apply_text_to_doc(
             resume.content or {},
             sugg.target_section,
             sugg.target_entry_id,
             sugg.target_field,
             sugg.target_index,
-            text_to_apply
+            text_to_apply,
         )
 
         # 3. Update resume version and content

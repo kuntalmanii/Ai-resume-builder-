@@ -1,4 +1,5 @@
 """LinkedIn Optimization Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -13,7 +14,11 @@ class LinkedInOptimizationRepository(BaseRepository[LinkedInOptimization]):
         super().__init__(LinkedInOptimization)
 
     async def get_by_user_id(self, db: AsyncSession, user_id: UUID) -> list[LinkedInOptimization]:
-        query = select(LinkedInOptimization).where(LinkedInOptimization.user_id == user_id).order_by(LinkedInOptimization.created_at.desc())
+        query = (
+            select(LinkedInOptimization)
+            .where(LinkedInOptimization.user_id == user_id)
+            .order_by(LinkedInOptimization.created_at.desc())
+        )
         result = await db.execute(query)
         return list(result.scalars().all())
 

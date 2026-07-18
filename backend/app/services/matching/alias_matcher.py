@@ -1,4 +1,5 @@
 """Alias matching module for detecting synonyms of skills."""
+
 from typing import Any
 
 from app.schemas.job_match_requirements import JobDescriptionRequirement
@@ -9,11 +10,11 @@ from app.services.matching.skill_taxonomy import TAXONOMY, get_canonical_skill, 
 def run_alias_matching(
     requirements: list[JobDescriptionRequirement],
     resume_facts: list[ResumeFact],
-    existing_matches: list[dict[str, Any]]
+    existing_matches: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """
-    Find alias matches where the requirement and resume use different terms for the same canonical skill.
-    Skips requirements that are already matched.
+    Find alias matches where the requirement and resume use different terms
+    for the same canonical skill. Skips requirements that are already matched.
     """
     alias_matches: list[dict[str, Any]] = []
     matched_req_ids = {m["requirement_id"] for m in existing_matches}
@@ -22,7 +23,12 @@ def run_alias_matching(
         if req.id in matched_req_ids:
             continue
 
-        if req.requirement_type not in ["required_skill", "preferred_skill", "tool", "domain_keyword"]:
+        if req.requirement_type not in [
+            "required_skill",
+            "preferred_skill",
+            "tool",
+            "domain_keyword",
+        ]:
             continue
 
         canonical = req.normalized_value or get_canonical_skill(req.text)
@@ -34,7 +40,7 @@ def run_alias_matching(
             if match_skill_in_text(canonical, fact.text):
                 # Differentiate from exact match: does the fact contain the exact term in the JD?
                 # If not, it's an alias match!
-                jd_term = req.text.lower()
+                req.text.lower()
                 fact_text_lower = fact.text.lower()
 
                 # If it's an alias match, find which alias was matched
@@ -45,17 +51,19 @@ def run_alias_matching(
                         matched_alias = a
                         break
 
-                alias_matches.append({
-                    "requirement_id": req.id,
-                    "requirement_text": req.text,
-                    "matched_canonical_skill": canonical,
-                    "jd_phrase": req.text,
-                    "resume_phrase": matched_alias or canonical,
-                    "resume_section": fact.section,
-                    "resume_entry_id": fact.entry_id,
-                    "source_text": fact.text,
-                    "match_type": "alias_match"
-                })
+                alias_matches.append(
+                    {
+                        "requirement_id": req.id,
+                        "requirement_text": req.text,
+                        "matched_canonical_skill": canonical,
+                        "jd_phrase": req.text,
+                        "resume_phrase": matched_alias or canonical,
+                        "resume_section": fact.section,
+                        "resume_entry_id": fact.entry_id,
+                        "source_text": fact.text,
+                        "match_type": "alias_match",
+                    }
+                )
                 break
 
     return alias_matches

@@ -3,6 +3,7 @@
 These run against the in-memory SQLite test database configured in conftest.py.
 No live PostgreSQL is needed.
 """
+
 from datetime import UTC
 
 import pytest
@@ -102,10 +103,12 @@ async def test_access_protected_endpoint_without_token(client: AsyncClient) -> N
 async def test_invalid_jwt_sub_claim_returns_401(client: AsyncClient) -> None:
     """A JWT with a non-UUID sub claim is rejected with 401, not a 500 crash."""
     from app.core.config import get_settings
+
     settings = get_settings()
 
     # Manually craft a token with sub="not-a-uuid"
     from jose import jwt
+
     token = jwt.encode(
         {"sub": "not-a-uuid", "type": "access"},
         settings.SECRET_KEY,
@@ -155,7 +158,11 @@ async def test_refresh_token_rotation(client: AsyncClient) -> None:
     # Register & Login
     await client.post(
         "/api/v1/auth/register",
-        json={"full_name": "Fiona Gallagher", "email": "fiona@example.com", "password": "Testpass1!"},
+        json={
+            "full_name": "Fiona Gallagher",
+            "email": "fiona@example.com",
+            "password": "Testpass1!",
+        },
     )
     login_res = await client.post(
         "/api/v1/auth/login",
@@ -181,6 +188,7 @@ async def test_expired_access_token_returns_401(client: AsyncClient) -> None:
     from jose import jwt
 
     from app.core.config import get_settings
+
     settings = get_settings()
 
     payload = {
@@ -201,7 +209,11 @@ async def test_refresh_token_cannot_access_protected_endpoint(client: AsyncClien
     """A refresh token cannot be used to authenticate access-token endpoints."""
     await client.post(
         "/api/v1/auth/register",
-        json={"full_name": "George Weasley", "email": "george@example.com", "password": "Testpass1!"},
+        json={
+            "full_name": "George Weasley",
+            "email": "george@example.com",
+            "password": "Testpass1!",
+        },
     )
     login_res = await client.post(
         "/api/v1/auth/login",
@@ -239,4 +251,3 @@ async def test_access_token_cannot_be_used_to_refresh(client: AsyncClient) -> No
     )
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "UNAUTHORIZED"
-

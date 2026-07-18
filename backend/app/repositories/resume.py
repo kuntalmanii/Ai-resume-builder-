@@ -1,4 +1,5 @@
 """Resume Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,8 +19,9 @@ class ResumeRepository(BaseRepository[Resume]):
         return list(result.scalars().all())
 
     async def get_primary_by_user_id(self, db: AsyncSession, user_id: UUID) -> Resume | None:
-        query = select(Resume).where(Resume.user_id == user_id, Resume.is_primary == True)
+        query = select(Resume).where(Resume.user_id == user_id, Resume.is_primary)
         result = await db.execute(query)
         return result.scalars().first()
+
 
 resume_repository = ResumeRepository()

@@ -7,6 +7,7 @@ The scoring engine must always return a valid result even if
 optional AI grammar services are unavailable. These checks cover
 the most common deterministic grammar issues.
 """
+
 from __future__ import annotations
 
 import re
@@ -33,16 +34,25 @@ def check_repeated_punctuation(resume: Any) -> CheckResult:
 
     if not real_issues:
         return CheckResult(
-            code, CATEGORY, "No Repeated Punctuation",
+            code,
+            CATEGORY,
+            "No Repeated Punctuation",
             "No repeated punctuation patterns detected.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Repeated Punctuation Found",
+            code,
+            CATEGORY,
+            "Repeated Punctuation Found",
             f"Found {len(real_issues)} instance(s) of repeated punctuation (e.g. '..', '!!').",
-            "warning", possible, 0,
-            recommendation="Remove repeated punctuation marks. Use single periods to end sentences.",
+            "warning",
+            possible,
+            0,
+            recommendation="Remove repeated punctuation marks. " \
+                "Use single periods to end sentences.",
             evidence_data={"instances_found": len(real_issues), "examples": real_issues[:3]},
         )
 
@@ -55,17 +65,51 @@ def check_excessive_capitalization(resume: Any) -> CheckResult:
     bullets = collect_all_bullets(resume)
     if not bullets:
         return CheckResult(
-            code, CATEGORY, "Capitalization — No Bullets",
+            code,
+            CATEGORY,
+            "Capitalization — No Bullets",
             "No bullets to evaluate.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
 
     # ALL-CAPS words longer than 4 chars and not common acronyms
     common_acronyms = {
-        "API", "SQL", "AWS", "GCP", "HTML", "CSS", "REST", "JSON", "YAML",
-        "XML", "HTTP", "HTTPS", "MVP", "KPI", "ROI", "SLA", "SDK", "CI",
-        "CD", "JWT", "ORM", "UI", "UX", "ML", "AI", "QA", "QC", "CRM",
-        "ERP", "SaaS", "B2B", "B2C", "NLP", "LLM",
+        "API",
+        "SQL",
+        "AWS",
+        "GCP",
+        "HTML",
+        "CSS",
+        "REST",
+        "JSON",
+        "YAML",
+        "XML",
+        "HTTP",
+        "HTTPS",
+        "MVP",
+        "KPI",
+        "ROI",
+        "SLA",
+        "SDK",
+        "CI",
+        "CD",
+        "JWT",
+        "ORM",
+        "UI",
+        "UX",
+        "ML",
+        "AI",
+        "QA",
+        "QC",
+        "CRM",
+        "ERP",
+        "SaaS",
+        "B2B",
+        "B2C",
+        "NLP",
+        "LLM",
     }
     caps_pattern = re.compile(r"\b[A-Z]{5,}\b")
     issues: list[str] = []
@@ -78,16 +122,24 @@ def check_excessive_capitalization(resume: Any) -> CheckResult:
 
     if not issues:
         return CheckResult(
-            code, CATEGORY, "No Excessive Capitalization",
+            code,
+            CATEGORY,
+            "No Excessive Capitalization",
             "No inappropriately capitalized words found in bullet points.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     else:
         unique_issues = list(set(issues))[:5]
         return CheckResult(
-            code, CATEGORY, "Excessive Capitalization Detected",
+            code,
+            CATEGORY,
+            "Excessive Capitalization Detected",
             f"Found {len(issues)} ALL-CAPS word(s) that are not standard acronyms.",
-            "warning", possible, 0,
+            "warning",
+            possible,
+            0,
             recommendation="Use title case or lowercase for non-acronym words.",
             evidence_data={"examples": unique_issues},
         )
@@ -105,15 +157,23 @@ def check_missing_spaces(resume: Any) -> CheckResult:
 
     if not matches:
         return CheckResult(
-            code, CATEGORY, "No Missing Spaces Detected",
+            code,
+            CATEGORY,
+            "No Missing Spaces Detected",
             "Punctuation spacing appears correct throughout the resume.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Missing Spaces After Punctuation",
+            code,
+            CATEGORY,
+            "Missing Spaces After Punctuation",
             f"Found {len(matches)} instance(s) of missing spaces after punctuation.",
-            "warning", possible, 0,
+            "warning",
+            possible,
+            0,
             recommendation="Add a space after periods, commas, and other punctuation marks.",
             evidence_data={"instances_found": len(matches), "examples": matches[:3]},
         )
@@ -131,16 +191,24 @@ def check_duplicate_words(resume: Any) -> CheckResult:
 
     if not matches:
         return CheckResult(
-            code, CATEGORY, "No Duplicate Words",
+            code,
+            CATEGORY,
+            "No Duplicate Words",
             "No consecutive repeated words found.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     else:
         unique = list(set(matches))[:5]
         return CheckResult(
-            code, CATEGORY, "Consecutive Duplicate Words Found",
+            code,
+            CATEGORY,
+            "Consecutive Duplicate Words Found",
             f"Found {len(matches)} instance(s) of repeated words (e.g. 'the the', 'is is').",
-            "warning", possible, 0,
+            "warning",
+            possible,
+            0,
             recommendation="Review and remove duplicate words.",
             evidence_data={"duplicates_found": unique},
         )
@@ -155,9 +223,13 @@ def check_bullet_ending_consistency(resume: Any) -> CheckResult:
     if len(bullets) < 3:
         # Not enough data to assess consistency
         return CheckResult(
-            code, CATEGORY, "Bullet Ending — Insufficient Data",
+            code,
+            CATEGORY,
+            "Bullet Ending — Insufficient Data",
             "Not enough bullet points to evaluate ending consistency.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
 
     with_period = sum(1 for b in bullets if b.rstrip().endswith("."))
@@ -168,16 +240,25 @@ def check_bullet_ending_consistency(resume: Any) -> CheckResult:
     if ratio >= 0.9 or ratio <= 0.1:
         style = "with periods" if ratio >= 0.9 else "without periods"
         return CheckResult(
-            code, CATEGORY, "Consistent Bullet Endings",
+            code,
+            CATEGORY,
+            "Consistent Bullet Endings",
             f"Bullet points consistently end {style} ({ratio:.0%}).",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             evidence_data={"style": style, "consistency_ratio": round(ratio, 2)},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Inconsistent Bullet Period Usage",
-            f"{with_period} bullets end with periods, {without_period} do not — inconsistent styling.",
-            "warning", possible, 0,
+            code,
+            CATEGORY,
+            "Inconsistent Bullet Period Usage",
+            f"{with_period} bullets end with periods, " \
+                f"{without_period} do not — inconsistent styling.",
+            "warning",
+            possible,
+            0,
             recommendation="Choose one style: either end all bullets with periods or none.",
             evidence_data={
                 "with_period": with_period,

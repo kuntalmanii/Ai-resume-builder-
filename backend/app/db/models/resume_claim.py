@@ -1,4 +1,5 @@
 """Resume Claim ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -12,9 +13,7 @@ from app.db.base import Base
 class ResumeClaim(Base):
     __tablename__ = "resume_claims"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -32,7 +31,9 @@ class ResumeClaim(Base):
     bullet_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
     original_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    verification_status: Mapped[str] = mapped_column(String(50), nullable=False, default="unverified")  # unverified, verified, contradictory
+    verification_status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="unverified"
+    )  # unverified, verified, contradictory
     contradiction_details: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(

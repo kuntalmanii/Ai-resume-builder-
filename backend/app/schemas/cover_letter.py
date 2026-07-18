@@ -1,4 +1,5 @@
 """Cover Letter Pydantic schemas."""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -9,9 +10,9 @@ from pydantic import BaseModel, ConfigDict
 class CoverLetterGenerateRequest(BaseModel):
     resume_id: uuid.UUID
     job_description_id: uuid.UUID | None = None
-    job_description_text: str | None = None # fallback to manual JD paste
+    job_description_text: str | None = None  # fallback to manual JD paste
     application_id: uuid.UUID | None = None
-    style_preference: str | None = "professional" # professional, creative, modern, etc.
+    style_preference: str | None = "professional"  # professional, creative, modern, etc.
 
 
 class CoverLetterBase(BaseModel):

@@ -1,4 +1,5 @@
 """Pydantic schemas for Career Entry (individual Smart Profile items)."""
+
 import uuid
 from datetime import datetime
 from typing import Literal

@@ -1,4 +1,6 @@
-"""Career Entry Service layer — handles CRUD, ownership checks, and status confirmation for profile entries."""
+"""Career Entry Service layer — handles CRUD, ownership checks, and status confirmation
+for profile entries."""
+
 import uuid
 
 from sqlalchemy import select
@@ -15,7 +17,9 @@ async def get_career_entry_by_id_raw(db: AsyncSession, entry_id: uuid.UUID) -> C
     return result.scalar_one_or_none()
 
 
-async def get_career_entry(db: AsyncSession, entry_id: uuid.UUID, user_id: uuid.UUID) -> CareerEntry:
+async def get_career_entry(
+    db: AsyncSession, entry_id: uuid.UUID, user_id: uuid.UUID
+) -> CareerEntry:
     """Fetch entry and enforce user ownership.
 
     Returns 404 (ResourceNotFoundError) on ownership mismatch for security
@@ -69,10 +73,13 @@ async def update_career_entry(
 ) -> CareerEntry:
     """Update career entry fields. Enforces source_verified record immutability."""
     from app.core.exceptions import ValidationError
+
     entry = await get_career_entry(db, entry_id, user_id)
 
     if entry.verification_status == "source_verified":
-        raise ValidationError("Cannot edit source-verified records", details="SOURCE_VERIFIED_IMMUTABLE")
+        raise ValidationError(
+            "Cannot edit source-verified records", details="SOURCE_VERIFIED_IMMUTABLE"
+        )
 
     update_data = payload.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -87,16 +94,21 @@ async def update_career_entry(
 async def delete_career_entry(db: AsyncSession, entry_id: uuid.UUID, user_id: uuid.UUID) -> None:
     """Delete owned career entry. Enforces source_verified record immutability."""
     from app.core.exceptions import ValidationError
+
     entry = await get_career_entry(db, entry_id, user_id)
 
     if entry.verification_status == "source_verified":
-        raise ValidationError("Cannot delete source-verified records", details="SOURCE_VERIFIED_IMMUTABLE")
+        raise ValidationError(
+            "Cannot delete source-verified records", details="SOURCE_VERIFIED_IMMUTABLE"
+        )
 
     await db.delete(entry)
     await db.commit()
 
 
-async def confirm_career_entry(db: AsyncSession, entry_id: uuid.UUID, user_id: uuid.UUID) -> CareerEntry:
+async def confirm_career_entry(
+    db: AsyncSession, entry_id: uuid.UUID, user_id: uuid.UUID
+) -> CareerEntry:
     """Promotes manually created unverified entries to user_confirmed state."""
     entry = await get_career_entry(db, entry_id, user_id)
     if entry.verification_status == "unverified":

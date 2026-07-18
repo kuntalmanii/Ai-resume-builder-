@@ -1,4 +1,5 @@
 """Evidence Source ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -18,18 +19,24 @@ class EvidenceSource(Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     ai_suggestion_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("ai_suggestions.id", ondelete="CASCADE"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("ai_suggestions.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
     resume_claim_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("resume_claims.id", ondelete="CASCADE"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("resume_claims.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
 
     label: Mapped[str] = mapped_column(String(255), nullable=False)
-    source_type: Mapped[str] = mapped_column(String(50), nullable=False)  # resume_content, career_profile_user_confirmed, etc.
+    source_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # resume_content, career_profile_user_confirmed, etc.
 
     source_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     source_section: Mapped[str | None] = mapped_column(String(50), nullable=True)
@@ -37,9 +44,15 @@ class EvidenceSource(Base):
     source_field: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     excerpt: Mapped[str | None] = mapped_column(Text, nullable=True)
-    evidence_strength: Mapped[str] = mapped_column(String(50), nullable=False, default="contextual")  # direct, corroborating, contextual, insufficient
-    support_kind: Mapped[str] = mapped_column(String(50), nullable=False, default="relevance_context")  # factual_support, relevance_context
-    verification_status: Mapped[str | None] = mapped_column(String(50), nullable=True)  # unverified, user_confirmed, source_verified
+    evidence_strength: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="contextual"
+    )  # direct, corroborating, contextual, insufficient
+    support_kind: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="relevance_context"
+    )  # factual_support, relevance_context
+    verification_status: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )  # unverified, user_confirmed, source_verified
     contradiction_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
@@ -47,13 +60,20 @@ class EvidenceSource(Base):
     )
 
     # Relationships
-    ai_suggestion: Mapped["AISuggestion"] = relationship("AISuggestion", back_populates="evidence_sources")  # type: ignore[name-defined]
-    resume_claim: Mapped["ResumeClaim"] = relationship("ResumeClaim", back_populates="evidence_sources")  # type: ignore[name-defined]
+    ai_suggestion: Mapped["AISuggestion"] = relationship(
+        "AISuggestion", back_populates="evidence_sources"
+    )  # type: ignore[name-defined]
+    resume_claim: Mapped["ResumeClaim"] = relationship(
+        "ResumeClaim", back_populates="evidence_sources"
+    )  # type: ignore[name-defined]
 
     # Compatibility Properties
     @property
     def verified(self) -> bool:
-        return self.verification_status in ["user_confirmed", "source_verified"] or self.evidence_strength == "direct"
+        return (
+            self.verification_status in ["user_confirmed", "source_verified"]
+            or self.evidence_strength == "direct"
+        )
 
     @verified.setter
     def verified(self, value: bool) -> None:

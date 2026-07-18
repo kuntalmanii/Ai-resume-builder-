@@ -1,4 +1,5 @@
 """User Repository class."""
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,5 +15,6 @@ class UserRepository(BaseRepository[User]):
         query = select(User).where(User.email == email)
         result = await db.execute(query)
         return result.scalars().first()
+
 
 user_repository = UserRepository()

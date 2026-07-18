@@ -1,4 +1,5 @@
 """Skill taxonomy and boundary-safe alias matching system."""
+
 import re
 
 # Centralized taxonomy: Canonical Name -> List of aliases/phrases
@@ -23,7 +24,7 @@ TAXONOMY = {
     "Docker": ["docker"],
     "Kubernetes": ["kubernetes", "k8s"],
     "GraphQL": ["graphql"],
-    "Webpack": ["webpack"]
+    "Webpack": ["webpack"],
 }
 
 # Special matching rules to prevent false positives
@@ -31,7 +32,7 @@ TAXONOMY = {
 SPECIAL_PATTERNS = {
     "Go": [
         (r"\bgolang\b", re.IGNORECASE),
-        (r"\bGo\b", 0)  # case-sensitive to avoid matching the English verb "go"
+        (r"\bGo\b", 0),  # case-sensitive to avoid matching the English verb "go"
     ],
     "R": [
         (r"\bR\b", 0)  # case-sensitive to avoid matching the English letter "r"
@@ -42,10 +43,9 @@ SPECIAL_PATTERNS = {
     "Java": [
         (r"\b[Jj]ava\b(?![Ss]cript)", 0)  # avoid matching JavaScript
     ],
-    "C++": [
-        (r"\b[Cc]\+\+", re.IGNORECASE)
-    ]
+    "C++": [(r"\b[Cc]\+\+", re.IGNORECASE)],
 }
+
 
 def get_canonical_skill(phrase: str) -> str | None:
     """Resolve a raw phrase/term to its canonical skill name if it exists in our taxonomy."""
@@ -54,6 +54,7 @@ def get_canonical_skill(phrase: str) -> str | None:
         if phrase_clean == canonical.lower() or any(phrase_clean == a.lower() for a in aliases):
             return canonical
     return None
+
 
 def match_skill_in_text(canonical_skill: str, text: str) -> bool:
     """Check if a canonical skill is mentioned in a text block, enforcing strict boundary rules."""

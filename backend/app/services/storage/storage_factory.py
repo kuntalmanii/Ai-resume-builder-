@@ -8,6 +8,7 @@ Usage:
     data = await storage.read(path)
     await storage.delete(path)
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,6 +30,7 @@ class _S3Storage(BaseStorage):
 
     def __init__(self) -> None:
         import boto3  # type: ignore[import]
+
         settings = get_settings()
         self._bucket = settings.STORAGE_BUCKET
         self._client = boto3.client(
@@ -40,6 +42,7 @@ class _S3Storage(BaseStorage):
 
     async def save(self, filename: str, data: bytes) -> str:
         import asyncio
+
         key = f"exports/{filename}"
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
@@ -50,6 +53,7 @@ class _S3Storage(BaseStorage):
 
     async def read(self, path: str) -> bytes:
         import asyncio
+
         key = path.removeprefix(f"s3://{self._bucket}/")
         loop = asyncio.get_event_loop()
         resp = await loop.run_in_executor(
@@ -60,6 +64,7 @@ class _S3Storage(BaseStorage):
 
     async def delete(self, path: str) -> None:
         import asyncio
+
         key = path.removeprefix(f"s3://{self._bucket}/")
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
@@ -72,7 +77,9 @@ class _GCSStorage(BaseStorage):
     """Google Cloud Storage driver (stub — install google-cloud-storage to use)."""
 
     async def save(self, filename: str, data: bytes) -> str:
-        raise NotImplementedError("GCS storage driver not yet configured. Install google-cloud-storage.")
+        raise NotImplementedError(
+            "GCS storage driver not yet configured. Install google-cloud-storage."
+        )
 
     async def read(self, path: str) -> bytes:
         raise NotImplementedError("GCS storage driver not yet configured.")
@@ -85,7 +92,9 @@ class _AzureBlobStorage(BaseStorage):
     """Azure Blob Storage driver (stub — install azure-storage-blob to use)."""
 
     async def save(self, filename: str, data: bytes) -> str:
-        raise NotImplementedError("Azure Blob storage driver not yet configured. Install azure-storage-blob.")
+        raise NotImplementedError(
+            "Azure Blob storage driver not yet configured. Install azure-storage-blob."
+        )
 
     async def read(self, path: str) -> bytes:
         raise NotImplementedError("Azure Blob storage driver not yet configured.")

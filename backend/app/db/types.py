@@ -1,4 +1,5 @@
 """Custom database column types for cross-dialect compatibility."""
+
 from sqlalchemy import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import TypeDecorator
@@ -10,6 +11,7 @@ class JSONBType(TypeDecorator):
     This allows us to use JSONB in production (PostgreSQL) while keeping
     in-memory SQLite tests working without a live database.
     """
+
     impl = JSON
     cache_ok = True
 

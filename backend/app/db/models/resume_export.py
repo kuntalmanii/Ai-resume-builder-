@@ -1,4 +1,5 @@
 """Resume Export snapshot model."""
+
 import uuid
 from datetime import datetime
 
@@ -13,9 +14,7 @@ from app.db.types import JSONBType
 class ResumeExport(Base):
     __tablename__ = "resume_exports"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -26,7 +25,9 @@ class ResumeExport(Base):
     storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
     renderer_version: Mapped[str] = mapped_column(String(50), nullable=False, default="1.0.0")
     page_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="completed")  # pending, completed, failed
+    status: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="completed"
+    )  # pending, completed, failed
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False

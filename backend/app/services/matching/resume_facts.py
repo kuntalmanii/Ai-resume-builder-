@@ -1,14 +1,24 @@
 """Service to extract structured facts and text fragments from a ResumeDocument with provenance."""
+
 from typing import Any
 
 from pydantic import BaseModel
 
 
+# section can be: personal_information, professional_summary, experience,
+# projects, skills, education, certifications
 class ResumeFact(BaseModel):
-    section: str            # e.g., 'personal_information', 'professional_summary', 'experience', 'projects', 'skills', 'education', 'certifications'
-    entry_id: str | None    # ID or index of the list item (if list section)
-    field: str | None       # e.g., 'bullets', 'technologies', 'description', 'degree'
-    text: str               # The raw text content of the fact
+    section: str
+    entry_id: str | None  # ID or index of the list item (if list section)
+    field: str | None  # e.g., 'bullets', 'technologies', 'description', 'degree'
+    text: str  # The raw text content of the fact
+
+
+def _make_fact(
+    section: str, entry_id: str | None, field: str | None, text: str
+) -> ResumeFact:
+    return ResumeFact(section=section, entry_id=entry_id, field=field, text=text)
+
 
 def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact]:
     """
@@ -33,12 +43,14 @@ def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact
         for field in ["full_name", "professional_title", "location"]:
             val = pers.get(field)
             if val:
-                facts.append(ResumeFact(section="personal_information", entry_id=None, field=field, text=str(val)))
+                facts.append(_make_fact("personal_information", None, field, str(val)))
 
     # 2. Professional Summary
     summary = data.get("professional_summary")
     if summary:
-        facts.append(ResumeFact(section="professional_summary", entry_id=None, field="professional_summary", text=str(summary)))
+        facts.append(
+            _make_fact("professional_summary", None, "professional_summary", str(summary))
+        )
 
     # 3. Work Experience
     exp_list = data.get("experience") or []
@@ -49,24 +61,28 @@ def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact
         title = exp.get("position") or exp.get("title") or ""
         company = exp.get("company") or ""
         if title:
-            facts.append(ResumeFact(section="experience", entry_id=entry_id, field="position", text=f"{title} at {company}"))
+            facts.append(
+                _make_fact("experience", entry_id, "position", f"{title} at {company}")
+            )
 
         # Bullets
         bullets = exp.get("bullets") or []
         for b_idx, bullet in enumerate(bullets):
             if bullet:
-                facts.append(ResumeFact(section="experience", entry_id=entry_id, field=f"bullet_{b_idx}", text=str(bullet)))
+                facts.append(
+                    _make_fact("experience", entry_id, f"bullet_{b_idx}", str(bullet))
+                )
 
         # Technologies list
         techs = exp.get("technologies") or []
         for tech in techs:
             if tech:
-                facts.append(ResumeFact(section="experience", entry_id=entry_id, field="technologies", text=str(tech)))
+                facts.append(_make_fact("experience", entry_id, "technologies", str(tech)))
 
         # Description
         desc = exp.get("description")
         if desc:
-            facts.append(ResumeFact(section="experience", entry_id=entry_id, field="description", text=str(desc)))
+            facts.append(_make_fact("experience", entry_id, "description", str(desc)))
 
     # 4. Projects
     proj_list = data.get("projects") or []
@@ -74,21 +90,23 @@ def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact
         entry_id = str(proj.get("id", idx))
         name = proj.get("name") or ""
         if name:
-            facts.append(ResumeFact(section="projects", entry_id=entry_id, field="name", text=name))
+            facts.append(_make_fact("projects", entry_id, "name", name))
 
         bullets = proj.get("bullets") or []
         for b_idx, bullet in enumerate(bullets):
             if bullet:
-                facts.append(ResumeFact(section="projects", entry_id=entry_id, field=f"bullet_{b_idx}", text=str(bullet)))
+                facts.append(
+                    _make_fact("projects", entry_id, f"bullet_{b_idx}", str(bullet))
+                )
 
         techs = proj.get("technologies") or []
         for tech in techs:
             if tech:
-                facts.append(ResumeFact(section="projects", entry_id=entry_id, field="technologies", text=str(tech)))
+                facts.append(_make_fact("projects", entry_id, "technologies", str(tech)))
 
         desc = proj.get("description")
         if desc:
-            facts.append(ResumeFact(section="projects", entry_id=entry_id, field="description", text=str(desc)))
+            facts.append(_make_fact("projects", entry_id, "description", str(desc)))
 
     # 5. Skills
     skills_groups = data.get("skills") or []
@@ -98,7 +116,7 @@ def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact
         skills = group.get("skills") or []
         for s_idx, skill in enumerate(skills):
             if skill:
-                facts.append(ResumeFact(section="skills", entry_id=entry_id, field=category, text=str(skill)))
+                facts.append(_make_fact("skills", entry_id, category, str(skill)))
 
     # 6. Education
     edu_list = data.get("education") or []
@@ -108,11 +126,13 @@ def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact
         deg = edu.get("degree") or ""
         field = edu.get("field_of_study") or ""
         if inst or deg:
-            facts.append(ResumeFact(section="education", entry_id=entry_id, field="degree", text=f"{deg} in {field} from {inst}"))
+            facts.append(
+                _make_fact("education", entry_id, "degree", f"{deg} in {field} from {inst}")
+            )
 
         desc = edu.get("description")
         if desc:
-            facts.append(ResumeFact(section="education", entry_id=entry_id, field="description", text=str(desc)))
+            facts.append(_make_fact("education", entry_id, "description", str(desc)))
 
     # 7. Certifications
     certs = data.get("certifications") or []
@@ -121,6 +141,8 @@ def extract_resume_facts(content: dict[str, Any] | BaseModel) -> list[ResumeFact
         name = cert.get("name") or ""
         issuer = cert.get("issuer") or ""
         if name:
-            facts.append(ResumeFact(section="certifications", entry_id=entry_id, field="name", text=f"{name} by {issuer}"))
+            facts.append(
+                _make_fact("certifications", entry_id, "name", f"{name} by {issuer}")
+            )
 
     return facts

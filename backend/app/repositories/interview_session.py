@@ -1,4 +1,5 @@
 """InterviewSession Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import select
@@ -13,7 +14,11 @@ class InterviewSessionRepository(BaseRepository[InterviewSession]):
         super().__init__(InterviewSession)
 
     async def get_by_user_id(self, db: AsyncSession, user_id: UUID) -> list[InterviewSession]:
-        query = select(InterviewSession).where(InterviewSession.user_id == user_id).order_by(InterviewSession.created_at.desc())
+        query = (
+            select(InterviewSession)
+            .where(InterviewSession.user_id == user_id)
+            .order_by(InterviewSession.created_at.desc())
+        )
         result = await db.execute(query)
         return list(result.scalars().all())
 

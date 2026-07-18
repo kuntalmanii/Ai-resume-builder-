@@ -1,4 +1,6 @@
-"""Experience matching module for calculating unique calendar duration and evaluating years of experience."""
+"""Experience matching module for calculating unique calendar duration and evaluating
+years of experience."""
+
 import re
 from datetime import datetime
 from typing import Any
@@ -25,7 +27,8 @@ def parse_date(date_str: str | None, is_current: bool = False) -> datetime:
     # Standard fallback
     if is_current:
         return datetime.utcnow()
-    return datetime.utcnow() # safe default
+    return datetime.utcnow()  # safe default
+
 
 def calculate_unique_experience_years(experience_entries: list[dict[str, Any]]) -> float:
     """
@@ -46,7 +49,7 @@ def calculate_unique_experience_years(experience_entries: list[dict[str, Any]]) 
         end = parse_date(end_str, is_current=is_curr)
 
         if start > end:
-            start, end = end, start # swap if reversed
+            start, end = end, start  # swap if reversed
 
         intervals.append((start, end))
 
@@ -75,9 +78,9 @@ def calculate_unique_experience_years(experience_entries: list[dict[str, Any]]) 
 
     return round(total_days / 365.25, 1)
 
+
 def run_experience_matching(
-    experience_requirements: list[dict[str, Any]],
-    experience_entries: list[dict[str, Any]]
+    experience_requirements: list[dict[str, Any]], experience_entries: list[dict[str, Any]]
 ) -> tuple[int, list[dict[str, Any]]]:
     """
     Evaluate experience requirements against resume history.
@@ -92,7 +95,7 @@ def run_experience_matching(
     for req in experience_requirements:
         # Extract years from requirement text if possible
         # e.g., "5+ years of experience"
-        match = re.search(r'(\d+)\+?\s*year', req.get("text", ""), re.IGNORECASE)
+        match = re.search(r"(\d+)\+?\s*year", req.get("text", ""), re.IGNORECASE)
         if match:
             required_years = int(match.group(1))
             if total_years < required_years:
@@ -100,11 +103,14 @@ def run_experience_matching(
                 # Deduct points proportionally
                 deduction = min(15, int((gap / required_years) * 25))
                 score -= deduction
-                gaps.append({
-                    "requirement": req.get("text"),
-                    "details": f"Your resume demonstrates {total_years} years of unique calendar experience.",
-                    "gapYears": round(gap, 1)
-                })
+                gaps.append(
+                    {
+                        "requirement": req.get("text"),
+                        "details": f"Your resume demonstrates {total_years} " \
+                            f"years of unique calendar experience.",
+                        "gapYears": round(gap, 1),
+                    }
+                )
 
     score = max(0, score)
     return score, gaps

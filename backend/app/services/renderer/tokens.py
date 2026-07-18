@@ -31,11 +31,11 @@ FONT_FAMILIES = {
 }
 
 ACCENT_COLORS = {
-    "modern": "#2563eb",      # Blue
-    "minimal": "#1f2937",     # Slate
-    "corporate": "#0f172a",   # Navy
-    "technical": "#0d9488",   # Teal
-    "student": "#4f46e5",     # Purple
+    "modern": "#2563eb",  # Blue
+    "minimal": "#1f2937",  # Slate
+    "corporate": "#0f172a",  # Navy
+    "technical": "#0d9488",  # Teal
+    "student": "#4f46e5",  # Purple
     "internship": "#059669",  # Emerald
-    "executive": "#78350f",   # Amber
+    "executive": "#78350f",  # Amber
 }

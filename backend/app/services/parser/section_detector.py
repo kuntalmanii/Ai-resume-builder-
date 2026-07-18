@@ -1,60 +1,111 @@
 """Section detector and text segmenter."""
+
 import re
 
 SECTION_KEYWORDS = {
     "professional_summary": [
-        "summary", "professional summary", "profile", "objective",
-        "career objective", "about me", "summary statement", "about"
+        "summary",
+        "professional summary",
+        "profile",
+        "objective",
+        "career objective",
+        "about me",
+        "summary statement",
+        "about",
     ],
     "education": [
-        "education", "academic background", "qualifications",
-        "academic history", "academic credentials", "academic profile",
-        "academic qualification", "academic qualifications"
+        "education",
+        "academic background",
+        "qualifications",
+        "academic history",
+        "academic credentials",
+        "academic profile",
+        "academic qualification",
+        "academic qualifications",
     ],
     "experience": [
-        "experience", "work experience", "professional experience",
-        "employment history", "internships", "employment", "work history",
-        "internship experience", "professional background", "career history"
+        "experience",
+        "work experience",
+        "professional experience",
+        "employment history",
+        "internships",
+        "employment",
+        "work history",
+        "internship experience",
+        "professional background",
+        "career history",
     ],
     "projects": [
-        "projects", "academic projects", "personal projects",
-        "selected projects", "key projects", "technical projects", "project experience"
+        "projects",
+        "academic projects",
+        "personal projects",
+        "selected projects",
+        "key projects",
+        "technical projects",
+        "project experience",
     ],
     "skills": [
-        "skills", "technical skills", "core competencies", "technologies",
-        "tools", "skills & technologies", "technical expertise", "skills and technologies",
-        "key skills", "expertise", "technical proficiencies", "proficiencies"
+        "skills",
+        "technical skills",
+        "core competencies",
+        "technologies",
+        "tools",
+        "skills & technologies",
+        "technical expertise",
+        "skills and technologies",
+        "key skills",
+        "expertise",
+        "technical proficiencies",
+        "proficiencies",
     ],
     "certifications": [
-        "certifications", "certificates", "licenses & certifications",
-        "credentials", "licenses and certifications", "certifications & licenses", "licenses"
+        "certifications",
+        "certificates",
+        "licenses & certifications",
+        "credentials",
+        "licenses and certifications",
+        "certifications & licenses",
+        "licenses",
     ],
     "achievements": [
-        "achievements", "awards", "honors", "accomplishments",
-        "awards & honors", "awards and honors"
+        "achievements",
+        "awards",
+        "honors",
+        "accomplishments",
+        "awards & honors",
+        "awards and honors",
     ],
     "positions_of_responsibility": [
-        "positions of responsibility", "leadership", "leadership experience",
-        "extra-curricular activities", "extracurricular activities", "responsibility",
-        "responsibilities", "leadership & activity", "activities", "extracurriculars"
+        "positions of responsibility",
+        "leadership",
+        "leadership experience",
+        "extra-curricular activities",
+        "extracurricular activities",
+        "responsibility",
+        "responsibilities",
+        "leadership & activity",
+        "activities",
+        "extracurriculars",
     ],
-    "languages": [
-        "languages", "languages spoken", "language skills", "language"
-    ],
+    "languages": ["languages", "languages spoken", "language skills", "language"],
     "interests": [
-        "interests", "hobbies", "interests & hobbies", "interests and hobbies", "personal interests"
-    ]
+        "interests",
+        "hobbies",
+        "interests & hobbies",
+        "interests and hobbies",
+        "personal interests",
+    ],
 }
 
 
 def clean_heading_candidate(line: str) -> str:
     """Clean punctuation and symbols around heading line to normalize for comparison."""
     # Remove leading/trailing formatting characters like :, *, -, #, _, [, ], (, )
-    cleaned = re.sub(r'^[\s:\*\-#_\[\]\(\)\-\u2022\u00b7]+', '', line)
-    cleaned = re.sub(r'[\s:\*\-#_\[\]\(\)\-\u2022\u00b7]+$', '', cleaned)
+    cleaned = re.sub(r"^[\s:\*\-#_\[\]\(\)\-\u2022\u00b7]+", "", line)
+    cleaned = re.sub(r"[\s:\*\-#_\[\]\(\)\-\u2022\u00b7]+$", "", cleaned)
     cleaned = cleaned.strip()
     # Collapse spaces
-    cleaned = re.sub(r'\s+', ' ', cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned)
     return cleaned
 
 

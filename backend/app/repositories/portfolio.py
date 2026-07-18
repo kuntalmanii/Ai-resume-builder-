@@ -1,4 +1,5 @@
 """Portfolio Repository class."""
+
 from uuid import UUID
 
 from sqlalchemy import select

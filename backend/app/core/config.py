@@ -4,6 +4,7 @@ This module is the SINGLE source of truth for all configuration.
 Every setting must be validated here. The application MUST fail-fast
 at startup when required production variables are absent or insecure.
 """
+
 from __future__ import annotations
 
 import sys
@@ -46,11 +47,13 @@ class Settings(BaseSettings):
         }
         if v in _insecure_defaults:
             import logging
+
             logging.getLogger("careeros").warning(
                 "SECURITY: Using an insecure SECRET_KEY. Set a unique 64+ char key in production."
             )
         elif len(v) < 32:
             import logging
+
             logging.getLogger("careeros").warning(
                 "SECURITY: SECRET_KEY is shorter than 32 characters."
             )
@@ -110,12 +113,12 @@ class Settings(BaseSettings):
 
     # ─── Rate Limiting ────────────────────────────────────────────────────────
     RATE_LIMIT_ENABLED: bool = True
-    RATE_LIMIT_DEFAULT: int = 60          # requests per window
-    RATE_LIMIT_WINDOW: int = 60           # window in seconds
-    RATE_LIMIT_AUTH: int = 10             # auth endpoints per window
-    RATE_LIMIT_AI: int = 20              # AI-heavy endpoints per window
-    RATE_LIMIT_EXPORT: int = 10          # export endpoints per window
-    RATE_LIMIT_UPLOAD: int = 5           # upload endpoint per window
+    RATE_LIMIT_DEFAULT: int = 60  # requests per window
+    RATE_LIMIT_WINDOW: int = 60  # window in seconds
+    RATE_LIMIT_AUTH: int = 10  # auth endpoints per window
+    RATE_LIMIT_AI: int = 20  # AI-heavy endpoints per window
+    RATE_LIMIT_EXPORT: int = 10  # export endpoints per window
+    RATE_LIMIT_UPLOAD: int = 5  # upload endpoint per window
 
     # ─── Email (placeholders for future integration) ──────────────────────────
     SMTP_HOST: str = ""
@@ -154,7 +157,8 @@ class Settings(BaseSettings):
             }
             if self.SECRET_KEY in insecure_keys or len(self.SECRET_KEY) < 32:
                 errors.append(
-                    "SECRET_KEY must be a cryptographically strong string of at least 32 characters in production."
+                    "SECRET_KEY must be a cryptographically strong " \
+                        "string of at least 32 characters in production."
                 )
 
             if not self.DATABASE_URL or "sqlite" in self.DATABASE_URL:

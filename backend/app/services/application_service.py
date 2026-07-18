@@ -1,4 +1,5 @@
 """Application Service class."""
+
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +14,9 @@ from app.services.notification_service import notification_service
 
 
 class ApplicationService:
-    async def create(self, db: AsyncSession, *, user_id: UUID, obj_in: ApplicationCreate) -> Application:
+    async def create(
+        self, db: AsyncSession, *, user_id: UUID, obj_in: ApplicationCreate
+    ) -> Application:
         data = obj_in.model_dump()
         data["user_id"] = user_id
         app_obj = await application_repository.create(db, obj_in=data)
@@ -26,20 +29,24 @@ class ApplicationService:
                 type="success",
                 title="Application Tracked",
                 body=f"Added job application for {app_obj.role} at {app_obj.company}.",
-                action_url=f"/applications/{app_obj.id}"
-            )
+                action_url=f"/applications/{app_obj.id}",
+            ),
         )
         return app_obj
 
     async def get_by_user_id(
         self, db: AsyncSession, user_id: UUID, status: str = None, search: str = None
     ) -> list[Application]:
-        return await application_repository.get_by_user_id(db, user_id, status=status, search=search)
+        return await application_repository.get_by_user_id(
+            db, user_id, status=status, search=search
+        )
 
     async def get_by_id(self, db: AsyncSession, id: UUID) -> Application | None:
         return await application_repository.get_with_interviews(db, id)
 
-    async def update(self, db: AsyncSession, *, db_obj: Application, obj_in: ApplicationUpdate) -> Application:
+    async def update(
+        self, db: AsyncSession, *, db_obj: Application, obj_in: ApplicationUpdate
+    ) -> Application:
         data = obj_in.model_dump(exclude_unset=True)
         old_status = db_obj.status
         updated = await application_repository.update(db, db_obj=db_obj, obj_in=data)
@@ -52,9 +59,10 @@ class ApplicationService:
                     user_id=db_obj.user_id,
                     type="info",
                     title="Application Status Updated",
-                    body=f"Application for {db_obj.role} at {db_obj.company} moved to {data['status']}.",
-                    action_url=f"/applications/{db_obj.id}"
-                )
+                    body=f"Application for {db_obj.role} at " \
+                        f"{db_obj.company} moved to {data['status']}.",
+                    action_url=f"/applications/{db_obj.id}",
+                ),
             )
         return updated
 
@@ -83,13 +91,16 @@ class ApplicationService:
                 user_id=user_id,
                 type="reminder",
                 title="Interview Scheduled",
-                body=f"New {iv_obj.round_type} interview scheduled for {role} at {company} on {iv_obj.scheduled_at.strftime('%Y-%m-%d %H:%M')}.",
-                action_url=f"/applications/{application_id}"
-            )
+                body=f"New {iv_obj.round_type} interview scheduled for {role} at " \
+                    f"{company} on {iv_obj.scheduled_at.strftime('%Y-%m-%d %H:%M')}.",
+                action_url=f"/applications/{application_id}",
+            ),
         )
         return iv_obj
 
-    async def get_interviews_by_app(self, db: AsyncSession, application_id: UUID) -> list[Interview]:
+    async def get_interviews_by_app(
+        self, db: AsyncSession, application_id: UUID
+    ) -> list[Interview]:
         return await interview_repository.get_by_application_id(db, application_id)
 
     async def update_interview(

@@ -1,4 +1,6 @@
-"""Import service layer - orchestrates upload validation, text extraction, structured parsing, and profile imports."""
+"""Import service layer - orchestrates upload validation, text extraction, structured
+parsing, and profile imports."""
+
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -23,7 +25,9 @@ from app.services.parser.structured_parser import parse_resume_text
 logger = logging.getLogger(__name__)
 
 
-async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: UploadFile) -> ResumeImportSession:
+async def create_import_session(
+    db: AsyncSession, user_id: uuid.UUID, file: UploadFile
+) -> ResumeImportSession:
     """Validate, extract, check quality, parse, and save a temporary ResumeImportSession."""
     # 1. Validate file metadata (name length, extension, mime type, traversal)
     validate_file_metadata(file)
@@ -36,7 +40,7 @@ async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: Uplo
     validate_file_content(file_bytes, filename)
 
     # Determine document type
-    ext = os_ext = filename.split(".")[-1].lower()
+    ext = filename.split(".")[-1].lower()
     doc_type = "pdf" if ext == "pdf" else "docx"
 
     # 4. Text Extraction
@@ -53,7 +57,7 @@ async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: Uplo
         raise ValidationError(
             "This PDF appears to contain scanned images rather than selectable text. "
             "OCR support is not yet enabled. Please upload a text-based PDF or DOCX.",
-            details="SCANNED_PDF_OCR_REQUIRED"
+            details="SCANNED_PDF_OCR_REQUIRED",
         )
 
     # 6. Structured Parsing
@@ -84,7 +88,7 @@ async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: Uplo
         "word_count": extracted.get("word_count"),
         "quality_status": quality["status"],
         "section_confidence": confidence,
-        "text": raw_text  # Kept in short-lived import session for raw_text population in finalize
+        "text": raw_text,  # Kept in short-lived import session for raw_text population in finalize
     }
 
     expires_at = datetime.now(UTC) + timedelta(hours=24)
@@ -99,7 +103,7 @@ async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: Uplo
         parsing_warnings=all_warnings,
         detected_sections=detected,
         missing_sections=missing,
-        expires_at=expires_at
+        expires_at=expires_at,
     )
 
     db.add(session)
@@ -108,7 +112,9 @@ async def create_import_session(db: AsyncSession, user_id: uuid.UUID, file: Uplo
     return session
 
 
-async def get_import_session(db: AsyncSession, user_id: uuid.UUID, import_id: uuid.UUID) -> ResumeImportSession:
+async def get_import_session(
+    db: AsyncSession, user_id: uuid.UUID, import_id: uuid.UUID
+) -> ResumeImportSession:
     """Retrieve import session, enforcing user ownership."""
     stmt = select(ResumeImportSession).where(ResumeImportSession.id == import_id)
     result = await db.execute(stmt)
@@ -127,9 +133,15 @@ async def update_import_document(
     session = await get_import_session(db, user_id, import_id)
 
     if session.status == "finalized":
-        raise ValidationError("Cannot update a finalized import session", details="SESSION_ALREADY_FINALIZED")
+        raise ValidationError(
+            "Cannot update a finalized import session", details="SESSION_ALREADY_FINALIZED"
+        )
 
-    expires_at = session.expires_at.replace(tzinfo=UTC) if session.expires_at.tzinfo is None else session.expires_at
+    expires_at = (
+        session.expires_at.replace(tzinfo=UTC)
+        if session.expires_at.tzinfo is None
+        else session.expires_at
+    )
     if expires_at < datetime.now(UTC):
         session.status = "expired"
         db.add(session)
@@ -161,10 +173,12 @@ async def delete_import_session(db: AsyncSession, user_id: uuid.UUID, import_id:
 def _is_duplicate_edu(edu: dict[str, Any], existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type == "education":
-            if (entry.organization.lower() == edu.get("institution", "").lower() and
-                entry.title.lower() == edu.get("degree", "").lower() and
-                entry.start_date == edu.get("start_date") and
-                entry.end_date == edu.get("end_date")):
+            if (
+                entry.organization.lower() == edu.get("institution", "").lower()
+                and entry.title.lower() == edu.get("degree", "").lower()
+                and entry.start_date == edu.get("start_date")
+                and entry.end_date == edu.get("end_date")
+            ):
                 return True
     return False
 
@@ -172,10 +186,12 @@ def _is_duplicate_edu(edu: dict[str, Any], existing: list[CareerEntry]) -> bool:
 def _is_duplicate_exp(exp: dict[str, Any], existing: list[CareerEntry]) -> bool:
     for entry in existing:
         if entry.entry_type in ["work_experience", "internship"]:
-            if (entry.organization.lower() == exp.get("company", "").lower() and
-                entry.title.lower() == exp.get("position", "").lower() and
-                entry.start_date == exp.get("start_date") and
-                entry.end_date == exp.get("end_date")):
+            if (
+                entry.organization.lower() == exp.get("company", "").lower()
+                and entry.title.lower() == exp.get("position", "").lower()
+                and entry.start_date == exp.get("start_date")
+                and entry.end_date == exp.get("end_date")
+            ):
                 return True
     return False
 
@@ -186,7 +202,10 @@ def _is_duplicate_proj(proj: dict[str, Any], existing: list[CareerEntry]) -> boo
             if entry.title.lower() == proj.get("name", "").lower():
                 ext_url = entry.data.get("url") or ""
                 proj_url = proj.get("url") or ""
-                if (ext_url.lower() == proj_url.lower() and proj_url) or (entry.start_date == proj.get("start_date") and entry.end_date == proj.get("end_date")):
+                if (ext_url.lower() == proj_url.lower() and proj_url) or (
+                    entry.start_date == proj.get("start_date")
+                    and entry.end_date == proj.get("end_date")
+                ):
                     return True
     return False
 
@@ -196,9 +215,11 @@ def _is_duplicate_cert(cert: dict[str, Any], existing: list[CareerEntry]) -> boo
         if entry.entry_type == "certification":
             ext_cred = entry.data.get("credential_id") or ""
             cert_cred = cert.get("credential_id") or ""
-            if (entry.title.lower() == cert.get("name", "").lower() and
-                entry.organization.lower() == cert.get("issuer", "").lower() and
-                (ext_cred == cert_cred if cert_cred else True)):
+            if (
+                entry.title.lower() == cert.get("name", "").lower()
+                and entry.organization.lower() == cert.get("issuer", "").lower()
+                and (ext_cred == cert_cred if cert_cred else True)
+            ):
                 return True
     return False
 
@@ -218,15 +239,20 @@ async def finalize_import(
     title: str,
     template_id: str,
     import_to_career_profile: bool,
-    selected_entries: list[str] = None
+    selected_entries: list[str] = None,
 ) -> Resume:
-    """Finalize import: create Resume, ResumeVersion, and optionally import to Career Profile with deduplication."""
+    """Finalize import: create Resume, ResumeVersion, and optionally import to Career
+    Profile with deduplication."""
     session = await get_import_session(db, user_id, import_id)
 
     if session.status == "finalized":
         raise ValidationError("This import has already been finalized", details="ALREADY_FINALIZED")
 
-    expires_at = session.expires_at.replace(tzinfo=UTC) if session.expires_at.tzinfo is None else session.expires_at
+    expires_at = (
+        session.expires_at.replace(tzinfo=UTC)
+        if session.expires_at.tzinfo is None
+        else session.expires_at
+    )
     if expires_at < datetime.now(UTC):
         session.status = "expired"
         db.add(session)
@@ -237,7 +263,10 @@ async def finalize_import(
     try:
         doc = ResumeDocument.model_validate(session.parsed_document)
     except Exception as e:
-        raise ValidationError(f"Invalid resume document in session: {str(e)}", details="INVALID_DOC_STATE")
+        raise ValidationError(
+            f"Invalid resume document in session: {str(e)}",
+            details="INVALID_DOC_STATE",
+        )
 
     # Create Resume in same transaction
     # Determine primary status
@@ -268,7 +297,7 @@ async def finalize_import(
         resume_id=resume.id,
         version_number=1,
         content_snapshot=doc.model_dump(),
-        change_reason="Initial import snapshot"
+        change_reason="Initial import snapshot",
     )
     db.add(snapshot)
 
@@ -280,8 +309,14 @@ async def finalize_import(
         existing_list = list(existing_res.scalars().all())
 
         selected_keys = selected_entries or [
-            "education", "experience", "projects", "skills", "certifications",
-            "achievements", "positions_of_responsibility", "languages"
+            "education",
+            "experience",
+            "projects",
+            "skills",
+            "certifications",
+            "achievements",
+            "positions_of_responsibility",
+            "languages",
         ]
 
         # Import Education
@@ -301,10 +336,10 @@ async def finalize_import(
                             "field_of_study": edu.field_of_study,
                             "location": edu.location,
                             "grade": edu.grade,
-                            "description": edu.description
+                            "description": edu.description,
                         },
                         verification_status="user_confirmed",
-                        source_type="resume_import"
+                        source_type="resume_import",
                     )
                     db.add(entry)
                     existing_list.append(entry)
@@ -326,10 +361,10 @@ async def finalize_import(
                             "location": exp.location,
                             "employment_type": exp.employment_type,
                             "bullets": exp.bullets,
-                            "technologies": exp.technologies
+                            "technologies": exp.technologies,
                         },
                         verification_status="user_confirmed",
-                        source_type="resume_import"
+                        source_type="resume_import",
                     )
                     db.add(entry)
                     existing_list.append(entry)
@@ -352,10 +387,10 @@ async def finalize_import(
                             "url": proj.url,
                             "github_url": proj.github_url,
                             "bullets": proj.bullets,
-                            "technologies": proj.technologies
+                            "technologies": proj.technologies,
                         },
                         verification_status="user_confirmed",
-                        source_type="resume_import"
+                        source_type="resume_import",
                     )
                     db.add(entry)
                     existing_list.append(entry)
@@ -372,7 +407,7 @@ async def finalize_import(
                             organization="",
                             data={"category": group.category},
                             verification_status="user_confirmed",
-                            source_type="resume_import"
+                            source_type="resume_import",
                         )
                         db.add(entry)
                         existing_list.append(entry)
@@ -392,10 +427,10 @@ async def finalize_import(
                         is_current=False,
                         data={
                             "credential_id": cert.credential_id,
-                            "credential_url": cert.credential_url
+                            "credential_url": cert.credential_url,
                         },
                         verification_status="user_confirmed",
-                        source_type="resume_import"
+                        source_type="resume_import",
                     )
                     db.add(entry)
                     existing_list.append(entry)
@@ -411,7 +446,7 @@ async def finalize_import(
                     start_date=ach.date,
                     data={"description": ach.description},
                     verification_status="user_confirmed",
-                    source_type="resume_import"
+                    source_type="resume_import",
                 )
                 db.add(entry)
 
@@ -428,7 +463,7 @@ async def finalize_import(
                     is_current=pos.is_current or False,
                     data={"bullets": pos.bullets},
                     verification_status="user_confirmed",
-                    source_type="resume_import"
+                    source_type="resume_import",
                 )
                 db.add(entry)
 
@@ -442,7 +477,7 @@ async def finalize_import(
                     organization="",
                     data={"proficiency": lang.proficiency},
                     verification_status="user_confirmed",
-                    source_type="resume_import"
+                    source_type="resume_import",
                 )
                 db.add(entry)
 

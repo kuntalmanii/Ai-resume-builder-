@@ -1,4 +1,5 @@
 """Notification Pydantic schemas."""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -8,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 
 class NotificationCreate(BaseModel):
     user_id: uuid.UUID
-    type: str # reminder, info, alert, success
+    type: str  # reminder, info, alert, success
     title: str
     body: str
     metadata_json: dict[str, Any] | None = None

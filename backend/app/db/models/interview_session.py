@@ -1,4 +1,5 @@
 """InterviewSession ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -13,9 +14,7 @@ from app.db.types import JSONBType
 class InterviewSession(Base):
     __tablename__ = "interview_sessions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -29,10 +28,16 @@ class InterviewSession(Base):
         UUID(as_uuid=True), ForeignKey("job_descriptions.id", ondelete="SET NULL"), nullable=True
     )
 
-    question_bank: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False) # list of questions {id, type, question, answer_hint, star_framework}
-    practice_log: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False) # list of answers submitted {question_id, user_answer, score, feedback}
+    question_bank: Mapped[dict] = mapped_column(
+        JSONBType, default=dict, nullable=False
+    )  # list of questions {id, type, question, answer_hint, star_framework}
+    practice_log: Mapped[dict] = mapped_column(
+        JSONBType, default=dict, nullable=False
+    )  # list of answers submitted {question_id, user_answer, score, feedback}
 
-    focus_areas: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False) # list of weak areas identified
+    focus_areas: Mapped[dict] = mapped_column(
+        JSONBType, default=dict, nullable=False
+    )  # list of weak areas identified
     overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(

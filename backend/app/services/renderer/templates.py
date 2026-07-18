@@ -4,7 +4,8 @@ TEMPLATES = {
     "modern": {
         "id": "modern",
         "name": "Modern ATS",
-        "description": "Left-aligned layout with subtle accents, solid horizontal dividers, and sans-serif typography.",
+        "description": "Left-aligned layout with subtle accents, solid " \
+            "horizontal dividers, and sans-serif typography.",
         "font_family": "sans",
         "accent_color": "modern",
         "header_align": "left",
@@ -17,7 +18,8 @@ TEMPLATES = {
     "minimal": {
         "id": "minimal",
         "name": "Minimal ATS",
-        "description": "Clean, elegant layout with centered header, serif body, and compact margins.",
+        "description": "Clean, elegant layout with centered " \
+            "header, serif body, and compact margins.",
         "font_family": "serif",
         "accent_color": "minimal",
         "header_align": "center",
@@ -30,7 +32,8 @@ TEMPLATES = {
     "corporate": {
         "id": "corporate",
         "name": "Corporate",
-        "description": "Left-aligned top header, solid dividers, and structured professional navy accent.",
+        "description": "Left-aligned top header, solid dividers, " \
+            "and structured professional navy accent.",
         "font_family": "serif",
         "accent_color": "corporate",
         "header_align": "left",
@@ -43,7 +46,8 @@ TEMPLATES = {
     "technical": {
         "id": "technical",
         "name": "Technical",
-        "description": "Clean monospace typography, compact grids, and teal accents optimized for developers.",
+        "description": "Clean monospace typography, compact grids, " \
+            "and teal accents optimized for developers.",
         "font_family": "mono",
         "accent_color": "technical",
         "header_align": "left",
@@ -56,7 +60,8 @@ TEMPLATES = {
     "student": {
         "id": "student",
         "name": "Student",
-        "description": "Centered title, education-first structure, and purple accents to highlight early achievements.",
+        "description": "Centered title, education-first structure, and " \
+            "purple accents to highlight early achievements.",
         "font_family": "sans",
         "accent_color": "student",
         "header_align": "center",
@@ -69,7 +74,8 @@ TEMPLATES = {
     "internship": {
         "id": "internship",
         "name": "Internship",
-        "description": "Compact spacing and projects-first layout with emerald green theme accents.",
+        "description": "Compact spacing and projects-first " \
+            "layout with emerald green theme accents.",
         "font_family": "sans",
         "accent_color": "internship",
         "header_align": "left",
@@ -82,7 +88,8 @@ TEMPLATES = {
     "executive": {
         "id": "executive",
         "name": "Executive",
-        "description": "Bronze/amber accents with spacious layout, two-column headers, and premium serif formatting.",
+        "description": "Bronze/amber accents with spacious layout, " \
+            "two-column headers, and premium serif formatting.",
         "font_family": "serif",
         "accent_color": "executive",
         "header_align": "left",
@@ -102,16 +109,19 @@ def get_template_config(template_id: str, ats_mode: bool = False) -> dict:
     base_config = TEMPLATES.get(template_id, TEMPLATES["modern"]).copy()
 
     if ats_mode:
-        # Enforce ATS guidelines (single-column, black-and-white, standard simple dividers, no graphics/icons)
-        base_config.update({
-            "font_family": "sans",  # Standard sans font (Arial-compatible)
-            "accent_color": "minimal",  # Black/Dark Grey only
-            "header_align": "left",
-            "divider_style": "none",
-            "bullets_format": "standard",
-            "skills_format": "comma",
-            "section_spacing": "md",
-            "entry_spacing": "sm",
-        })
+        # Enforce ATS guidelines (single-column, black-and-white, standard simple
+        # dividers, no graphics/icons)
+        base_config.update(
+            {
+                "font_family": "sans",  # Standard sans font (Arial-compatible)
+                "accent_color": "minimal",  # Black/Dark Grey only
+                "header_align": "left",
+                "divider_style": "none",
+                "bullets_format": "standard",
+                "skills_format": "comma",
+                "section_spacing": "md",
+                "entry_spacing": "sm",
+            }
+        )
 
     return base_config

@@ -1,4 +1,5 @@
 """Interview Preparation Service class."""
+
 import json
 import uuid
 
@@ -37,25 +38,28 @@ class InterviewService:
 
         system_prompt = (
             "You are an expert interviewer and technical recruiter.\n"
-            "Generate 5 interview questions tailored to the candidate's resume and target job description.\n"
+            "Generate 5 interview questions tailored to the " \
+                "candidate's resume and target job description.\n"
             "The list must contain:\n"
             "- 2 Behavioral questions\n"
             "- 2 Technical questions\n"
             "- 1 System Design or Coding question\n"
-            "Return EXACTLY a valid JSON array of questions. Output nothing else. Do not use markdown wraps."
+            "Return EXACTLY a valid JSON array of questions. " \
+                "Output nothing else. Do not use markdown wraps."
         )
 
         user_prompt = (
             f"Resume:\n{resume_content}\n\n"
             f"Target Job:\n{jd_text}\n\n"
-            "Output format: Array of objects, each containing: id (e.g. q1, q2), question (str), type (str: behavioral/technical/system_design/coding), answer_hint (str), star_framework_hint (str)."
+            "Output format: Array of objects, each containing: " \
+                "id (e.g. q1, q2), question (str), type (str: " \
+                "behavioral/technical/system_design/coding), " \
+                    "answer_hint (str), star_framework_hint (str)."
         )
 
         ai_provider = get_ai_provider()
         raw_resp = await ai_provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.4
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.4
         )
 
         try:
@@ -73,15 +77,15 @@ class InterviewService:
                     "question": "Tell me about a challenging technical project you worked on.",
                     "type": "behavioral",
                     "answer_hint": "Focus on conflict resolution or architectural choices.",
-                    "star_framework_hint": "Situation, Task, Action, Result."
+                    "star_framework_hint": "Situation, Task, Action, Result.",
                 },
                 {
                     "id": "q2",
                     "question": "How do you optimize system performance under high traffic load?",
                     "type": "technical",
                     "answer_hint": "Mention caching, indexing, queue-based async architectures.",
-                    "star_framework_hint": ""
-                }
+                    "star_framework_hint": "",
+                },
             ]
 
         # Save to DB
@@ -95,8 +99,8 @@ class InterviewService:
                 "question_bank": {"items": parsed},
                 "practice_log": {"items": []},
                 "focus_areas": {"items": []},
-                "overall_score": 0.0
-            }
+                "overall_score": 0.0,
+            },
         )
 
         # Trigger notification
@@ -106,14 +110,20 @@ class InterviewService:
                 user_id=user_id,
                 type="info",
                 title="Practice Interview Ready",
-                body=f"AI has generated {len(parsed)} customized mock practice questions based on your resume.",
-                action_url=f"/interviews/{session.id}"
-            )
+                body=f"AI has generated {len(parsed)} customized " \
+                    f"mock practice questions based on your resume.",
+                action_url=f"/interviews/{session.id}",
+            ),
         )
         return session
 
     async def submit_answer(
-        self, db: AsyncSession, *, user_id: uuid.UUID, session_id: uuid.UUID, submission: PracticeAnswerSubmit
+        self,
+        db: AsyncSession,
+        *,
+        user_id: uuid.UUID,
+        session_id: uuid.UUID,
+        submission: PracticeAnswerSubmit,
     ) -> PracticeFeedbackResponse:
         session = await interview_session_repository.get(db, session_id)
         if not session or session.user_id != user_id:
@@ -135,7 +145,8 @@ class InterviewService:
         system_prompt = (
             "You are an AI Interview Coach evaluating a candidate's practice answer.\n"
             "Score their answer out of 10. Be constructive but critical.\n"
-            "Return EXACTLY a valid JSON object matching the requested schema. Do not use markdown wraps."
+            "Return EXACTLY a valid JSON object matching the " \
+                "requested schema. Do not use markdown wraps."
         )
 
         user_prompt = (
@@ -153,9 +164,7 @@ class InterviewService:
 
         ai_provider = get_ai_provider()
         raw_resp = await ai_provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.3
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.3
         )
 
         try:
@@ -170,19 +179,21 @@ class InterviewService:
                 "score": 5.0,
                 "feedback": "Answer accepted.",
                 "improvement_tips": "Try structuring your answer with STAR method.",
-                "model_answer": "Model answer suggestion placeholder."
+                "model_answer": "Model answer suggestion placeholder.",
             }
 
         # Log practice details
         log_items = session.practice_log.get("items", [])
-        log_items.append({
-            "question_id": submission.question_id,
-            "user_answer": submission.user_answer,
-            "score": parsed.get("score"),
-            "feedback": parsed.get("feedback"),
-            "improvement_tips": parsed.get("improvement_tips"),
-            "model_answer": parsed.get("model_answer")
-        })
+        log_items.append(
+            {
+                "question_id": submission.question_id,
+                "user_answer": submission.user_answer,
+                "score": parsed.get("score"),
+                "feedback": parsed.get("feedback"),
+                "improvement_tips": parsed.get("improvement_tips"),
+                "model_answer": parsed.get("model_answer"),
+            }
+        )
 
         # Recalculate overall score
         total = sum(item.get("score", 0.0) for item in log_items)
@@ -199,8 +210,8 @@ class InterviewService:
             obj_in={
                 "practice_log": {"items": log_items},
                 "overall_score": avg,
-                "focus_areas": {"items": list(set(focus))}
-            }
+                "focus_areas": {"items": list(set(focus))},
+            },
         )
 
         return PracticeFeedbackResponse(
@@ -209,13 +220,15 @@ class InterviewService:
             score=parsed.get("score"),
             feedback=parsed.get("feedback"),
             improvement_tips=parsed.get("improvement_tips"),
-            model_answer=parsed.get("model_answer")
+            model_answer=parsed.get("model_answer"),
         )
 
     async def get_by_user_id(self, db: AsyncSession, user_id: uuid.UUID) -> list[InterviewSession]:
         return await interview_session_repository.get_by_user_id(db, user_id)
 
-    async def get_by_id(self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID) -> InterviewSession | None:
+    async def get_by_id(
+        self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID
+    ) -> InterviewSession | None:
         sess = await interview_session_repository.get(db, id)
         if sess and sess.user_id == user_id:
             return sess

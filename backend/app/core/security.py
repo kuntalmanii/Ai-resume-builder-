@@ -1,4 +1,5 @@
 """Security utilities: password hashing and JWT token management."""
+
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -29,9 +30,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # ─── JWT Tokens ───────────────────────────────────────────────────────────────
 def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> str:
-    expire = datetime.now(UTC) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload: dict[str, Any] = {
         "sub": subject,
         "exp": expire,
@@ -43,9 +42,7 @@ def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> st
 
 
 def create_refresh_token(subject: str) -> str:
-    expire = datetime.now(UTC) + timedelta(
-        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-    )
+    expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     payload: dict[str, Any] = {
         "sub": subject,
         "exp": expire,

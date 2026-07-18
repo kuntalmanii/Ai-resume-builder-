@@ -1,4 +1,5 @@
 """Recruiter Service class."""
+
 import uuid
 
 from sqlalchemy import select
@@ -19,7 +20,7 @@ class RecruiterService:
         candidates = []
         for u in users:
             # Get primary resume details
-            res_query = select(Resume).where(Resume.user_id == u.id, Resume.is_primary == True)
+            res_query = select(Resume).where(Resume.user_id == u.id, Resume.is_primary)
             res_result = await db.execute(res_query)
             resume = res_result.scalars().first()
 
@@ -31,21 +32,25 @@ class RecruiterService:
 
             if resume:
                 # fetch average score details
-                match_query = select(JobMatchResult).where(JobMatchResult.resume_id == resume.id).limit(1)
+                match_query = (
+                    select(JobMatchResult).where(JobMatchResult.resume_id == resume.id).limit(1)
+                )
                 match_res = await db.execute(match_query)
                 match = match_res.scalars().first()
                 match_score = round(match.overall_score * 100, 2) if match else 75.0
 
-                candidates.append({
-                    "user_id": str(u.id),
-                    "full_name": u.full_name,
-                    "email": u.email,
-                    "primary_resume_id": str(resume.id) if resume else None,
-                    "primary_resume_title": resume.title if resume else None,
-                    "ats_score": 78.0,
-                    "credibility_score": 85.0,
-                    "jd_match_score": match_score
-                })
+                candidates.append(
+                    {
+                        "user_id": str(u.id),
+                        "full_name": u.full_name,
+                        "email": u.email,
+                        "primary_resume_id": str(resume.id) if resume else None,
+                        "primary_resume_title": resume.title if resume else None,
+                        "ats_score": 78.0,
+                        "credibility_score": 85.0,
+                        "jd_match_score": match_score,
+                    }
+                )
 
         return candidates
 
@@ -53,7 +58,7 @@ class RecruiterService:
         self, db: AsyncSession, *, candidate_id: uuid.UUID
     ) -> Resume | None:
         """Fetch candidate's primary resume for read-only viewer."""
-        query = select(Resume).where(Resume.user_id == candidate_id, Resume.is_primary == True)
+        query = select(Resume).where(Resume.user_id == candidate_id, Resume.is_primary)
         result = await db.execute(query)
         resume = result.scalars().first()
 

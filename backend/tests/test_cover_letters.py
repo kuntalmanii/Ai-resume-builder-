@@ -1,18 +1,15 @@
 """Tests for Cover Letter Generator and versioning."""
+
 import pytest
 from httpx import AsyncClient
 
 
 async def _register_and_login(client: AsyncClient, email: str = "cl_test@test.com") -> str:
-    await client.post("/api/v1/auth/register", json={
-        "email": email,
-        "password": "Password@123",
-        "full_name": "CL User"
-    })
-    res = await client.post("/api/v1/auth/login", json={
-        "email": email,
-        "password": "Password@123"
-    })
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password@123", "full_name": "CL User"},
+    )
+    res = await client.post("/api/v1/auth/login", json={"email": email, "password": "Password@123"})
     return res.json()["access_token"]
 
 
@@ -30,10 +27,14 @@ async def test_cover_letter_flow(client: AsyncClient) -> None:
     payload = {
         "resume_id": resume_id,
         "job_description_text": "Looking for a Software Engineer with Python skills.",
-        "style_preference": "professional"
+        "style_preference": "professional",
     }
     from unittest.mock import patch
-    with patch("app.ai.gemini_provider.GeminiProvider.complete", return_value="Dear Hiring Manager, I love python."):
+
+    with patch(
+        "app.ai.gemini_provider.GeminiProvider.complete",
+        return_value="Dear Hiring Manager, I love python.",
+    ):
         res = await client.post("/api/v1/cover-letters/generate", json=payload, headers=headers)
     assert res.status_code == 200
     body = res.json()
@@ -41,11 +42,7 @@ async def test_cover_letter_flow(client: AsyncClient) -> None:
     ai_content = body["content"]
 
     # 3. Save Cover Letter draft
-    save_payload = {
-        "resume_id": resume_id,
-        "title": "Google Cover Letter",
-        "content": ai_content
-    }
+    save_payload = {"resume_id": resume_id, "title": "Google Cover Letter", "content": ai_content}
     res = await client.post("/api/v1/cover-letters", json=save_payload, headers=headers)
     assert res.status_code == 201
     cl_body = res.json()
@@ -65,17 +62,17 @@ async def test_cover_letter_flow(client: AsyncClient) -> None:
     # 6. Update Cover Letter
     update_payload = {
         "title": "Google Updated Cover Letter",
-        "content": "Dear Google Recruiter, I love python."
+        "content": "Dear Google Recruiter, I love python.",
     }
     res = await client.put(f"/api/v1/cover-letters/{cl_id}", json=update_payload, headers=headers)
     assert res.status_code == 200
     assert res.json()["title"] == "Google Updated Cover Letter"
 
     # 7. Create New Version
-    version_payload = {
-        "content": "Dear Google Hiring Manager, I am still loving python."
-    }
-    res = await client.post(f"/api/v1/cover-letters/{cl_id}/versions", json=version_payload, headers=headers)
+    version_payload = {"content": "Dear Google Hiring Manager, I am still loving python."}
+    res = await client.post(
+        f"/api/v1/cover-letters/{cl_id}/versions", json=version_payload, headers=headers
+    )
     assert res.status_code == 201
     assert res.json()["version"] == 2
 

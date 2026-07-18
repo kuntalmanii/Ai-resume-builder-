@@ -13,6 +13,7 @@ class JobDescriptionBase(BaseModel):
     source_filename: str | None = None
     source_type: str = "manual"
 
+
 class JobDescriptionCreate(BaseModel):
     title: str | None = Field(None, max_length=255)
     company: str | None = Field(None, max_length=255)
@@ -27,12 +28,14 @@ class JobDescriptionCreate(BaseModel):
             raise ValueError("Job description text cannot be empty.")
         return v
 
+
 class JobDescriptionUpdate(BaseModel):
     title: str | None = None
     company: str | None = None
     raw_text: str | None = None
     source_filename: str | None = None
     source_type: str | None = None
+
 
 class JobDescriptionResponse(JobDescriptionBase):
     id: uuid.UUID

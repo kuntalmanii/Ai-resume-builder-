@@ -1,4 +1,5 @@
 """FastAPI endpoints for Resume Import Sessions."""
+
 import uuid
 
 from fastapi import APIRouter, File, Response, UploadFile, status
@@ -16,12 +17,9 @@ router = APIRouter(prefix="/resume-imports", tags=["Resume Imports"])
 
 
 @router.post("", response_model=ResumeImportSessionResponse, status_code=status.HTTP_201_CREATED)
-async def upload_resume(
-    db: DBSession,
-    current_user: CurrentUser,
-    file: UploadFile = File(...)
-):
-    """Upload resume document (PDF/DOCX), validate it, extract text, parse structures, and return session."""
+async def upload_resume(db: DBSession, current_user: CurrentUser, file: UploadFile = File(...)):
+    """Upload resume document (PDF/DOCX), validate it, extract text, parse structures,
+    and return session."""
     session = await import_service.create_import_session(db, current_user.id, file)
     return session
 
@@ -66,7 +64,7 @@ async def finalize_import(
         payload.title or "",
         payload.template_id,
         payload.import_to_career_profile,
-        payload.selected_entries
+        payload.selected_entries,
     )
     return resume
 

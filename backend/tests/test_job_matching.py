@@ -1,4 +1,6 @@
-"""Integration tests for Job Description Matching, Boundary Checks, Caching, and Smart Profile Retrieval."""
+"""Integration tests for Job Description Matching, Boundary Checks, Caching, and Smart
+Profile Retrieval."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +9,7 @@ from app.services.matching.experience_matcher import calculate_unique_experience
 from app.services.matching.skill_taxonomy import match_skill_in_text
 
 pytestmark = pytest.mark.asyncio
+
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 async def _register_and_login(client: AsyncClient, email: str, name: str) -> str:
@@ -25,9 +28,14 @@ async def _register_and_login(client: AsyncClient, email: str, name: str) -> str
 async def test_unauthenticated_jd_creation_rejected(client: AsyncClient) -> None:
     res = await client.post(
         "/api/v1/job-descriptions",
-        json={"title": "Software Eng", "company": "Stark", "raw_text": "Need React and python developer."}
+        json={
+            "title": "Software Eng",
+            "company": "Stark",
+            "raw_text": "Need React and python developer.",
+        },
     )
     assert res.status_code == 401
+
 
 async def test_jd_validations(client: AsyncClient) -> None:
     token = await _register_and_login(client, "user_jd@example.com", "John Doe")
@@ -37,9 +45,10 @@ async def test_jd_validations(client: AsyncClient) -> None:
     res1 = await client.post(
         "/api/v1/job-descriptions",
         headers=headers,
-        json={"title": "Short", "company": "Inc", "raw_text": "   "}
+        json={"title": "Short", "company": "Inc", "raw_text": "   "},
     )
     assert res1.status_code == 422
+
 
 async def test_jd_crud_and_ownership(client: AsyncClient) -> None:
     token_a = await _register_and_login(client, "usera_jd@example.com", "User A")
@@ -55,8 +64,9 @@ async def test_jd_crud_and_ownership(client: AsyncClient) -> None:
         json={
             "title": "SWE React",
             "company": "Meta",
-            "raw_text": "We need a React developer. This description has to be at least fifty characters long."
-        }
+            "raw_text": "We need a React developer. This description " \
+                "has to be at least fifty characters long.",
+        },
     )
     assert res.status_code == 201
     jd_id = res.json()["id"]
@@ -67,9 +77,7 @@ async def test_jd_crud_and_ownership(client: AsyncClient) -> None:
 
     # User B cannot edit User A's JD
     res_put = await client.put(
-        f"/api/v1/job-descriptions/{jd_id}",
-        headers=headers_b,
-        json={"title": "Hacked Title"}
+        f"/api/v1/job-descriptions/{jd_id}", headers=headers_b, json={"title": "Hacked Title"}
     )
     assert res_put.status_code == 404
 
@@ -104,9 +112,9 @@ async def test_skill_boundary_isolation() -> None:
 # ─── 3. Experience Matcher unique calendar years ──────────────────────────────
 async def test_overlapping_experience_duration() -> None:
     experience_list = [
-        {"start_date": "2022-06", "end_date": "Present", "is_current": True}, # current role
-        {"start_date": "2022-01", "end_date": "2022-08", "is_current": False}, # overlap
-        {"start_date": "2020-01", "end_date": "2021-06", "is_current": False}
+        {"start_date": "2022-06", "end_date": "Present", "is_current": True},  # current role
+        {"start_date": "2022-01", "end_date": "2022-08", "is_current": False},  # overlap
+        {"start_date": "2020-01", "end_date": "2021-06", "is_current": False},
     ]
     # Unique years should merge overlaps and count correctly
     years = calculate_unique_experience_years(experience_list)
@@ -127,7 +135,9 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
             "title": "React SWE",
             "content": {
                 "personal_information": {"full_name": "Applicant"},
-                "skills": [{"category": "Frontend", "skills": ["React", "TypeScript", "JavaScript"]}],
+                "skills": [
+                    {"category": "Frontend", "skills": ["React", "TypeScript", "JavaScript"]}
+                ],
                 "experience": [
                     {
                         "company": "Innovate",
@@ -136,12 +146,12 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
                         "end_date": "Present",
                         "is_current": True,
                         "bullets": ["Coded responsive UI components using React."],
-                        "technologies": ["React", "TypeScript"]
+                        "technologies": ["React", "TypeScript"],
                     }
                 ],
-                "projects": []
-            }
-        }
+                "projects": [],
+            },
+        },
     )
     assert resume_res.status_code == 201
     resume_id = resume_res.json()["id"]
@@ -153,8 +163,9 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
         json={
             "title": "React and PostgreSQL developer",
             "company": "DataCorp",
-            "raw_text": "We are seeking a React developer. Must have experience with PostgreSQL. Preferred skills include TypeScript."
-        }
+            "raw_text": "We are seeking a React developer. Must have experience " \
+                "with PostgreSQL. Preferred skills include TypeScript.",
+        },
     )
     assert jd_res.status_code == 201
     jd_id = jd_res.json()["id"]
@@ -170,34 +181,30 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
             "start_date": "2023-01",
             "end_date": "2023-06",
             "is_current": False,
-            "data": {
-                "skills": ["PostgreSQL", "React", "Python"]
-            },
-            "source_type": "manual"
-        }
+            "data": {"skills": ["PostgreSQL", "React", "Python"]},
+            "source_type": "manual",
+        },
     )
     assert profile_entry.status_code == 201
     entry_id = profile_entry.json()["id"]
 
     # Confirm Career Profile entry to make it "user_confirmed" (so it counts for potential match!)
     confirm_res = await client.post(
-        f"/api/v1/career-profile/entries/{entry_id}/confirm",
-        headers=headers
+        f"/api/v1/career-profile/entries/{entry_id}/confirm", headers=headers
     )
     assert confirm_res.status_code == 200
 
     # Run Job Description Match
     match_res = await client.post(
-        f"/api/v1/resumes/{resume_id}/matches",
-        headers=headers,
-        json={"job_description_id": jd_id}
+        f"/api/v1/resumes/{resume_id}/matches", headers=headers, json={"job_description_id": jd_id}
     )
     assert match_res.status_code == 200
     match_data = match_res.json()
 
     # Verify overall percentages and gaps
     assert match_data["overall_match_percentage"] > 0
-    # Potential score must be higher than current score because PostgreSQL was found in Career Profile
+    # Potential score must be higher than current score because PostgreSQL was found in
+    # Career Profile
     assert match_data["potential_match_percentage"] >= match_data["overall_match_percentage"]
 
     # Check matching values are present in schema Response
@@ -209,16 +216,16 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
 
     # Caching check: re-run match without force uses cache
     match_res_cached = await client.post(
-        f"/api/v1/resumes/{resume_id}/matches",
-        headers=headers,
-        json={"job_description_id": jd_id}
+        f"/api/v1/resumes/{resume_id}/matches", headers=headers, json={"job_description_id": jd_id}
     )
     assert match_res_cached.status_code == 200
 
     # Stale checks: edit resume content to increment version
     new_content = {
         "personal_information": {"full_name": "Applicant"},
-        "skills": [{"category": "Frontend", "skills": ["React", "TypeScript", "JavaScript", "Python"]}],
+        "skills": [
+            {"category": "Frontend", "skills": ["React", "TypeScript", "JavaScript", "Python"]}
+        ],
         "experience": [
             {
                 "company": "Innovate",
@@ -227,22 +234,19 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
                 "end_date": "Present",
                 "is_current": True,
                 "bullets": ["Coded UI components in React."],
-                "technologies": ["React"]
+                "technologies": ["React"],
             }
         ],
-        "projects": []
+        "projects": [],
     }
     edit_res = await client.put(
-        f"/api/v1/resumes/{resume_id}/content",
-        headers=headers,
-        json=new_content
+        f"/api/v1/resumes/{resume_id}/content", headers=headers, json=new_content
     )
     assert edit_res.status_code == 200
 
     # Get latest match, should now be stale
     latest_match = await client.get(
-        f"/api/v1/resumes/{resume_id}/matches/latest?job_description_id={jd_id}",
-        headers=headers
+        f"/api/v1/resumes/{resume_id}/matches/latest?job_description_id={jd_id}", headers=headers
     )
     assert latest_match.status_code == 200
     assert latest_match.json()["is_stale"] is True

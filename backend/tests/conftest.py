@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """Pytest configuration and shared async test fixtures.
 
 Architecture:
@@ -7,6 +8,7 @@ Architecture:
 - Overrides the `get_db` FastAPI dependency so the ASGI app uses the
   test session transparently.
 """
+
 import os
 import pathlib
 
@@ -68,6 +70,7 @@ async def create_test_tables():
         ResumeVersion,
         User,
     )
+
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -102,8 +105,6 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://testserver"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as ac:
         yield ac
     app.dependency_overrides.pop(get_db, None)

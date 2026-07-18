@@ -1,4 +1,5 @@
 """Auth router: register, login, refresh, logout, account deletion, and current user info."""
+
 from fastapi import APIRouter, Body, Cookie, Response, status
 
 from app.api.dependencies import CurrentUser, DBSession
@@ -33,6 +34,7 @@ async def login(
     tokens = auth_service.generate_token_pair(user.id)
 
     from app.core.config import get_settings
+
     settings = get_settings()
     is_prod = settings.APP_ENV == "production"
 
@@ -64,11 +66,13 @@ async def refresh(
     token = refresh_token or (payload.refresh_token if payload else None)
     if not token:
         from app.core.exceptions import ValidationError
+
         raise ValidationError("Refresh token missing")
 
     tokens = await auth_service.refresh_access_token(db, token)
 
     from app.core.config import get_settings
+
     settings = get_settings()
     is_prod = settings.APP_ENV == "production"
 

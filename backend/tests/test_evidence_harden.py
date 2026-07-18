@@ -33,12 +33,7 @@ async def test_deterministic_claim_extraction():
     """Verify deterministic parsing rules extract correct claim types and values."""
     content = {
         "professional_summary": "Expert with 7 years of experience in React.",
-        "skills": [
-            {
-                "category": "Languages",
-                "skills": ["Python", "JavaScript"]
-            }
-        ],
+        "skills": [{"category": "Languages", "skills": ["Python", "JavaScript"]}],
         "experience": [
             {
                 "id": "exp-1",
@@ -47,7 +42,10 @@ async def test_deterministic_claim_extraction():
                 "start_date": "Jan 2024",
                 "end_date": "Present",
                 "is_current": True,
-                "bullets": ["Led development of React dashboard.", "Reduced latency by 45% saving $15,000."]
+                "bullets": [
+                    "Led development of React dashboard.",
+                    "Reduced latency by 45% saving $15,000.",
+                ],
             }
         ],
         "education": [
@@ -57,7 +55,7 @@ async def test_deterministic_claim_extraction():
                 "degree": "B.S. Computer Science",
                 "grade": "3.9 GPA",
                 "start_date": "2020",
-                "end_date": "2024"
+                "end_date": "2024",
             }
         ],
         "certifications": [
@@ -65,9 +63,9 @@ async def test_deterministic_claim_extraction():
                 "id": "cert-1",
                 "name": "AWS Solutions Architect",
                 "issuer": "Amazon Web Services",
-                "issue_date": "Feb 2023"
+                "issue_date": "Feb 2023",
             }
-        ]
+        ],
     }
 
     claims = ClaimExtractorService.deterministic_extract_claims(content)
@@ -122,45 +120,90 @@ async def test_credibility_scoring_logic():
     """Verify credibility scoring formula & dimensions calculation."""
     # Build list of mocked claims
     claims = [
-        ResumeClaim(id=uuid.uuid4(), claim_text="React", claim_type="technology", verification_status="source_verified"),
-        ResumeClaim(id=uuid.uuid4(), claim_text="Google", claim_type="employer", verification_status="career_profile_supported"),
-        ResumeClaim(id=uuid.uuid4(), claim_text="Stanford", claim_type="education", verification_status="unsupported"),
-        ResumeClaim(id=uuid.uuid4(), claim_text="Latency by 40%", claim_type="metric", verification_status="contradictory")
+        ResumeClaim(
+            id=uuid.uuid4(),
+            claim_text="React",
+            claim_type="technology",
+            verification_status="source_verified",
+        ),
+        ResumeClaim(
+            id=uuid.uuid4(),
+            claim_text="Google",
+            claim_type="employer",
+            verification_status="career_profile_supported",
+        ),
+        ResumeClaim(
+            id=uuid.uuid4(),
+            claim_text="Stanford",
+            claim_type="education",
+            verification_status="unsupported",
+        ),
+        ResumeClaim(
+            id=uuid.uuid4(),
+            claim_text="Latency by 40%",
+            claim_type="metric",
+            verification_status="contradictory",
+        ),
     ]
 
     # Set mock evidence sources
-    claims[0].evidence_sources = [EvidenceSource(label="V1", source_type="profile", support_kind="factual_support", evidence_strength="direct", verification_status="source_verified")]
-    claims[1].evidence_sources = [EvidenceSource(label="V2", source_type="profile", support_kind="factual_support", evidence_strength="corroborating", verification_status="user_confirmed")]
+    claims[0].evidence_sources = [
+        EvidenceSource(
+            label="V1",
+            source_type="profile",
+            support_kind="factual_support",
+            evidence_strength="direct",
+            verification_status="source_verified",
+        )
+    ]
+    claims[1].evidence_sources = [
+        EvidenceSource(
+            label="V2",
+            source_type="profile",
+            support_kind="factual_support",
+            evidence_strength="corroborating",
+            verification_status="user_confirmed",
+        )
+    ]
 
     total_claims = len(claims)
     cnt_supported = 2
     cnt_contradictions = 1
     cnt_career_profile = 1
-    cnt_unsupported = 1
 
-    high_risk_claims = [c for c in claims if c.claim_type in ["employer", "role", "degree", "certification", "metric"]]
-    cnt_high_risk_supported = 1 # Google is supported
+    high_risk_claims = [
+        c
+        for c in claims
+        if c.claim_type in ["employer", "role", "degree", "certification", "metric"]
+    ]
+    cnt_high_risk_supported = 1  # Google is supported
 
     total_evidence_sources = 2
     cnt_verified_evidence = 2
 
-    claim_support_score = 40.0 * (cnt_supported / total_claims) # 20.0
-    internal_consistency_score = max(0.0, 20.0 - 5.0 * cnt_contradictions) # 15.0
-    career_profile_score = 15.0 * (cnt_career_profile / total_claims) # 3.75
+    claim_support_score = 40.0 * (cnt_supported / total_claims)  # 20.0
+    internal_consistency_score = max(0.0, 20.0 - 5.0 * cnt_contradictions)  # 15.0
+    career_profile_score = 15.0 * (cnt_career_profile / total_claims)  # 3.75
 
     applicable_max = 40.0 + 20.0 + 15.0
 
     high_risk_score = 0.0
     if len(high_risk_claims) > 0:
-        high_risk_score = 15.0 * (cnt_high_risk_supported / len(high_risk_claims)) # 15 * 0.5 = 7.5
+        high_risk_score = 15.0 * (cnt_high_risk_supported / len(high_risk_claims))  # 15 * 0.5 = 7.5
         applicable_max += 15.0
 
     transparency_score = 0.0
     if total_evidence_sources > 0:
-        transparency_score = 10.0 * (cnt_verified_evidence / total_evidence_sources) # 10.0
+        transparency_score = 10.0 * (cnt_verified_evidence / total_evidence_sources)  # 10.0
         applicable_max += 10.0
 
-    raw_score = claim_support_score + internal_consistency_score + career_profile_score + high_risk_score + transparency_score
+    raw_score = (
+        claim_support_score
+        + internal_consistency_score
+        + career_profile_score
+        + high_risk_score
+        + transparency_score
+    )
     overall_score = max(0, min(100, int((raw_score / applicable_max) * 100)))
 
     assert overall_score > 0
@@ -179,7 +222,7 @@ async def test_contradiction_detection():
             "start_date": "Jan 2023",
             "end_date": "Dec 2023",
             "is_current": False,
-            "bullets": ["Reduced memory usage by 15%"]
+            "bullets": ["Reduced memory usage by 15%"],
         }
     ]
 
@@ -190,7 +233,7 @@ async def test_contradiction_detection():
         field_name="start_date",
         normalized_value="jan 2024",
         original_text="Jan 2024",
-        source_section="experience"
+        source_section="experience",
     )
     res_date = CredibilityEngineService.check_contradictions(claim_date, facts)
     assert res_date is not None
@@ -201,7 +244,7 @@ async def test_contradiction_detection():
         claim_type="metric",
         normalized_value="40%",
         original_text="Reduced memory usage by 40%",
-        source_section="experience"
+        source_section="experience",
     )
     res_metric = CredibilityEngineService.check_contradictions(claim_metric, facts)
     assert res_metric is not None
@@ -212,7 +255,7 @@ async def test_contradiction_detection():
         claim_type="technology",
         normalized_value="rust",
         original_text="Built project using Rust",
-        source_section="experience"
+        source_section="experience",
     )
     res_absent = CredibilityEngineService.check_contradictions(claim_absent, facts)
     assert res_absent is None
@@ -233,18 +276,23 @@ async def test_evidence_audit_graceful_llm_fallback(client: AsyncClient):
                     "id": str(uuid.uuid4()),
                     "company": "Netflix",
                     "position": "Manager",
-                    "bullets": ["Did leadership stuff."]
+                    "bullets": ["Did leadership stuff."],
                 }
             ]
-        }
+        },
     }
     create_res = await client.post("/api/v1/resumes", json=resume_data, headers=headers)
     assert create_res.status_code == 201
     resume_id = create_res.json()["id"]
 
     # Mock complete to raise an exception
-    with patch("app.services.evidence.claim_extractor.GeminiProvider.complete", side_effect=Exception("API limit exceeded")):
-        audit_res = await client.post(f"/api/v1/resumes/{resume_id}/evidence-audits", headers=headers)
+    with patch(
+        "app.services.evidence.claim_extractor.GeminiProvider.complete",
+        side_effect=Exception("API limit exceeded"),
+    ):
+        audit_res = await client.post(
+            f"/api/v1/resumes/{resume_id}/evidence-audits", headers=headers
+        )
         assert audit_res.status_code == 200
         data = audit_res.json()
         assert data["ai_fallback_active"] is True
@@ -252,15 +300,12 @@ async def test_evidence_audit_graceful_llm_fallback(client: AsyncClient):
 
 
 async def test_audit_history_and_caching(client: AsyncClient):
-    """Verify audits are stored historically, cache hits return existing logs, and force=True re-runs."""
+    """Verify audits are stored historically, cache hits return existing logs, and
+    force=True re-runs."""
     token = await _register_and_login(client, "history@example.com", "History User")
     headers = {"Authorization": f"Bearer {token}"}
 
-    resume_data = {
-        "title": "History Resume",
-        "template_id": "modern",
-        "content": {}
-    }
+    resume_data = {"title": "History Resume", "template_id": "modern", "content": {}}
     create_res = await client.post("/api/v1/resumes", json=resume_data, headers=headers)
     resume_id = create_res.json()["id"]
 
@@ -274,7 +319,9 @@ async def test_audit_history_and_caching(client: AsyncClient):
     assert audit1["id"] == audit2["id"]
 
     # 3. Run with force=True
-    res3 = await client.post(f"/api/v1/resumes/{resume_id}/evidence-audits?force=true", headers=headers)
+    res3 = await client.post(
+        f"/api/v1/resumes/{resume_id}/evidence-audits?force=true", headers=headers
+    )
     audit3 = res3.json()
     assert audit1["id"] != audit3["id"]
 
@@ -293,10 +340,10 @@ async def test_claim_confirm_and_link(client: AsyncClient):
                     "id": "exp-1",
                     "company": "Amazon Inc",
                     "position": "Manager",
-                    "bullets": ["Did stuff."]
+                    "bullets": ["Did stuff."],
                 }
             ]
-        }
+        },
     }
     create_res = await client.post("/api/v1/resumes", json=resume_data, headers=headers)
     resume_id = create_res.json()["id"]
@@ -314,14 +361,15 @@ async def test_claim_confirm_and_link(client: AsyncClient):
     confirm_res = await client.post(
         f"/api/v1/resumes/{resume_id}/claims/{claim_id}/confirm",
         json={"note": "Verified by my contract"},
-        headers=headers
+        headers=headers,
     )
     assert confirm_res.status_code == 200
     assert confirm_res.json()["verification_status"] == "user_confirmed"
 
 
 async def test_suggestion_application_blocking(client: AsyncClient, db_session: AsyncSession):
-    """Verify apply-time revalidation blocks suggestions introducing unsupported claims or contradictions."""
+    """Verify apply-time revalidation blocks suggestions introducing unsupported claims
+    or contradictions."""
     token = await _register_and_login(client, "suggestionblock@example.com", "Sugg User")
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -330,14 +378,9 @@ async def test_suggestion_application_blocking(client: AsyncClient, db_session: 
         "template_id": "modern",
         "content": {
             "experience": [
-                {
-                    "id": "exp-1",
-                    "company": "Airtel",
-                    "position": "SDE",
-                    "bullets": ["Wrote code."]
-                }
+                {"id": "exp-1", "company": "Airtel", "position": "SDE", "bullets": ["Wrote code."]}
             ]
-        }
+        },
     }
     create_res = await client.post("/api/v1/resumes", json=resume_data, headers=headers)
     resume_id = uuid.UUID(create_res.json()["id"])
@@ -355,7 +398,7 @@ async def test_suggestion_application_blocking(client: AsyncClient, db_session: 
         original_text="Wrote code.",
         suggested_text="Wrote code and saved 90% latency.",
         risk_level="low",
-        status="pending"
+        status="pending",
     )
     db_session.add(sugg)
     await db_session.commit()
@@ -363,6 +406,7 @@ async def test_suggestion_application_blocking(client: AsyncClient, db_session: 
 
     # Try applying
     from app.db.models.user import User
+
     user = await db_session.scalar(select(User).where(User.email == "suggestionblock@example.com"))
     user_id = user.id
 

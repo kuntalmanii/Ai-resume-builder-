@@ -1,4 +1,5 @@
 """Career profile retriever module for searching user CareerEntries for missing requirements."""
+
 import uuid
 from typing import Any
 
@@ -11,9 +12,7 @@ from app.services.matching.skill_taxonomy import get_canonical_skill, match_skil
 
 
 async def retrieve_profile_opportunities(
-    db: AsyncSession,
-    user_id: uuid.UUID,
-    missing_requirements: list[JobDescriptionRequirement]
+    db: AsyncSession, user_id: uuid.UUID, missing_requirements: list[JobDescriptionRequirement]
 ) -> list[dict[str, Any]]:
     """
     Search the user's Smart Career Profile (CareerEntry records) for missing requirements.
@@ -24,9 +23,7 @@ async def retrieve_profile_opportunities(
         return []
 
     # Query all CareerEntries for this user
-    result = await db.execute(
-        select(CareerEntry).where(CareerEntry.user_id == user_id)
-    )
+    result = await db.execute(select(CareerEntry).where(CareerEntry.user_id == user_id))
     career_entries = result.scalars().all()
 
     for req in missing_requirements:
@@ -36,7 +33,8 @@ async def retrieve_profile_opportunities(
             canonical = req.text
 
         for entry in career_entries:
-            # We look in the entry title, organization, and custom data fields (bullets, skills list)
+            # We look in the entry title, organization, and custom data fields (bullets,
+            # skills list)
             match_found = False
             matched_fact = ""
 
@@ -74,17 +72,21 @@ async def retrieve_profile_opportunities(
                             break
 
             if match_found:
-                opportunities.append({
-                    "requirement_id": req.id,
-                    "requirement_text": req.text,
-                    "entry_id": str(entry.id),
-                    "entry_type": entry.entry_type,
-                    "title": entry.title,
-                    "organization": entry.organization,
-                    "matching_fact": matched_fact,
-                    "match_reason": f"Matches required skill '{canonical}' from the job description.",
-                    "verification_status": entry.verification_status # user_confirmed, source_verified, unverified
-                })
+                opportunities.append(
+                    {
+                        "requirement_id": req.id,
+                        "requirement_text": req.text,
+                        "entry_id": str(entry.id),
+                        "entry_type": entry.entry_type,
+                        "title": entry.title,
+                        "organization": entry.organization,
+                        "matching_fact": matched_fact,
+                        "match_reason": f"Matches required skill '{canonical}' " \
+                            f"from the job description.",
+                        # status can be: user_confirmed, source_verified, unverified
+                        "verification_status": entry.verification_status,
+                    }
+                )
                 # Break to avoid multiple matches for the same requirement from the same CareerEntry
                 break
 

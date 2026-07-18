@@ -1,4 +1,6 @@
-"""Resume Service layer — handles core CRUD, ownership checks, version snapshotting, and concurrency control."""
+"""Resume Service layer — handles core CRUD, ownership checks, version snapshotting, and
+concurrency control."""
+
 import copy
 import uuid
 
@@ -44,7 +46,8 @@ async def get_resumes(
     limit: int | None = None,
     offset: int | None = None,
 ) -> list[Resume]:
-    """Fetch all resumes belonging to user, supporting search, status filtering, sorting, and pagination."""
+    """Fetch all resumes belonging to user, supporting search, status filtering,
+    sorting, and pagination."""
     stmt = select(Resume).where(Resume.user_id == user_id).options(selectinload(Resume.analyses))
 
     if search:
@@ -74,7 +77,8 @@ async def get_resumes(
 
 
 async def create_resume(db: AsyncSession, user_id: uuid.UUID, payload: ResumeCreate) -> Resume:
-    """Create a new resume. Automatically handles primary settings and default template structured schema."""
+    """Create a new resume. Automatically handles primary settings and default template
+    structured schema."""
     # Check if this is the user's first resume
     existing_resumes = await get_resumes(db, user_id)
     is_first = len(existing_resumes) == 0
@@ -84,7 +88,9 @@ async def create_resume(db: AsyncSession, user_id: uuid.UUID, payload: ResumeCre
     # If setting to primary, unset previous primary
     if is_primary and not is_first:
         await db.execute(
-            update(Resume).where(Resume.user_id == user_id, Resume.is_primary == True).values(is_primary=False)
+            update(Resume)
+            .where(Resume.user_id == user_id, Resume.is_primary)
+            .values(is_primary=False)
         )
 
     # Use default content template if empty
@@ -168,18 +174,21 @@ async def update_resume(
 
     # Optimistic concurrency check
     if expected_version is not None and resume.version != expected_version:
-        raise ConflictError("Version conflict: resume state has diverged", details="RESUME_VERSION_CONFLICT")
+        raise ConflictError(
+            "Version conflict: resume state has diverged", details="RESUME_VERSION_CONFLICT"
+        )
 
     update_data = payload.model_dump(exclude_unset=True)
 
     # Detect if content is changing
     if "content" in update_data:
         if update_data["content"] is not None:
-            # Check if snapshot for the current version already exists to prevent duplicate key violations
+            # Check if snapshot for the current version already exists to prevent
+            # duplicate key violations
             existing_snapshot = await db.scalar(
                 select(ResumeVersion).where(
                     ResumeVersion.resume_id == resume.id,
-                    ResumeVersion.version_number == resume.version
+                    ResumeVersion.version_number == resume.version,
                 )
             )
             if not existing_snapshot:
@@ -212,7 +221,7 @@ async def update_resume(
             # Setting to primary unsets all other user resumes
             await db.execute(
                 update(Resume)
-                .where(Resume.user_id == user_id, Resume.id != resume.id, Resume.is_primary == True)
+                .where(Resume.user_id == user_id, Resume.id != resume.id, Resume.is_primary)
                 .values(is_primary=False)
             )
         setattr(resume, field, value)
@@ -289,7 +298,7 @@ async def set_primary_resume(db: AsyncSession, resume_id: uuid.UUID, user_id: uu
     # Unset previous primary resume
     await db.execute(
         update(Resume)
-        .where(Resume.user_id == user_id, Resume.id != resume.id, Resume.is_primary == True)
+        .where(Resume.user_id == user_id, Resume.id != resume.id, Resume.is_primary)
         .values(is_primary=False)
     )
 
@@ -300,7 +309,9 @@ async def set_primary_resume(db: AsyncSession, resume_id: uuid.UUID, user_id: uu
     return resume
 
 
-async def get_versions(db: AsyncSession, resume_id: uuid.UUID, user_id: uuid.UUID) -> list[ResumeVersion]:
+async def get_versions(
+    db: AsyncSession, resume_id: uuid.UUID, user_id: uuid.UUID
+) -> list[ResumeVersion]:
     """Retrieve all historical version snapshots for a resume."""
     # Enforce ownership check first
     await get_resume(db, resume_id, user_id)

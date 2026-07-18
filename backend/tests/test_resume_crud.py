@@ -2,6 +2,7 @@
 
 All tests run in-memory against SQLite via transactional conftest fixtures.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -43,8 +44,14 @@ async def test_create_and_list_resumes(client: AsyncClient) -> None:
                 "skills": [],
                 "certifications": [],
                 "achievements": [],
-                "section_order": ["personal_information", "professional_summary", "education", "experience", "skills"],
-            }
+                "section_order": [
+                    "personal_information",
+                    "professional_summary",
+                    "education",
+                    "experience",
+                    "skills",
+                ],
+            },
         },
     )
     assert res1.status_code == 201
@@ -105,7 +112,13 @@ async def test_ownership_enforcement(client: AsyncClient) -> None:
             "skills": [],
             "certifications": [],
             "achievements": [],
-            "section_order": ["personal_information", "professional_summary", "education", "experience", "skills"],
+            "section_order": [
+                "personal_information",
+                "professional_summary",
+                "education",
+                "experience",
+                "skills",
+            ],
         },
     )
     assert response_update.status_code == 404
@@ -138,8 +151,14 @@ async def test_resume_version_history_and_restore(client: AsyncClient) -> None:
                 "skills": [],
                 "certifications": [],
                 "achievements": [],
-                "section_order": ["personal_information", "professional_summary", "education", "experience", "skills"],
-            }
+                "section_order": [
+                    "personal_information",
+                    "professional_summary",
+                    "education",
+                    "experience",
+                    "skills",
+                ],
+            },
         },
     )
     resume_id = res.json()["id"]
@@ -157,7 +176,13 @@ async def test_resume_version_history_and_restore(client: AsyncClient) -> None:
             "skills": [],
             "certifications": [],
             "achievements": [],
-            "section_order": ["personal_information", "professional_summary", "education", "experience", "skills"],
+            "section_order": [
+                "personal_information",
+                "professional_summary",
+                "education",
+                "experience",
+                "skills",
+            ],
         },
     )
     assert update_res.status_code == 200
@@ -186,7 +211,9 @@ async def test_resume_version_history_and_restore(client: AsyncClient) -> None:
     versions_res2 = await client.get(f"/api/v1/resumes/{resume_id}/versions", headers=headers)
     assert len(versions_res2.json()) == 2
     assert versions_res2.json()[0]["version_number"] == 2
-    assert versions_res2.json()[0]["content_snapshot"]["professional_summary"] == "updated content v2"
+    assert (
+        versions_res2.json()[0]["content_snapshot"]["professional_summary"] == "updated content v2"
+    )
 
 
 # ─── Job Description CRUD Tests ───────────────────────────────────────────────

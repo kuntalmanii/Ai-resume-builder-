@@ -1,4 +1,5 @@
 """Application ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -12,9 +13,7 @@ from app.db.base import Base
 class Application(Base):
     __tablename__ = "applications"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -59,8 +58,11 @@ class Application(Base):
     user = relationship("User")
     job_description = relationship("JobDescription")
     resume_version = relationship("ResumeVersion")
-    interviews = relationship("Interview", back_populates="application", cascade="all, delete-orphan")
+    interviews = relationship(
+        "Interview", back_populates="application", cascade="all, delete-orphan"
+    )
     cover_letters = relationship("CoverLetter", back_populates="application")
 
     def __repr__(self) -> str:
-        return f"<Application id={self.id} company={self.company} role={self.role} status={self.status}>"
+        return f"<Application id={self.id} company={self.company} " \
+            f"role={self.role} status={self.status}>"

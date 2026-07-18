@@ -1,4 +1,5 @@
 """Recruiter Workspace API endpoints."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
@@ -14,14 +15,12 @@ def _verify_recruiter_permission(user) -> None:
     if user.role not in ("recruiter", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Recruiter permissions required."
+            detail="Access denied. Recruiter permissions required.",
         )
 
 
 @router.get("/candidates")
-async def list_candidates(
-    current_user: CurrentUser, db: DBSession
-) -> list:
+async def list_candidates(current_user: CurrentUser, db: DBSession) -> list:
     """List shared candidates (role recruiter/admin only)."""
     _verify_recruiter_permission(current_user)
     return await recruiter_service.list_candidates(db)

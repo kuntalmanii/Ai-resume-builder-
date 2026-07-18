@@ -1,4 +1,5 @@
 """Job Descriptions router: CRUD operations for user-owned JDs."""
+
 import uuid
 
 from fastapi import APIRouter, status
@@ -54,8 +55,6 @@ async def update_job_description(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_job_description(
-    id: uuid.UUID, current_user: CurrentUser, db: DBSession
-) -> None:
+async def delete_job_description(id: uuid.UUID, current_user: CurrentUser, db: DBSession) -> None:
     """Delete a specific job description, enforcing ownership."""
     await job_description_service.delete_job_description(db, id, current_user.id)

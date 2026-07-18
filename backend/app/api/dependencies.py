@@ -1,4 +1,5 @@
 """FastAPI dependency injection: DB session, current user."""
+
 from typing import Annotated
 from uuid import UUID
 

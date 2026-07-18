@@ -13,10 +13,12 @@ JD Score Normalization Decision:
 - If a resume is analyzed WITHOUT a job description (resume-only mode),
   the job_description_id and jd_match_score are set to Null.
 - In this case, to avoid penalizing the user for the missing 25 points,
-  the overall_score is calculated out of the remaining 75 points and normalized to a 100-point scale:
+  the overall_score is calculated out of the remaining 75 points and
+  normalized to a 100-point scale:
   overall_score = Math.round((sum_of_other_categories / 75) * 100).
 - If a job description is provided, overall_score is the direct sum of all categories (out of 100).
 """
+
 import uuid
 from datetime import datetime
 
@@ -30,9 +32,7 @@ from app.db.base import Base
 class ResumeAnalysis(Base):
     __tablename__ = "resume_analyses"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("resumes.id", ondelete="CASCADE"),
@@ -78,7 +78,9 @@ class ResumeAnalysis(Base):
     # Relationships
     resume: Mapped["Resume"] = relationship("Resume", back_populates="analyses")  # type: ignore[name-defined]
     user: Mapped["User"] = relationship("User", back_populates="analyses")  # type: ignore[name-defined]
-    job_description: Mapped["JobDescription"] = relationship("JobDescription", back_populates="analyses")  # type: ignore[name-defined]
+    job_description: Mapped["JobDescription"] = relationship(
+        "JobDescription", back_populates="analyses"
+    )  # type: ignore[name-defined]
     checks: Mapped[list["AnalysisCheck"]] = relationship(  # type: ignore[name-defined]
         "AnalysisCheck", back_populates="analysis", cascade="all, delete-orphan"
     )

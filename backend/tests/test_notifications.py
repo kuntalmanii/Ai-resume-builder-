@@ -1,18 +1,15 @@
 """Tests for Notifications Center."""
+
 import pytest
 from httpx import AsyncClient
 
 
 async def _register_and_login(client: AsyncClient, email: str = "notif_test@test.com") -> str:
-    await client.post("/api/v1/auth/register", json={
-        "email": email,
-        "password": "Password@123",
-        "full_name": "Notif User"
-    })
-    res = await client.post("/api/v1/auth/login", json={
-        "email": email,
-        "password": "Password@123"
-    })
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "Password@123", "full_name": "Notif User"},
+    )
+    res = await client.post("/api/v1/auth/login", json={"email": email, "password": "Password@123"})
     return res.json()["access_token"]
 
 
@@ -27,11 +24,7 @@ async def test_notifications_lifecycle(client: AsyncClient) -> None:
     assert res.json() == 0
 
     # 2. Trigger a notification by creating an application
-    payload = {
-        "company": "Netflix",
-        "role": "Senior Engineer",
-        "status": "Wishlist"
-    }
+    payload = {"company": "Netflix", "role": "Senior Engineer", "status": "Wishlist"}
     await client.post("/api/v1/applications", json=payload, headers=headers)
 
     # 3. Unread count should increment to 1

@@ -7,6 +7,7 @@ Important: ResumeDocument contains canonical post-parsing data.
 We analyze the structured content — we do not claim to detect
 original-file formatting issues we cannot actually inspect.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -24,10 +25,21 @@ from app.services.scoring.text_metrics import (
 
 # ─── Check Result ─────────────────────────────────────────────────────────────
 
+
 class CheckResult:
     """Result for a single scoring check."""
-    __slots__ = ("check_code", "category", "title", "description", "status",
-                 "points_possible", "points_awarded", "recommendation", "evidence_data")
+
+    __slots__ = (
+        "check_code",
+        "category",
+        "title",
+        "description",
+        "status",
+        "points_possible",
+        "points_awarded",
+        "recommendation",
+        "evidence_data",
+    )
 
     def __init__(
         self,
@@ -77,25 +89,39 @@ def check_contact_info(resume: Any) -> CheckResult:
 
     if not missing:
         return CheckResult(
-            code, CATEGORY, "Contact Information Complete",
+            code,
+            CATEGORY,
+            "Contact Information Complete",
             "Name, email, and phone number are all present.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             evidence_data={"found": ["name", "email", "phone"]},
         )
     elif len(missing) == 1:
         return CheckResult(
-            code, CATEGORY, "Contact Information Incomplete",
+            code,
+            CATEGORY,
+            "Contact Information Incomplete",
             f"The following contact field is missing: {missing[0]}.",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
             recommendation=f"Add your {missing[0]} to the contact information section.",
             evidence_data={"missing": missing},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Contact Information Missing",
+            code,
+            CATEGORY,
+            "Contact Information Missing",
             f"Missing essential contact fields: {', '.join(missing)}.",
-            "failed", possible, 0,
-            recommendation="Add your name, email, and phone number to ensure recruiters can contact you.",
+            "failed",
+            possible,
+            0,
+            recommendation=(
+                "Add your name, email, and phone number to ensure recruiters can contact you."
+            ),
             evidence_data={"missing": missing},
         )
 
@@ -108,26 +134,44 @@ def check_section_naming(resume: Any) -> CheckResult:
     # ResumeDocument always uses canonical keys after parsing/creation.
     # We verify the section_order uses only valid canonical keys.
     canonical = {
-        "personal_information", "professional_summary", "education",
-        "experience", "projects", "skills", "certifications",
-        "achievements", "positions_of_responsibility", "languages", "interests",
+        "personal_information",
+        "professional_summary",
+        "education",
+        "experience",
+        "projects",
+        "skills",
+        "certifications",
+        "achievements",
+        "positions_of_responsibility",
+        "languages",
+        "interests",
     }
     section_order = _get(resume, "section_order") or []
     non_canonical = [s for s in section_order if s not in canonical] if section_order else []
 
     if not non_canonical:
         return CheckResult(
-            code, CATEGORY, "Section Naming — Standard",
+            code,
+            CATEGORY,
+            "Section Naming — Standard",
             "All resume sections use standard, ATS-recognized naming.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             evidence_data={"canonical_sections": list(section_order)},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Non-Standard Section Names Detected",
-            f"Non-canonical section names found: {non_canonical}. Some ATS systems may not recognize them.",
-            "warning", possible, possible - 1,
-            recommendation="Rename sections to standard headings (Experience, Education, Skills, etc.).",
+            code,
+            CATEGORY,
+            "Non-Standard Section Names Detected",
+            f"Non-canonical section names found: {non_canonical}. "
+            f"Some ATS systems may not recognize them.",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Rename sections to standard headings "
+            "(Experience, Education, Skills, etc.).",
             evidence_data={"non_canonical": non_canonical},
         )
 
@@ -151,24 +195,37 @@ def check_section_structure(resume: Any) -> CheckResult:
 
     if not empty_sections:
         return CheckResult(
-            code, CATEGORY, "Core Sections Populated",
+            code,
+            CATEGORY,
+            "Core Sections Populated",
             "Experience, Education, and Skills sections all contain content.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     elif len(empty_sections) == 1:
         return CheckResult(
-            code, CATEGORY, "Core Section Sparse",
+            code,
+            CATEGORY,
+            "Core Section Sparse",
             f"The '{empty_sections[0]}' section is empty or missing.",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
             recommendation=f"Add content to your {empty_sections[0]} section.",
             evidence_data={"empty": empty_sections},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Multiple Core Sections Empty",
+            code,
+            CATEGORY,
+            "Multiple Core Sections Empty",
             f"Multiple core sections are empty: {', '.join(empty_sections)}.",
-            "failed", possible, max(0, possible - len(empty_sections)),
-            recommendation="Add content to Experience, Education, and Skills sections for ATS recognition.",
+            "failed",
+            possible,
+            max(0, possible - len(empty_sections)),
+            recommendation="Add content to Experience, Education, "
+            "and Skills sections for ATS recognition.",
             evidence_data={"empty": empty_sections},
         )
 
@@ -190,17 +247,26 @@ def check_date_format(resume: Any) -> CheckResult:
 
     if len(format_types) <= 1:
         return CheckResult(
-            code, CATEGORY, "Date Format Consistent",
+            code,
+            CATEGORY,
+            "Date Format Consistent",
             "All dates use a consistent format.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             evidence_data={"formats_found": list(format_types)},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Mixed Date Formats",
+            code,
+            CATEGORY,
+            "Mixed Date Formats",
             f"Multiple date formats detected: {format_types}. This can confuse ATS parsers.",
-            "warning", possible, possible - 1,
-            recommendation="Use a single consistent date format throughout (e.g., 'Jan 2023' or 'MM/YYYY').",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Use a single consistent date format "
+            "throughout (e.g., 'Jan 2023' or 'MM/YYYY').",
             evidence_data={"formats_found": list(format_types)},
         )
 
@@ -213,9 +279,13 @@ def check_bullet_structure(resume: Any) -> CheckResult:
     experience = _get_list(resume, "experience")
     if not experience:
         return CheckResult(
-            code, CATEGORY, "Bullet Structure — No Experience",
+            code,
+            CATEGORY,
+            "Bullet Structure — No Experience",
             "No experience entries to evaluate bullet structure.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
 
     entries_with_bullets = sum(1 for e in experience if _get(e, "bullets"))
@@ -223,23 +293,37 @@ def check_bullet_structure(resume: Any) -> CheckResult:
 
     if ratio >= 0.8:
         return CheckResult(
-            code, CATEGORY, "Bullet Points Used Consistently",
+            code,
+            CATEGORY,
+            "Bullet Points Used Consistently",
             f"{entries_with_bullets}/{len(experience)} experience entries use bullet points.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     elif ratio >= 0.5:
         return CheckResult(
-            code, CATEGORY, "Inconsistent Bullet Usage",
+            code,
+            CATEGORY,
+            "Inconsistent Bullet Usage",
             f"Only {entries_with_bullets}/{len(experience)} experience entries use bullet points.",
-            "warning", possible, possible - 1,
-            recommendation="Add bullet points to all experience entries for consistent ATS parsing.",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Add bullet points to all experience "
+            "entries for consistent ATS parsing.",
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Bullets Largely Absent",
+            code,
+            CATEGORY,
+            "Bullets Largely Absent",
             "Most experience entries lack bullet points, reducing ATS parseability.",
-            "failed", possible, 0,
-            recommendation="Use bullet points to describe responsibilities and achievements in each experience entry.",
+            "failed",
+            possible,
+            0,
+            recommendation="Use bullet points to describe responsibilities "
+            "and achievements in each experience entry.",
         )
 
 
@@ -253,23 +337,36 @@ def check_special_chars(resume: Any) -> CheckResult:
 
     if ratio < 0.01:
         return CheckResult(
-            code, CATEGORY, "No Problematic Special Characters",
+            code,
+            CATEGORY,
+            "No Problematic Special Characters",
             "Resume text contains no excessive decoration characters.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     elif ratio < 0.03:
         return CheckResult(
-            code, CATEGORY, "Minor Special Character Usage",
+            code,
+            CATEGORY,
+            "Minor Special Character Usage",
             f"A small number of decoration characters detected ({ratio:.1%} of content).",
-            "warning", possible, possible - 1,
-            recommendation="Remove decorative symbols (arrows, bullets as Unicode characters) that may break ATS parsing.",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Remove decorative symbols (arrows, bullets as "
+            "Unicode characters) that may break ATS parsing.",
             evidence_data={"special_char_ratio": round(ratio, 4)},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Excessive Special Characters",
+            code,
+            CATEGORY,
+            "Excessive Special Characters",
             f"High density of decoration characters ({ratio:.1%}) may cause ATS parsing failures.",
-            "failed", possible, 0,
+            "failed",
+            possible,
+            0,
             recommendation="Replace Unicode decoration characters with plain text punctuation.",
             evidence_data={"special_char_ratio": round(ratio, 4)},
         )
@@ -281,36 +378,53 @@ def check_content_density(resume: Any) -> CheckResult:
     possible = ATS_WEIGHTS[code]
 
     from app.services.scoring.config import MAX_TOTAL_WORDS, MIN_TOTAL_WORDS
+
     full_text = collect_all_text(resume)
     total_words = word_count(full_text)
 
     if MIN_TOTAL_WORDS <= total_words <= MAX_TOTAL_WORDS:
         return CheckResult(
-            code, CATEGORY, "Content Length Appropriate",
+            code,
+            CATEGORY,
+            "Content Length Appropriate",
             f"Resume contains {total_words} words — within the recommended range.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             evidence_data={"word_count": total_words},
         )
     elif total_words < MIN_TOTAL_WORDS:
         return CheckResult(
-            code, CATEGORY, "Resume Is Very Sparse",
-            f"Resume contains only {total_words} words. Very thin resumes score poorly in ATS systems.",
-            "warning", possible, possible - 1,
+            code,
+            CATEGORY,
+            "Resume Is Very Sparse",
+            f"Resume contains only {total_words} words. Very "
+            f"thin resumes score poorly in ATS systems.",
+            "warning",
+            possible,
+            possible - 1,
             recommendation="Expand descriptions, add bullet points, and fill in missing sections.",
             evidence_data={"word_count": total_words, "min_recommended": MIN_TOTAL_WORDS},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Resume Is Very Dense",
-            f"Resume contains {total_words} words — exceeds recommended length for a 1–2 page resume.",
-            "warning", possible, possible - 1,
-            recommendation="Condense older experiences and remove irrelevant details to keep the resume focused.",
+            code,
+            CATEGORY,
+            "Resume Is Very Dense",
+            f"Resume contains {total_words} words — exceeds "
+            f"recommended length for a 1–2 page resume.",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Condense older experiences and remove "
+            "irrelevant details to keep the resume focused.",
             evidence_data={"word_count": total_words, "max_recommended": MAX_TOTAL_WORDS},
         )
 
 
 def check_template_safety(resume: Any, template_id: str | None = None) -> CheckResult:
-    """ATS_TEMPLATE_SAFETY — Template is ATS-safe (no multi-column layouts known to break parsers)."""
+    """ATS_TEMPLATE_SAFETY — Template is ATS-safe (no multi-column layouts known to
+    break parsers)."""
     code = "ATS_TEMPLATE_SAFETY"
     possible = ATS_WEIGHTS[code]
 
@@ -321,31 +435,50 @@ def check_template_safety(resume: Any, template_id: str | None = None) -> CheckR
 
     if not template_id:
         return CheckResult(
-            code, CATEGORY, "Template Safety — Unknown",
+            code,
+            CATEGORY,
+            "Template Safety — Unknown",
             "No template metadata available for ATS safety assessment.",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
             recommendation="Select a verified ATS-safe template from the template library.",
         )
     elif template_id.lower() in ats_safe_templates:
         return CheckResult(
-            code, CATEGORY, "ATS-Safe Template",
-            f"Template '{template_id}' uses a single-column, text-first layout compatible with ATS parsers.",
-            "passed", possible, possible,
+            code,
+            CATEGORY,
+            "ATS-Safe Template",
+            f"Template '{template_id}' uses a single-column, "
+            f"text-first layout compatible with ATS parsers.",
+            "passed",
+            possible,
+            possible,
             evidence_data={"template_id": template_id},
         )
     elif template_id.lower() in ats_risky_templates:
         return CheckResult(
-            code, CATEGORY, "ATS-Risky Template",
-            f"Template '{template_id}' may use multi-column or graphic layouts that confuse ATS parsers.",
-            "failed", possible, 0,
-            recommendation="Switch to a single-column ATS-safe template (Modern, Classic, or Minimal).",
+            code,
+            CATEGORY,
+            "ATS-Risky Template",
+            f"Template '{template_id}' may use multi-column "
+            f"or graphic layouts that confuse ATS parsers.",
+            "failed",
+            possible,
+            0,
+            recommendation="Switch to a single-column ATS-safe "
+            "template (Modern, Classic, or Minimal).",
             evidence_data={"template_id": template_id},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Template Safety — Unverified",
+            code,
+            CATEGORY,
+            "Template Safety — Unverified",
             f"Template '{template_id}' has not been verified for ATS compatibility.",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
             recommendation="Use a verified ATS-safe template.",
             evidence_data={"template_id": template_id},
         )

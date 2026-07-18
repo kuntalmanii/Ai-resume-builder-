@@ -1,4 +1,5 @@
 """Portfolio API endpoints."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException
@@ -11,9 +12,7 @@ router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
 
 @router.get("/", response_model=PortfolioResponse)
-async def get_portfolio(
-    current_user: CurrentUser, db: DBSession
-) -> PortfolioResponse:
+async def get_portfolio(current_user: CurrentUser, db: DBSession) -> PortfolioResponse:
     """Get candidate portfolio draft configuration."""
     portfolio = await portfolio_service.get_or_create(db, user_id=current_user.id)
     await db.commit()
@@ -36,9 +35,7 @@ async def update_portfolio(
 
 
 @router.post("/{id}/export")
-async def export_portfolio(
-    id: uuid.UUID, current_user: CurrentUser, db: DBSession
-) -> dict:
+async def export_portfolio(id: uuid.UUID, current_user: CurrentUser, db: DBSession) -> dict:
     """Compile and export static portfolio ZIP bundle."""
     portfolio = await portfolio_service.get_or_create(db, user_id=current_user.id)
     if portfolio.id != id:

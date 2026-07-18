@@ -1,4 +1,5 @@
 """Pydantic schemas for Career Profile."""
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -7,12 +8,13 @@ from pydantic import BaseModel, Field
 
 # ─── Sub-schemas ──────────────────────────────────────────────────────────────
 
+
 class EducationEntry(BaseModel):
     institution: str = Field(..., min_length=1)
     degree: str = Field(..., min_length=1)
     field_of_study: str = ""
     start_date: str = ""  # "YYYY-MM" or "YYYY"
-    end_date: str = ""    # "YYYY-MM", "YYYY", or "Present"
+    end_date: str = ""  # "YYYY-MM", "YYYY", or "Present"
     gpa: str = ""
     description: str = ""
     is_current: bool = False
@@ -76,6 +78,7 @@ class LanguageEntry(BaseModel):
 
 
 # ─── Main Profile Schemas ─────────────────────────────────────────────────────
+
 
 class CareerProfileResponse(BaseModel):
     id: uuid.UUID

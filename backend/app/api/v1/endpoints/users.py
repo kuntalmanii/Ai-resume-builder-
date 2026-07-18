@@ -1,4 +1,5 @@
 """Users router: current user info and updates."""
+
 from fastapi import APIRouter
 
 from app.api.dependencies import CurrentUser, DBSession
@@ -14,9 +15,7 @@ async def get_me(current_user: CurrentUser) -> UserResponse:
 
 
 @router.patch("/me", response_model=UserResponse)
-async def update_me(
-    payload: UserUpdate, current_user: CurrentUser, db: DBSession
-) -> UserResponse:
+async def update_me(payload: UserUpdate, current_user: CurrentUser, db: DBSession) -> UserResponse:
     """Update basic user info (full name)."""
     if payload.full_name is not None:
         current_user.full_name = payload.full_name

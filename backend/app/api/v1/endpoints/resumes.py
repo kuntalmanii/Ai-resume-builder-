@@ -1,4 +1,6 @@
-"""Resumes router: CRUD, metadata updates, content updates with optimistic concurrency, duplicating, and versioning."""
+"""Resumes router: CRUD, metadata updates, content updates with optimistic concurrency,
+duplicating, and versioning."""
+
 import uuid
 from typing import Annotated
 
@@ -53,7 +55,8 @@ async def list_resumes(
     sort_by: Annotated[str | None, Query(description="Field to sort by")] = "updated_at",
     sort_order: Annotated[str | None, Query(description="Sort order (asc/desc)")] = "desc",
 ) -> list[ResumeResponse]:
-    """Retrieve all resumes belonging to the authenticated user, supporting search, filters, sorting, and pagination."""
+    """Retrieve all resumes belonging to the authenticated user, supporting search,
+    filters, sorting, and pagination."""
     limit = page_size
     offset = (page - 1) * page_size
     resumes = await resume_service.get_resumes(
@@ -70,9 +73,7 @@ async def list_resumes(
 
 
 @router.get("/{id}", response_model=ResumeResponse)
-async def get_resume(
-    id: uuid.UUID, current_user: CurrentUser, db: DBSession
-) -> ResumeResponse:
+async def get_resume(id: uuid.UUID, current_user: CurrentUser, db: DBSession) -> ResumeResponse:
     """Retrieve a specific resume, enforcing user ownership.
 
     Returns 404 on ownership failure for security.
@@ -91,9 +92,7 @@ async def patch_resume_metadata(
     """Update resume metadata like title, template_id, or status."""
     # Ensure content field is NOT modified in metadata PATCH
     payload.content = None
-    resume = await resume_service.update_resume(
-        db, id, current_user.id, payload
-    )
+    resume = await resume_service.update_resume(db, id, current_user.id, payload)
     return ResumeResponse.model_validate(resume)
 
 
@@ -103,10 +102,15 @@ async def update_resume_content(
     payload: ResumeDocument,
     current_user: CurrentUser,
     db: DBSession,
-    expected_version: Annotated[int | None, Query(description="Expected concurrency version number")] = None,
-    change_reason: Annotated[str | None, Query(description="Reason for version snapshot creation")] = None,
+    expected_version: Annotated[
+        int | None, Query(description="Expected concurrency version number")
+    ] = None,
+    change_reason: Annotated[
+        str | None, Query(description="Reason for version snapshot creation")
+    ] = None,
 ) -> ResumeResponse:
-    """Update validated resume content. Checks expected_version for optimistic concurrency control."""
+    """Update validated resume content. Checks expected_version for optimistic
+    concurrency control."""
     update_payload = ResumeUpdate(content=payload)
     resume = await resume_service.update_resume(
         db,
@@ -161,7 +165,9 @@ async def get_version(
     return ResumeVersionResponse.model_validate(version)
 
 
-@router.post("/{id}/versions", response_model=ResumeVersionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{id}/versions", response_model=ResumeVersionResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_manual_version(
     id: uuid.UUID,
     current_user: CurrentUser,
@@ -186,35 +192,43 @@ async def restore_version(
 async def audit_resume_claims(
     id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> EvidenceMapResponse:
-    """Extracts atomic claims from the resume and computes the credibility map (Legacy Compatibility)."""
-    claims, ai_fallback = await ClaimExtractorService.extract_claims_for_resume(db, id, current_user.id)
-    claims, audit = await CredibilityEngineService.compute_evidence_map(db, id, current_user.id, ai_fallback_active=ai_fallback)
+    """Extracts atomic claims from the resume and computes the credibility map (Legacy
+    Compatibility)."""
+    claims, ai_fallback = await ClaimExtractorService.extract_claims_for_resume(
+        db, id, current_user.id
+    )
+    claims, audit = await CredibilityEngineService.compute_evidence_map(
+        db, id, current_user.id, ai_fallback_active=ai_fallback
+    )
     validated = [ResumeClaimSchema.model_validate(c) for c in claims]
-    return EvidenceMapResponse(claims=validated, evidence_credibility_score=audit.overall_score, ai_fallback_active=audit.ai_fallback_active)
+    return EvidenceMapResponse(
+        claims=validated,
+        evidence_credibility_score=audit.overall_score,
+        ai_fallback_active=audit.ai_fallback_active,
+    )
 
 
 @router.post("/{resume_id}/evidence-audits", response_model=EvidenceAuditSchema)
 async def run_evidence_audit(
-    resume_id: uuid.UUID,
-    current_user: CurrentUser,
-    db: DBSession,
-    force: bool = Query(False)
+    resume_id: uuid.UUID, current_user: CurrentUser, db: DBSession, force: bool = Query(False)
 ) -> EvidenceAuditSchema:
     """Run evidence claims audit on a resume and returns the audit run details."""
     resume = await db.get(Resume, resume_id)
     if not resume or resume.user_id != current_user.id:
         raise ResourceNotFoundError("Resume not found")
 
-    claims, ai_fallback = await ClaimExtractorService.extract_claims_for_resume(db, resume_id, current_user.id)
-    claims, audit = await CredibilityEngineService.compute_evidence_map(db, resume_id, current_user.id, force=force, ai_fallback_active=ai_fallback)
+    claims, ai_fallback = await ClaimExtractorService.extract_claims_for_resume(
+        db, resume_id, current_user.id
+    )
+    claims, audit = await CredibilityEngineService.compute_evidence_map(
+        db, resume_id, current_user.id, force=force, ai_fallback_active=ai_fallback
+    )
     return EvidenceAuditSchema.model_validate(audit)
 
 
 @router.get("/{resume_id}/evidence-audits/latest", response_model=EvidenceAuditSchema)
 async def get_latest_evidence_audit(
-    resume_id: uuid.UUID,
-    current_user: CurrentUser,
-    db: DBSession
+    resume_id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> EvidenceAuditSchema:
     """Retrieve the latest completed evidence audit for the resume."""
     resume = await db.get(Resume, resume_id)
@@ -235,9 +249,7 @@ async def get_latest_evidence_audit(
 
 @router.get("/{resume_id}/evidence-audits", response_model=list[EvidenceAuditSchema])
 async def get_evidence_audit_history(
-    resume_id: uuid.UUID,
-    current_user: CurrentUser,
-    db: DBSession
+    resume_id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> list[EvidenceAuditSchema]:
     """Retrieve audit history for the resume."""
     resume = await db.get(Resume, resume_id)
@@ -254,10 +266,7 @@ async def get_evidence_audit_history(
 
 @router.get("/{resume_id}/evidence-audits/{audit_id}", response_model=EvidenceAuditSchema)
 async def get_evidence_audit_by_id(
-    resume_id: uuid.UUID,
-    audit_id: uuid.UUID,
-    current_user: CurrentUser,
-    db: DBSession
+    resume_id: uuid.UUID, audit_id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> EvidenceAuditSchema:
     """Retrieve a specific historical audit run by ID."""
     resume = await db.get(Resume, resume_id)
@@ -280,7 +289,7 @@ async def get_resume_claims(
     section: str | None = None,
     claim_type: str | None = None,
     support_status: str | None = None,
-    risk_level: str | None = None
+    risk_level: str | None = None,
 ) -> EvidenceMapResponse:
     """Retrieves the pre-computed credibility map of resume claims with filtering."""
     resume = await db.get(Resume, id)
@@ -301,6 +310,7 @@ async def get_resume_claims(
             continue
         if risk_level:
             from app.services.evidence.credibility_engine import RISK_WEIGHTS
+
             claim_risk_val = RISK_WEIGHTS.get(c.claim_type, 1)
             mapped_risk = "low"
             if claim_risk_val == 2:
@@ -311,15 +321,14 @@ async def get_resume_claims(
                 continue
         filtered_claims.append(c)
 
-    return EvidenceMapResponse(claims=filtered_claims, evidence_credibility_score=score, ai_fallback_active=ai_fallback)
+    return EvidenceMapResponse(
+        claims=filtered_claims, evidence_credibility_score=score, ai_fallback_active=ai_fallback
+    )
 
 
 @router.get("/{resume_id}/claims/{claim_id}", response_model=ResumeClaimSchema)
 async def get_claim_detail(
-    resume_id: uuid.UUID,
-    claim_id: uuid.UUID,
-    current_user: CurrentUser,
-    db: DBSession
+    resume_id: uuid.UUID, claim_id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> ResumeClaimSchema:
     """Retrieve detailed information about a specific claim."""
     resume = await db.get(Resume, resume_id)
@@ -343,7 +352,7 @@ async def confirm_resume_claim(
     claim_id: uuid.UUID,
     payload: ClaimConfirmationRequest,
     current_user: CurrentUser,
-    db: DBSession
+    db: DBSession,
 ) -> ResumeClaimSchema:
     """Allow the user to confirm a claim, updating verification status."""
     resume = await db.get(Resume, resume_id)
@@ -374,7 +383,7 @@ async def confirm_resume_claim(
         source_type="career_profile_user_confirmed",
         support_kind="factual_support",
         evidence_strength="direct",
-        verification_status="user_confirmed"
+        verification_status="user_confirmed",
     )
     db.add(evidence)
     await db.commit()
@@ -389,7 +398,7 @@ async def link_career_entry_to_claim(
     claim_id: uuid.UUID,
     payload: CareerEntryLinkRequest,
     current_user: CurrentUser,
-    db: DBSession
+    db: DBSession,
 ) -> ResumeClaimSchema:
     """Link a claim to a relevant Smart Career Profile entry."""
     resume = await db.get(Resume, resume_id)
@@ -409,22 +418,33 @@ async def link_career_entry_to_claim(
         raise ResourceNotFoundError("Career entry not found")
 
     is_relevant = False
-    if entry.entry_type == "experience" and claim.claim_type in ["employer", "role", "responsibility", "date", "metric"]:
+    if entry.entry_type == "experience" and claim.claim_type in [
+        "employer",
+        "role",
+        "responsibility",
+        "date",
+        "metric",
+    ]:
         is_relevant = True
     elif entry.entry_type == "education" and claim.claim_type in ["education", "date"]:
         is_relevant = True
     elif entry.entry_type == "skill" and claim.claim_type in ["technology"]:
         is_relevant = True
-    elif entry.entry_type in ["certification", "certifications"] and claim.claim_type in ["certification", "date"]:
+    elif entry.entry_type in ["certification", "certifications"] and claim.claim_type in [
+        "certification",
+        "date",
+    ]:
         is_relevant = True
     elif claim.claim_type == "responsibility":
         is_relevant = True
 
     if not is_relevant:
         from fastapi import HTTPException
+
         raise HTTPException(
             status_code=400,
-            detail=f"Clearly unrelated link: Career entry of type {entry.entry_type} cannot support claim of type {claim.claim_type}"
+            detail=f"Clearly unrelated link: Career entry of type {entry.entry_type} " \
+                f"cannot support claim of type {claim.claim_type}",
         )
 
     evidence = EvidenceSource(
@@ -434,11 +454,19 @@ async def link_career_entry_to_claim(
         source_id=str(entry.id),
         source_section=entry.entry_type,
         support_kind="factual_support",
-        evidence_strength="direct" if entry.verification_status == "source_verified" else "corroborating",
-        verification_status="source_verified" if entry.verification_status == "source_verified" else "user_confirmed"
+        evidence_strength="direct"
+        if entry.verification_status == "source_verified"
+        else "corroborating",
+        verification_status="source_verified"
+        if entry.verification_status == "source_verified"
+        else "user_confirmed",
     )
     db.add(evidence)
-    claim.verification_status = "source_verified" if entry.verification_status == "source_verified" else "career_profile_supported"
+    claim.verification_status = (
+        "source_verified"
+        if entry.verification_status == "source_verified"
+        else "career_profile_supported"
+    )
 
     await db.commit()
     await db.refresh(claim)
@@ -448,6 +476,7 @@ async def link_career_entry_to_claim(
 
 evidence_router = APIRouter(prefix="/evidence", tags=["Evidence Methodology"])
 
+
 @evidence_router.get("/methodology")
 async def get_evidence_methodology() -> dict[str, Any]:
     """Retrieve methodology scoring details, weights, and multipliers."""
@@ -456,15 +485,33 @@ async def get_evidence_methodology() -> dict[str, Any]:
         RISK_WEIGHTS,
         SUPPORT_MULTIPLIERS,
     )
+
     return {
         "credibility_version": CREDIBILITY_VERSION,
         "scoring_dimensions": {
-            "claim_support_coverage": {"max_score": 40, "description": "Percent of claims supported by Career Profile or User confirmations"},
-            "internal_consistency": {"max_score": 20, "description": "Absence of contradictions in dates, roles, or metrics"},
-            "career_profile_corroboration": {"max_score": 15, "description": "Ratio of claims that align directly with Smart Career Profile"},
-            "high_risk_claim_support": {"max_score": 15, "description": "Factual verification of employers, roles, degrees, certs, and metrics"},
-            "verification_transparency": {"max_score": 10, "description": "Percent of evidence backed by verified external sources"}
+            "claim_support_coverage": {
+                "max_score": 40,
+                "description": "Percent of claims supported by " \
+                    "Career Profile or User confirmations",
+            },
+            "internal_consistency": {
+                "max_score": 20,
+                "description": "Absence of contradictions in dates, roles, or metrics",
+            },
+            "career_profile_corroboration": {
+                "max_score": 15,
+                "description": "Ratio of claims that align directly with Smart Career Profile",
+            },
+            "high_risk_claim_support": {
+                "max_score": 15,
+                "description": "Factual verification of employers, " \
+                    "roles, degrees, certs, and metrics",
+            },
+            "verification_transparency": {
+                "max_score": 10,
+                "description": "Percent of evidence backed by verified external sources",
+            },
         },
         "support_multipliers": SUPPORT_MULTIPLIERS,
-        "claim_risk_weights": RISK_WEIGHTS
+        "claim_risk_weights": RISK_WEIGHTS,
     }

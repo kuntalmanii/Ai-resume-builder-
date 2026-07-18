@@ -15,6 +15,7 @@ Invariants enforced:
 - overall_score in [0, 100]
 - Each check's points_awarded in [0, points_possible]
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -35,13 +36,15 @@ from app.services.scoring.recommendations import TopRecommendation, build_recomm
 
 # ─── Result Types ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class CategoryResult:
     """Score breakdown for a single category."""
+
     category: str
-    raw_score: int      # Points earned (e.g. 14 out of 20)
-    max_score: int      # Maximum possible (e.g. 20)
-    normalized: int     # 0–100 normalized score (e.g. 70)
+    raw_score: int  # Points earned (e.g. 14 out of 20)
+    max_score: int  # Maximum possible (e.g. 20)
+    normalized: int  # 0–100 normalized score (e.g. 70)
     check_count: int
     passed_count: int
     failed_count: int
@@ -51,13 +54,14 @@ class CategoryResult:
 @dataclass
 class AnalysisResult:
     """Complete result from the scoring engine."""
+
     analysis_version: str
-    raw_score: int          # 0–75
-    raw_max_score: int      # 75 (resume-only)
-    overall_score: int      # 0–100 normalized
+    raw_score: int  # 0–75
+    raw_max_score: int  # 75 (resume-only)
+    overall_score: int  # 0–100 normalized
     ats_score: int
     content_score: int
-    jd_match_score: int | None     # Always None in Phase 9
+    jd_match_score: int | None  # Always None in Phase 9
     completeness_score: int
     readability_score: int
     grammar_score: int
@@ -65,11 +69,12 @@ class AnalysisResult:
     categories: list[CategoryResult]
     checks: list[CheckResult]
     top_recommendations: list[TopRecommendation]
-    potential_score_gain: int       # Points user could gain by fixing failed checks
+    potential_score_gain: int  # Points user could gain by fixing failed checks
     metadata: dict = field(default_factory=dict)
 
 
 # ─── Score Clamping ───────────────────────────────────────────────────────────
+
 
 def _clamp(value: int, lo: int = 0, hi: int = 100) -> int:
     return max(lo, min(hi, value))
@@ -89,6 +94,7 @@ def _sum_category(checks: list[CheckResult]) -> tuple[int, int]:
 
 
 # ─── Engine ───────────────────────────────────────────────────────────────────
+
 
 def run_resume_analysis(
     resume: Any,
@@ -134,7 +140,8 @@ def run_resume_analysis(
     # ── Enforce invariants ────────────────────────────────────────────────
     raw_score = _clamp(
         ats_raw + content_raw + complete_raw + read_raw + gram_raw + evid_raw,
-        0, RAW_MAX_SCORE,
+        0,
+        RAW_MAX_SCORE,
     )
     raw_max_score = RAW_MAX_SCORE
     overall_score = _normalize(raw_score, raw_max_score)
@@ -189,7 +196,7 @@ def run_resume_analysis(
         overall_score=overall_score,
         ats_score=ats_score,
         content_score=content_score,
-        jd_match_score=None,   # Phase 9: resume-only mode
+        jd_match_score=None,  # Phase 9: resume-only mode
         completeness_score=completeness_score,
         readability_score=readability_score,
         grammar_score=grammar_score,

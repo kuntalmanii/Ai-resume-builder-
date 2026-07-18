@@ -10,6 +10,7 @@ Usage:
         await cache.set("ats", resume_id, version=resume.version, data=value)
     await cache.invalidate_resume(resume_id)
 """
+
 from __future__ import annotations
 
 import json
@@ -24,14 +25,15 @@ settings = get_settings()
 # ─── Key namespaces ──────────────────────────────────────────────────────────
 _NAMESPACES = frozenset(
     {
-        "ats",         # ATS analysis results
-        "jd_match",    # JD matching results
-        "audit",       # Evidence audit results
-        "preview",     # Export render-tree previews
-        "template",    # Template metadata
+        "ats",  # ATS analysis results
+        "jd_match",  # JD matching results
+        "audit",  # Evidence audit results
+        "preview",  # Export render-tree previews
+        "template",  # Template metadata
         "rate_limit",  # Rate limiting counters
     }
 )
+
 
 def _make_key(namespace: str, resource_id: str, version: int | None = None) -> str:
     """Build a structured cache key."""
@@ -59,6 +61,7 @@ class _InMemoryFallback:
 
     async def delete_pattern(self, pattern: str) -> int:
         import fnmatch
+
         matched = [k for k in list(self._store.keys()) if fnmatch.fnmatch(k, pattern)]
         for k in matched:
             del self._store[k]
@@ -124,9 +127,7 @@ class CacheService:
 
     # ─── Core ops ────────────────────────────────────────────────────────────
 
-    async def get(
-        self, namespace: str, resource_id: str, version: int | None = None
-    ) -> Any | None:  # noqa: ANN401
+    async def get(self, namespace: str, resource_id: str, version: int | None = None) -> Any | None:  # noqa: ANN401
         key = _make_key(namespace, resource_id, version)
         return await self._backend.get(key)
 
@@ -156,9 +157,7 @@ class CacheService:
 
     # ─── Rate limiting ────────────────────────────────────────────────────────
 
-    async def rate_limit_check(
-        self, identifier: str, limit: int, window: int
-    ) -> tuple[int, bool]:
+    async def rate_limit_check(self, identifier: str, limit: int, window: int) -> tuple[int, bool]:
         """
         Increment a rate-limit counter and check if limit is exceeded.
 
@@ -192,6 +191,7 @@ async def get_cache() -> CacheService:
     if settings.REDIS_ENABLED:
         try:
             import redis.asyncio as aioredis  # type: ignore[import]
+
             client = aioredis.from_url(
                 settings.REDIS_URL,
                 encoding="utf-8",
@@ -203,9 +203,7 @@ async def get_cache() -> CacheService:
             _cache_instance = CacheService(_RedisCache(client))
             logger.info("Cache: Redis connected at %s", settings.REDIS_URL)
         except Exception as exc:
-            logger.warning(
-                "Cache: Redis unavailable (%s) — falling back to in-memory store.", exc
-            )
+            logger.warning("Cache: Redis unavailable (%s) — falling back to in-memory store.", exc)
             _cache_instance = CacheService(_InMemoryFallback())
     else:
         logger.info("Cache: REDIS_ENABLED=false — using in-memory store.")

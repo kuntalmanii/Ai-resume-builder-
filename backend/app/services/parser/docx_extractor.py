@@ -1,4 +1,5 @@
 """DOCX text extraction using python-docx."""
+
 import io
 import re
 
@@ -23,7 +24,7 @@ def extract_docx_text(file_bytes: bytes) -> dict:
     except Exception as e:
         raise ValidationError(
             "Could not open DOCX file. It may be corrupt or encrypted.",
-            details=f"CORRUPT_DOCX: {str(e)}"
+            details=f"CORRUPT_DOCX: {str(e)}",
         )
 
     lines = []
@@ -38,7 +39,7 @@ def extract_docx_text(file_bytes: bytes) -> dict:
         style_name = p.style.name.lower() if p.style and p.style.name else ""
         if any(kw in style_name for kw in ["list", "bullet", "desc"]):
             # Prepend bullet if not already containing list item markers
-            if not text.startswith(('•', '-', '*', 'o', '1.', '2.', '3.')):
+            if not text.startswith(("•", "-", "*", "o", "1.", "2.", "3.")):
                 text = "• " + text
 
         lines.append(text)
@@ -62,7 +63,7 @@ def extract_docx_text(file_bytes: bytes) -> dict:
     normalized_lines = []
     for line in combined.splitlines():
         cleaned_line = line.strip()
-        cleaned_line = re.sub(r' +', ' ', cleaned_line)
+        cleaned_line = re.sub(r" +", " ", cleaned_line)
         if cleaned_line:
             normalized_lines.append(cleaned_line)
 

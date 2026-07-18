@@ -1,4 +1,5 @@
 """Resume Version ORM model."""
+
 import uuid
 from datetime import datetime
 
@@ -13,9 +14,7 @@ from app.db.types import JSONBType
 class ResumeVersion(Base):
     __tablename__ = "resume_versions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resumes.id", ondelete="CASCADE"), nullable=False, index=True
     )

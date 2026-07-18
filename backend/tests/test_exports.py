@@ -1,4 +1,5 @@
 """Integration tests for Resume Exports snapshots and history."""
+
 import pytest
 from httpx import AsyncClient
 
@@ -32,14 +33,14 @@ async def _create_resume(client: AsyncClient, headers: dict) -> str:
                     "full_name": "Jane Doe",
                     "email": "jane@example.com",
                     "phone": "123-456-7890",
-                    "location": "San Francisco, CA"
+                    "location": "San Francisco, CA",
                 },
                 "professional_summary": "Intelligent and results-driven PM.",
                 "education": [
                     {
                         "institution": "Stanford University",
                         "degree": "B.S. Computer Science",
-                        "end_date": "2022"
+                        "end_date": "2022",
                     }
                 ],
                 "experience": [
@@ -49,19 +50,20 @@ async def _create_resume(client: AsyncClient, headers: dict) -> str:
                         "start_date": "2022-06",
                         "end_date": "Present",
                         "description": "Led shipping of 3 major features.",
-                        "bullets": ["Managed roadmap", "Analyzed user behavior metrics"]
+                        "bullets": ["Managed roadmap", "Analyzed user behavior metrics"],
                     }
                 ],
-                "skills": [
-                    {
-                        "category": "Languages",
-                        "skills": ["Python", "JavaScript", "SQL"]
-                    }
-                ],
+                "skills": [{"category": "Languages", "skills": ["Python", "JavaScript", "SQL"]}],
                 "certifications": [],
                 "achievements": [],
-                "section_order": ["personal_information", "professional_summary", "education", "experience", "skills"],
-            }
+                "section_order": [
+                    "personal_information",
+                    "professional_summary",
+                    "education",
+                    "experience",
+                    "skills",
+                ],
+            },
         },
     )
     assert res.status_code == 201
@@ -86,9 +88,9 @@ async def test_create_and_list_exports(client: AsyncClient) -> None:
                 "accent_color": "modern",
                 "margin_top": "15mm",
                 "font_scale": 1.0,
-                "ats_mode": False
-            }
-        }
+                "ats_mode": False,
+            },
+        },
     )
     assert res.status_code == 201
     data = res.json()
@@ -115,11 +117,7 @@ async def test_caching_and_force_regenerate(client: AsyncClient) -> None:
     # Create first export
     payload = {
         "template_id": "minimal",
-        "settings": {
-            "accent_color": "minimal",
-            "margin_top": "10mm",
-            "ats_mode": True
-        }
+        "settings": {"accent_color": "minimal", "margin_top": "10mm", "ats_mode": True},
     }
     res1 = await client.post(f"/api/v1/resumes/{resume_id}/exports", headers=headers, json=payload)
     assert res1.status_code == 201
@@ -134,7 +132,9 @@ async def test_caching_and_force_regenerate(client: AsyncClient) -> None:
     # Create third export (identical settings, but force=True) - should generate a new record
     payload_force = payload.copy()
     payload_force["force"] = True
-    res3 = await client.post(f"/api/v1/resumes/{resume_id}/exports", headers=headers, json=payload_force)
+    res3 = await client.post(
+        f"/api/v1/resumes/{resume_id}/exports", headers=headers, json=payload_force
+    )
     assert res3.status_code == 201
     id3 = res3.json()["id"]
     assert id1 != id3
@@ -151,9 +151,7 @@ async def test_export_ownership_enforcement(client: AsyncClient) -> None:
     # User A creates resume and export
     resume_id = await _create_resume(client, headers_a)
     res_export = await client.post(
-        f"/api/v1/resumes/{resume_id}/exports",
-        headers=headers_a,
-        json={"template_id": "modern"}
+        f"/api/v1/resumes/{resume_id}/exports", headers=headers_a, json={"template_id": "modern"}
     )
     export_id = res_export.json()["id"]
 
@@ -179,9 +177,7 @@ async def test_download_and_delete_export(client: AsyncClient) -> None:
 
     # Create export
     res = await client.post(
-        f"/api/v1/resumes/{resume_id}/exports",
-        headers=headers,
-        json={"template_id": "modern"}
+        f"/api/v1/resumes/{resume_id}/exports", headers=headers, json={"template_id": "modern"}
     )
     export_id = res.json()["id"]
 

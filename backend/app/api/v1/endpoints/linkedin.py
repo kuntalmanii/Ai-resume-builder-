@@ -1,4 +1,5 @@
 """LinkedIn Optimization API endpoints."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
@@ -10,7 +11,9 @@ from app.services.linkedin_service import linkedin_service
 router = APIRouter(prefix="/linkedin", tags=["LinkedIn"])
 
 
-@router.post("/optimize", response_model=LinkedInOptimizationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/optimize", response_model=LinkedInOptimizationResponse, status_code=status.HTTP_201_CREATED
+)
 async def optimize_profile(
     payload: LinkedInOptimizeRequest, current_user: CurrentUser, db: DBSession
 ) -> LinkedInOptimizationResponse:

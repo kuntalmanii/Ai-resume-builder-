@@ -1,4 +1,5 @@
 """Portfolio Service class."""
+
 import io
 import uuid
 import zipfile
@@ -42,7 +43,7 @@ class PortfolioService:
                 "start_date": entry.start_date,
                 "end_date": entry.end_date,
                 "is_current": entry.is_current,
-                "description": entry.data.get("description", "")
+                "description": entry.data.get("description", ""),
             }
             if entry.entry_type == "project":
                 projects.append(payload)
@@ -58,14 +59,14 @@ class PortfolioService:
             "skills": skills,
             "projects": projects,
             "experience": experience,
-            "education": education
+            "education": education,
         }
 
         default_config = {
             "colors": {"primary": "#1A365D", "bg": "#FFFFFF", "text": "#2D3748"},
             "fonts": {"header": "Inter", "body": "Inter"},
             "social": {"github": "", "linkedin": "", "twitter": ""},
-            "sections": {"about": True, "projects": True, "experience": True, "education": True}
+            "sections": {"about": True, "projects": True, "experience": True, "education": True},
         }
 
         portfolio = await portfolio_repository.create(
@@ -75,8 +76,8 @@ class PortfolioService:
                 "theme": "minimal",
                 "config": default_config,
                 "content": initial_content,
-                "status": "draft"
-            }
+                "status": "draft",
+            },
         )
         return portfolio
 
@@ -88,7 +89,9 @@ class PortfolioService:
             return None
         return await portfolio_repository.update(db, db_obj=portfolio, obj_in=updates)
 
-    async def export_static_zip(self, db: AsyncSession, *, id: uuid.UUID, user_id: uuid.UUID) -> str:
+    async def export_static_zip(
+        self, db: AsyncSession, *, id: uuid.UUID, user_id: uuid.UUID
+    ) -> str:
         portfolio = await portfolio_repository.get(db, id)
         if not portfolio or portfolio.user_id != user_id:
             raise ValueError("Portfolio not found.")
@@ -96,7 +99,6 @@ class PortfolioService:
         # Create static HTML file representing the portfolio website
         content = portfolio.content
         config = portfolio.config
-        theme = portfolio.theme
 
         primary_color = config.get("colors", {}).get("primary", "#3182ce")
         bg_color = config.get("colors", {}).get("bg", "#fff")
@@ -107,9 +109,10 @@ class PortfolioService:
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{content.get('name')} | Portfolio</title>
+    <title>{content.get("name")} | Portfolio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+          rel="stylesheet">
     <style>
         body {{
             font-family: 'Inter', sans-serif;
@@ -173,37 +176,53 @@ class PortfolioService:
 <body>
     <div class="container">
         <header>
-            <h1>{content.get('name')}</h1>
-            <div class="tagline">{content.get('tagline')}</div>
-            <p>{content.get('about')}</p>
+            <h1>{content.get("name")}</h1>
+            <div class="tagline">{content.get("tagline")}</div>
+            <p>{content.get("about")}</p>
         </header>
 
         <section>
             <h2>Skills</h2>
             <div class="skills-list">
-                {"".join(f'<span class="skill-tag">{skill}</span>' for skill in content.get('skills', []))}
+                {
+            "".join(
+                f'<span class="skill-tag">{skill}</span>' for skill in content.get("skills", [])
+            )
+        }
             </div>
         </section>
 
         <section>
             <h2>Experience</h2>
-            {"".join(f'''<div class="item">
+            {
+            "".join(
+                f'''<div class="item">
                 <div class="item-title">{exp.get("title")} at {exp.get("organization")}</div>
-                <div style="font-size:0.875rem; color:#718096;">{exp.get("start_date")} - {exp.get("end_date") or 'Present'}</div>
+                <div style="font-size:0.875rem; color:#718096;">
+                    {exp.get("start_date")} - {exp.get("end_date") or 'Present'}
+                </div>
                 <p>{exp.get("description")}</p>
-            </div>''' for exp in content.get('experience', []))}
+            </div>'''
+                for exp in content.get("experience", [])
+            )
+        }
         </section>
 
         <section>
             <h2>Projects</h2>
-            {"".join(f'''<div class="item">
+            {
+            "".join(
+                f'''<div class="item">
                 <div class="item-title">{proj.get("title")}</div>
                 <p>{proj.get("description")}</p>
-            </div>''' for proj in content.get('projects', []))}
+            </div>'''
+                for proj in content.get("projects", [])
+            )
+        }
         </section>
 
         <footer>
-            <p>&copy; {datetime.now().year} {content.get('name')}. Generated by CareerOS AI.</p>
+            <p>&copy; {datetime.now().year} {content.get("name")}. Generated by CareerOS AI.</p>
         </footer>
     </div>
 </body>
@@ -221,10 +240,9 @@ class PortfolioService:
         file_path = await storage.save(filename, zip_data)
 
         # Update db record
-        await portfolio_repository.update(db, db_obj=portfolio, obj_in={
-            "export_path": file_path,
-            "status": "ready"
-        })
+        await portfolio_repository.update(
+            db, db_obj=portfolio, obj_in={"export_path": file_path, "status": "ready"}
+        )
 
         # Trigger notification
         await notification_service.create_notification(
@@ -234,8 +252,8 @@ class PortfolioService:
                 type="success",
                 title="Portfolio Website Ready",
                 body="Your static portfolio website ZIP is compiled and ready for download.",
-                action_url="/portfolio"
-            )
+                action_url="/portfolio",
+            ),
         )
         return file_path
 

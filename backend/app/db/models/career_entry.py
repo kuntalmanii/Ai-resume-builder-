@@ -1,4 +1,5 @@
 """Career Entry ORM model — stores structured individual career experiences."""
+
 import uuid
 from datetime import datetime
 
@@ -13,9 +14,7 @@ from app.db.types import JSONBType
 class CareerEntry(Base):
     __tablename__ = "career_entries"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -34,7 +33,9 @@ class CareerEntry(Base):
     # Detailed section-specific metadata (grade, GPA, bullets, skills list, etc.)
     data: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
 
-    verification_status: Mapped[str] = mapped_column(String(50), default="unverified", nullable=False)
+    verification_status: Mapped[str] = mapped_column(
+        String(50), default="unverified", nullable=False
+    )
     source_type: Mapped[str] = mapped_column(String(50), default="manual", nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(

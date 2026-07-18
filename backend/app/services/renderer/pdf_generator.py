@@ -1,4 +1,5 @@
 """Playwright-based PDF Generation Service."""
+
 import hashlib
 import json
 import os
@@ -19,7 +20,9 @@ from app.services.storage.local import LocalStorage
 
 class PlaywrightPDFGenerator:
     @staticmethod
-    def calculate_checksum(resume_id: uuid.UUID, resume_version: int, template_id: str, settings: dict) -> str:
+    def calculate_checksum(
+        resume_id: uuid.UUID, resume_version: int, template_id: str, settings: dict
+    ) -> str:
         """Calculate a unique SHA-256 checksum for this export request configuration."""
         settings_str = json.dumps(settings, sort_keys=True)
         raw_key = f"{resume_id}:{resume_version}:{template_id}:{settings_str}"
@@ -36,20 +39,19 @@ class PlaywrightPDFGenerator:
             pdf_bytes = await page.pdf(
                 format="A4",
                 print_background=True,
-                margin={"top": "20mm", "bottom": "20mm", "left": "20mm", "right": "20mm"}
+                margin={"top": "20mm", "bottom": "20mm", "left": "20mm", "right": "20mm"},
             )
             await browser.close()
         return pdf_bytes
 
     @classmethod
     async def generate_pdf(
-
         cls,
         db: AsyncSession,
         resume_id: uuid.UUID,
         template_id: str,
         settings: dict,
-        force: bool = False
+        force: bool = False,
     ) -> ResumeExport:
         """Generate PDF for the given resume and save it, using cached export if available."""
         # 1. Fetch Resume with User relationship (for metadata author name)
@@ -67,7 +69,7 @@ class PlaywrightPDFGenerator:
                 ResumeExport.resume_version == resume.version,
                 ResumeExport.template_id == template_id,
                 ResumeExport.checksum == checksum,
-                ResumeExport.status == "completed"
+                ResumeExport.status == "completed",
             )
             cache_res = await db.execute(cache_stmt)
             cached_export = cache_res.scalar_one_or_none()
@@ -83,7 +85,7 @@ class PlaywrightPDFGenerator:
             checksum=checksum,
             storage_path="",  # Filled upon completion
             page_count=1,
-            status="pending"
+            status="pending",
         )
         db.add(export_snapshot)
         await db.flush()
@@ -106,13 +108,18 @@ class PlaywrightPDFGenerator:
                 await page.wait_for_load_state("networkidle")
 
                 # Dynamic page format and margins configuration
+                footer_html = (
+                    '<div style="font-size: 8px; font-family: Arial, sans-serif; '
+                    'width: 100%; text-align: center; color: #888; padding-bottom: 5px;">'
+                    '<span class="pageNumber"></span> / <span class="totalPages"></span></div>'
+                )
                 pdf_bytes = await page.pdf(
                     format=tree.paper_size.upper(),
                     print_background=True,
                     display_header_footer=settings.get("show_page_numbers", True),
                     header_template='<div style="height: 10px;"></div>',
-                    footer_template='<div style="font-size: 8px; font-family: Arial, sans-serif; width: 100%; text-align: center; color: #888; padding-bottom: 5px;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>',
-                    margin=tree.margins
+                    footer_template=footer_html,
+                    margin=tree.margins,
                 )
                 await browser.close()
 

@@ -97,34 +97,34 @@ EVIDENCE_WEIGHTS = {
 # ─── Content Thresholds ───────────────────────────────────────────────────────
 
 # Bullet analysis
-MAX_BULLET_WORDS = 35          # Bullets longer than this are flagged
-MIN_BULLET_WORDS = 4           # Bullets shorter than this are too vague
-IDEAL_BULLET_WORDS_MAX = 25    # Ideal range upper bound
+MAX_BULLET_WORDS = 35  # Bullets longer than this are flagged
+MIN_BULLET_WORDS = 4  # Bullets shorter than this are too vague
+IDEAL_BULLET_WORDS_MAX = 25  # Ideal range upper bound
 
 # Section analysis
 MIN_ENTRIES_FOR_FOUNDATION = 1  # Min experience or education entries
-EXCESSIVE_SUMMARY_WORDS = 120   # Summary longer than this is a paragraph wall
+EXCESSIVE_SUMMARY_WORDS = 120  # Summary longer than this is a paragraph wall
 
 # Special character density
-MAX_SPECIAL_CHAR_RATIO = 0.05   # >5% special chars in a section is flagged
+MAX_SPECIAL_CHAR_RATIO = 0.05  # >5% special chars in a section is flagged
 
 # Content density
-MIN_TOTAL_WORDS = 150           # Fewer than this = very sparse resume
-MAX_TOTAL_WORDS = 1200          # More than this = too dense
+MIN_TOTAL_WORDS = 150  # Fewer than this = very sparse resume
+MAX_TOTAL_WORDS = 1200  # More than this = too dense
 
 # Action verb coverage
 ACTION_VERB_COVERAGE_THRESHOLD = 0.5  # >50% of bullets should start with action verb
 
 # Weak phrase coverage
-WEAK_PHRASE_THRESHOLD = 0.2    # >20% of bullets with weak phrases = warning
+WEAK_PHRASE_THRESHOLD = 0.2  # >20% of bullets with weak phrases = warning
 
 # Date format
 DATE_FORMAT_PATTERNS = [
-    r"^\d{4}$",                          # 2024
+    r"^\d{4}$",  # 2024
     r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$",  # Jan 2024
     r"^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}$",
-    r"^\d{2}/\d{4}$",                    # 01/2024
-    r"^\d{4}-\d{2}$",                    # 2024-01
+    r"^\d{2}/\d{4}$",  # 01/2024
+    r"^\d{4}-\d{2}$",  # 2024-01
     r"^(Present|Current|present|current|Now|now)$",
 ]
 
@@ -132,29 +132,104 @@ DATE_FORMAT_PATTERNS = [
 
 ACTION_VERBS = {
     # Engineering & technical
-    "built", "developed", "designed", "implemented", "architected", "engineered",
-    "deployed", "automated", "optimized", "refactored", "migrated", "integrated",
-    "debugged", "maintained", "tested", "documented", "configured", "provisioned",
-    "containerized", "modularized", "instrumented", "monitored", "scaled",
+    "built",
+    "developed",
+    "designed",
+    "implemented",
+    "architected",
+    "engineered",
+    "deployed",
+    "automated",
+    "optimized",
+    "refactored",
+    "migrated",
+    "integrated",
+    "debugged",
+    "maintained",
+    "tested",
+    "documented",
+    "configured",
+    "provisioned",
+    "containerized",
+    "modularized",
+    "instrumented",
+    "monitored",
+    "scaled",
     # Leadership & management
-    "led", "managed", "mentored", "coached", "directed", "coordinated",
-    "supervised", "oversaw", "facilitated", "organized", "delegated",
-    "established", "championed", "drove", "spearheaded", "pioneered",
+    "led",
+    "managed",
+    "mentored",
+    "coached",
+    "directed",
+    "coordinated",
+    "supervised",
+    "oversaw",
+    "facilitated",
+    "organized",
+    "delegated",
+    "established",
+    "championed",
+    "drove",
+    "spearheaded",
+    "pioneered",
     # Creation & innovation
-    "created", "launched", "initiated", "introduced", "innovated", "ideated",
-    "prototyped", "founded", "proposed", "conceptualized", "formulated",
+    "created",
+    "launched",
+    "initiated",
+    "introduced",
+    "innovated",
+    "ideated",
+    "prototyped",
+    "founded",
+    "proposed",
+    "conceptualized",
+    "formulated",
     # Analysis & research
-    "analyzed", "researched", "evaluated", "assessed", "investigated",
-    "identified", "diagnosed", "audited", "reviewed", "benchmarked",
+    "analyzed",
+    "researched",
+    "evaluated",
+    "assessed",
+    "investigated",
+    "identified",
+    "diagnosed",
+    "audited",
+    "reviewed",
+    "benchmarked",
     # Improvement & optimization
-    "improved", "enhanced", "increased", "reduced", "decreased", "accelerated",
-    "streamlined", "simplified", "consolidated", "eliminated", "revamped",
+    "improved",
+    "enhanced",
+    "increased",
+    "reduced",
+    "decreased",
+    "accelerated",
+    "streamlined",
+    "simplified",
+    "consolidated",
+    "eliminated",
+    "revamped",
     # Communication & collaboration
-    "collaborated", "partnered", "presented", "negotiated", "advised",
-    "consulted", "trained", "taught", "guided", "communicated",
+    "collaborated",
+    "partnered",
+    "presented",
+    "negotiated",
+    "advised",
+    "consulted",
+    "trained",
+    "taught",
+    "guided",
+    "communicated",
     # Achievement
-    "achieved", "delivered", "completed", "exceeded", "surpassed", "secured",
-    "generated", "produced", "contributed", "supported", "enabled",
+    "achieved",
+    "delivered",
+    "completed",
+    "exceeded",
+    "surpassed",
+    "secured",
+    "generated",
+    "produced",
+    "contributed",
+    "supported",
+    "enabled",
 }
 
 # ─── Weak Phrase Lexicon ─────────────────────────────────────────────────────
@@ -180,14 +255,14 @@ WEAK_PHRASES = [
 # ─── Metric Detection Patterns ────────────────────────────────────────────────
 
 METRIC_PATTERNS = [
-    r"\d+\s*%",                          # percentages: 40%, 15 %
+    r"\d+\s*%",  # percentages: 40%, 15 %
     r"\$\s*\d[\d,\.]*\s*(k|m|b|million|billion|thousand)?",  # currency: $50k, $1.2M
-    r"\d[\d,]*\s*(k|m|b|million|billion|thousand)\b",        # scale: 1M, 500k
-    r"\b\d+x\b",                         # multipliers: 3x, 10x
+    r"\d[\d,]*\s*(k|m|b|million|billion|thousand)\b",  # scale: 1M, 500k
+    r"\b\d+x\b",  # multipliers: 3x, 10x
     r"\b\d+\s*(users?|customers?|clients?|people|employees?|members?|teams?)\b",
     r"\b\d+\s*(requests?|queries|transactions?|calls?)\s*(per|\/)\s*(second|minute|hour|day)",
     r"\b(increased|decreased|reduced|improved|grew|boosted|cut|saved)\s+by\s+\d",
-    r"\bfrom\s+\d.*\bto\s+\d",          # from X to Y improvements
+    r"\bfrom\s+\d.*\bto\s+\d",  # from X to Y improvements
 ]
 
 # ─── Special Characters ───────────────────────────────────────────────────────

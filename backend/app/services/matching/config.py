@@ -9,5 +9,5 @@ CATEGORY_WEIGHTS = {
     "experience": 25,
     "responsibilities": 15,
     "keywords": 10,
-    "education_certification": 10
+    "education_certification": 10,
 }

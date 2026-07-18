@@ -1,4 +1,5 @@
 """Structured resume parsing service containing deterministic and AI-assisted layers."""
+
 import logging
 import re
 
@@ -22,14 +23,14 @@ from app.services.parser.section_detector import segment_text_by_sections
 logger = logging.getLogger(__name__)
 
 # Regular Expressions for Deterministic Extraction
-EMAIL_REGEX = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
-PHONE_REGEX = re.compile(r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,9}')
-URL_REGEX = re.compile(r'https?://[^\s/$.?#].[^\s]*')
+EMAIL_REGEX = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+PHONE_REGEX = re.compile(r"(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,9}")
+URL_REGEX = re.compile(r"https?://[^\s/$.?#].[^\s]*")
 DATE_RANGE_REGEX = re.compile(
-    r'\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-.\s]?\d{4}|\d{4})\s*[-–—to\s]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-.\s]?\d{4}|\d{4}|Present|Current)\b',
-    re.IGNORECASE
+    r"\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-.\s]?\d{4}|\d{4})\s*[-–—to\s]+\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-.\s]?\d{4}|\d{4}|Present|Current)\b",
+    re.IGNORECASE,
 )
-BULLET_PREFIXES = ('•', '-', '*', 'o', '▪', '◦', '■')
+BULLET_PREFIXES = ("•", "-", "*", "o", "▪", "◦", "■")
 
 
 def extract_contact_info(text: str) -> dict[str, str]:
@@ -59,12 +60,15 @@ def extract_contact_info(text: str) -> dict[str, str]:
         "phone": phone,
         "linkedin_url": linkedin,
         "github_url": github,
-        "portfolio_url": portfolio
+        "portfolio_url": portfolio,
     }
 
 
-def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> tuple[ResumeDocument, list[str], dict[str, float]]:
-    """Deterministic parser layer (Layer 1) to build a partial ResumeDocument when AI is unavailable."""
+def parse_deterministic_fallback(
+    text: str, segments: dict[str, list[str]]
+) -> tuple[ResumeDocument, list[str], dict[str, float]]:
+    """Deterministic parser layer (Layer 1) to build a partial ResumeDocument when AI is
+    unavailable."""
     warnings = ["AI parser was unavailable or failed. Downgraded to rule-based fallback parser."]
 
     # 1. Personal Info
@@ -76,7 +80,11 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     for line in personal_lines:
         cleaned = line.strip()
         # Ensure it's not contact info
-        if cleaned and "@" not in cleaned and not any(kw in cleaned.lower() for kw in ["linkedin", "github", "http"]):
+        if (
+            cleaned
+            and "@" not in cleaned
+            and not any(kw in cleaned.lower() for kw in ["linkedin", "github", "http"])
+        ):
             name = cleaned
             break
 
@@ -84,7 +92,13 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     title = ""
     for line in personal_lines:
         cleaned = line.strip()
-        if cleaned and cleaned != name and len(cleaned) < 50 and "@" not in cleaned and not any(kw in cleaned.lower() for kw in ["linkedin", "github", "http"]):
+        if (
+            cleaned
+            and cleaned != name
+            and len(cleaned) < 50
+            and "@" not in cleaned
+            and not any(kw in cleaned.lower() for kw in ["linkedin", "github", "http"])
+        ):
             title = cleaned
             break
 
@@ -93,7 +107,9 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     for line in personal_lines:
         cleaned = line.strip()
         if cleaned and cleaned != name and cleaned != title:
-            if re.search(r'\b[A-Z]{2}\b|\b\d{5}\b', cleaned) or any(k in cleaned.lower() for k in ["city", "street", "road", "state", "country"]):
+            if re.search(r"\b[A-Z]{2}\b|\b\d{5}\b", cleaned) or any(
+                k in cleaned.lower() for k in ["city", "street", "road", "state", "country"]
+            ):
                 location = cleaned
                 break
 
@@ -119,9 +135,26 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     for line in edu_lines:
         line_clean = line.strip()
         # Look for institution keywords
-        inst_match = any(kw in line_clean.lower() for kw in ["university", "college", "school", "institute", "academy"])
+        inst_match = any(
+            kw in line_clean.lower()
+            for kw in ["university", "college", "school", "institute", "academy"]
+        )
         # Look for degree keywords
-        deg_match = any(kw in line_clean.lower() for kw in ["bachelor", "master", "phd", "b.s", "m.s", "b.tech", "m.tech", "degree", "diploma", "associate"])
+        deg_match = any(
+            kw in line_clean.lower()
+            for kw in [
+                "bachelor",
+                "master",
+                "phd",
+                "b.s",
+                "m.s",
+                "b.tech",
+                "m.tech",
+                "degree",
+                "diploma",
+                "associate",
+            ]
+        )
 
         date_range = DATE_RANGE_REGEX.search(line_clean)
 
@@ -141,7 +174,7 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
                 start_date=start_d,
                 end_date=end_d,
                 is_current=(end_d.lower() in ["present", "current"]),
-                order=len(education) + 1
+                order=len(education) + 1,
             )
         elif current_edu:
             # Append description/details
@@ -163,7 +196,22 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
         date_range = DATE_RANGE_REGEX.search(line_clean)
         is_bullet = line_clean.startswith(BULLET_PREFIXES)
 
-        if not is_bullet and (date_range or any(kw in line_clean.lower() for kw in ["engineer", "developer", "manager", "lead", "analyst", "intern", "associate", "consultant"])):
+        if not is_bullet and (
+            date_range
+            or any(
+                kw in line_clean.lower()
+                for kw in [
+                    "engineer",
+                    "developer",
+                    "manager",
+                    "lead",
+                    "analyst",
+                    "intern",
+                    "associate",
+                    "consultant",
+                ]
+            )
+        ):
             if current_job:
                 experience.append(current_job)
 
@@ -172,7 +220,7 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
                 start_d, end_d = date_range.groups()
 
             # Clean job title/company candidate
-            parts = [p.strip() for p in re.split(r'[-–—|@,]', line_clean) if p.strip()]
+            parts = [p.strip() for p in re.split(r"[-–—|@,]", line_clean) if p.strip()]
             pos = parts[0] if parts else "Employee"
             comp = parts[1] if len(parts) > 1 else "Company"
 
@@ -182,15 +230,21 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
                 start_date=start_d,
                 end_date=end_d,
                 is_current=(end_d.lower() in ["present", "current"]),
-                order=len(experience) + 1
+                order=len(experience) + 1,
             )
         elif is_bullet and current_job:
-            bullet_text = re.sub(r'^[\s\*\-•▪◦o■]+', '', line_clean).strip()
+            bullet_text = re.sub(r"^[\s\*\-•▪◦o■]+", "", line_clean).strip()
             current_job.bullets.append(bullet_text)
         elif current_job:
             # Just some additional text, maybe description or tech stack
             if "technologies" in line_clean.lower() or "skills" in line_clean.lower():
-                techs = [t.strip() for t in re.split(r'[,|/]', re.sub(r'(?i)technologies:|skills:', '', line_clean)) if t.strip()]
+                techs = [
+                    t.strip()
+                    for t in re.split(
+                        r"[,|/]", re.sub(r"(?i)technologies:|skills:", "", line_clean)
+                    )
+                    if t.strip()
+                ]
                 current_job.technologies.extend(techs)
 
     if current_job:
@@ -203,9 +257,9 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     for line in skills_lines:
         line_clean = line.strip()
         if line_clean.startswith(BULLET_PREFIXES):
-            line_clean = re.sub(r'^[\s\*\-•▪◦o■]+', '', line_clean).strip()
+            line_clean = re.sub(r"^[\s\*\-•▪◦o■]+", "", line_clean).strip()
         # Split by comma or semicolon
-        items = [s.strip() for s in re.split(r'[,;]', line_clean) if s.strip()]
+        items = [s.strip() for s in re.split(r"[,;]", line_clean) if s.strip()]
         all_skills.extend(items)
 
     if all_skills:
@@ -228,13 +282,13 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
             if date_range:
                 start_d, end_d = date_range.groups()
             current_proj = ProjectEntry(
-                name=re.sub(r'https?://[^\s]+', '', line_clean).strip() or "Project",
+                name=re.sub(r"https?://[^\s]+", "", line_clean).strip() or "Project",
                 start_date=start_d,
                 end_date=end_d,
-                order=len(projects) + 1
+                order=len(projects) + 1,
             )
         elif is_bullet and current_proj:
-            bullet_text = re.sub(r'^[\s\*\-•▪◦o■]+', '', line_clean).strip()
+            bullet_text = re.sub(r"^[\s\*\-•▪◦o■]+", "", line_clean).strip()
             current_proj.bullets.append(bullet_text)
 
     if current_proj:
@@ -245,7 +299,9 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     for line in segments.get("certifications", []):
         line_clean = line.strip()
         if line_clean:
-            certifications.append(CertificationEntry(name=line_clean, order=len(certifications) + 1))
+            certifications.append(
+                CertificationEntry(name=line_clean, order=len(certifications) + 1)
+            )
 
     achievements = []
     for line in segments.get("achievements", []):
@@ -257,11 +313,11 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
     for line in segments.get("positions_of_responsibility", []):
         line_clean = line.strip()
         if line_clean:
-            positions.append(PositionOfResponsibilityEntry(
-                organization="Organization",
-                position=line_clean,
-                order=len(positions) + 1
-            ))
+            positions.append(
+                PositionOfResponsibilityEntry(
+                    organization="Organization", position=line_clean, order=len(positions) + 1
+                )
+            )
 
     languages = []
     for line in segments.get("languages", []):
@@ -299,7 +355,7 @@ def parse_deterministic_fallback(text: str, segments: dict[str, list[str]]) -> t
             "positions_of_responsibility",
             "languages",
             "interests",
-        ]
+        ],
     )
 
     confidence = {
@@ -329,27 +385,37 @@ async def parse_resume_text(text: str) -> tuple[ResumeDocument, list[str], dict[
 
     # Check if AI provider settings are available
     settings = get_settings()
-    has_ai = settings.AI_PROVIDER and settings.AI_API_KEY and settings.AI_API_KEY != "your-ai-api-key-here"
+    has_ai = (
+        settings.AI_PROVIDER
+        and settings.AI_API_KEY
+        and settings.AI_API_KEY != "your-ai-api-key-here"
+    )
 
     if has_ai:
         try:
             provider = get_ai_provider()
             prompt = (
-                "You are a professional resume parser. Segment and map the provided resume text into a structured JSON "
+                "You are a professional resume parser. Segment and " \
+                    "map the provided resume text into a structured JSON "
                 "schema matching the ResumeDocument structure.\n"
                 "Rules:\n"
-                "1. NEVER fabricate or hallucinate any facts. Only extract what is present in the text.\n"
+                "1. NEVER fabricate or hallucinate any facts. " \
+                    "Only extract what is present in the text.\n"
                 "2. Do not enhance phrasing or add achievements.\n"
-                "3. If any field like start_date, degree, company is missing, set it to empty string or null. Do not guess.\n"
-                "4. Make sure to populate the `section_order` list with keys that represent sections present in the resume.\n\n"
+                "3. If any field like start_date, degree, company is " \
+                    "missing, set it to empty string or null. Do not guess.\n"
+                "4. Make sure to populate the `section_order` list with " \
+                    "keys that represent sections present in the resume.\n\n"
                 f"Resume text to parse:\n{text}"
             )
 
             result: ResumeDocument = await provider.complete(
                 prompt=prompt,
                 system_prompt=(
-                    "You are a precise, deterministic resume data parser. Extract structured entities (education, "
-                    "experience, projects, skills) and map them accurately. Never invent certifications, credentials, "
+                    "You are a precise, deterministic resume data " \
+                        "parser. Extract structured entities (education, "
+                    "experience, projects, skills) and map them " \
+                        "accurately. Never invent certifications, credentials, "
                     "or bullet points. Be faithful to the source text."
                 ),
                 response_schema=ResumeDocument,
@@ -369,7 +435,8 @@ async def parse_resume_text(text: str) -> tuple[ResumeDocument, list[str], dict[
             if not result.personal_information.portfolio_url and contact["portfolio_url"]:
                 result.personal_information.portfolio_url = contact["portfolio_url"]
 
-            # Calculate rule-based confidence for AI parse (90% basic confidence, 95% if contact details found)
+            # Calculate rule-based confidence for AI parse (90% basic confidence, 95% if
+            # contact details found)
             confidence = {}
             for field in ResumeDocument.model_fields.keys():
                 val = getattr(result, field)

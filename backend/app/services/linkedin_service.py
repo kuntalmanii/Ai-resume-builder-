@@ -1,4 +1,5 @@
 """LinkedIn Optimization Service class."""
+
 import json
 import uuid
 
@@ -27,11 +28,14 @@ class LinkedInService:
         # 2. Build AI prompts for optimization
         system_prompt = (
             "You are an expert LinkedIn profile optimizer and SEO specialist.\n"
-            "Your goal is to maximize search visibility for recruiters, keyword density, and overall professional layout.\n"
+            "Your goal is to maximize search visibility for recruiters, " \
+                "keyword density, and overall professional layout.\n"
             "CRITICAL INSTRUCTIONS:\n"
             "1. NEVER invent projects, experiences, titles, or skills.\n"
-            "2. Ensure everything recommended is strictly aligned and grounded in the provided resume data.\n"
-            "3. Return the output as a valid JSON object matching the requested schema. No markdown formatting outside of JSON code block."
+            "2. Ensure everything recommended is strictly " \
+                "aligned and grounded in the provided resume data.\n"
+            "3. Return the output as a valid JSON object matching the requested " \
+                "schema. No markdown formatting outside of JSON code block."
         )
 
         original_profile = request.profile_data.model_dump()
@@ -51,9 +55,7 @@ class LinkedInService:
 
         ai_provider = get_ai_provider()
         raw_response = await ai_provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            temperature=0.3
+            prompt=user_prompt, system_prompt=system_prompt, temperature=0.3
         )
 
         # Parse JSON block
@@ -72,7 +74,7 @@ class LinkedInService:
                 "about": original_profile.get("about") or "Professional profile details.",
                 "experience_updates": [],
                 "optimization_score": 70,
-                "recommendations": ["Improve profile photo", "Add skills list to about section"]
+                "recommendations": ["Improve profile photo", "Add skills list to about section"],
             }
 
         # Save to DB
@@ -85,12 +87,12 @@ class LinkedInService:
                 "optimized_profile": {
                     "headline": parsed.get("headline"),
                     "about": parsed.get("about"),
-                    "experience_updates": parsed.get("experience_updates")
+                    "experience_updates": parsed.get("experience_updates"),
                 },
                 "optimization_score": parsed.get("optimization_score", 70),
                 "recommendations": {"items": parsed.get("recommendations", [])},
-                "status": "complete"
-            }
+                "status": "complete",
+            },
         )
 
         # Trigger notification
@@ -100,16 +102,21 @@ class LinkedInService:
                 user_id=user_id,
                 type="success",
                 title="LinkedIn Profile Analyzed",
-                body=f"Your LinkedIn profile optimization is complete. Score: {opt_obj.optimization_score}/100.",
-                action_url="/linkedin"
-            )
+                body=f"Your LinkedIn profile optimization is complete. " \
+                    f"Score: {opt_obj.optimization_score}/100.",
+                action_url="/linkedin",
+            ),
         )
         return opt_obj
 
-    async def get_by_user_id(self, db: AsyncSession, user_id: uuid.UUID) -> list[LinkedInOptimization]:
+    async def get_by_user_id(
+        self, db: AsyncSession, user_id: uuid.UUID
+    ) -> list[LinkedInOptimization]:
         return await linkedin_optimization_repository.get_by_user_id(db, user_id)
 
-    async def get_by_id(self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID) -> LinkedInOptimization | None:
+    async def get_by_id(
+        self, db: AsyncSession, id: uuid.UUID, user_id: uuid.UUID
+    ) -> LinkedInOptimization | None:
         opt = await linkedin_optimization_repository.get(db, id)
         if opt and opt.user_id == user_id:
             return opt

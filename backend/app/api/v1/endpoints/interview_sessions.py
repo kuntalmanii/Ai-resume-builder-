@@ -1,4 +1,5 @@
 """Interview Practice Sessions API endpoints."""
+
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
@@ -15,7 +16,9 @@ from app.services.interview_service import interview_service
 router = APIRouter(prefix="/interview-sessions", tags=["Interview Prep"])
 
 
-@router.post("/generate", response_model=InterviewSessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/generate", response_model=InterviewSessionResponse, status_code=status.HTTP_201_CREATED
+)
 async def generate_practice_session(
     payload: InterviewSessionGenerateRequest, current_user: CurrentUser, db: DBSession
 ) -> InterviewSessionResponse:
@@ -26,9 +29,7 @@ async def generate_practice_session(
 
 
 @router.get("", response_model=list[InterviewSessionResponse])
-async def list_sessions(
-    current_user: CurrentUser, db: DBSession
-) -> list[InterviewSessionResponse]:
+async def list_sessions(current_user: CurrentUser, db: DBSession) -> list[InterviewSessionResponse]:
     """List historical practice sessions."""
     sessions = await interview_service.get_by_user_id(db, user_id=current_user.id)
     return [InterviewSessionResponse.model_validate(s) for s in sessions]
@@ -50,6 +51,8 @@ async def submit_practice_answer(
     id: uuid.UUID, payload: PracticeAnswerSubmit, current_user: CurrentUser, db: DBSession
 ) -> PracticeFeedbackResponse:
     """Submit practice answer for coaching evaluation feedback and scoring."""
-    feedback = await interview_service.submit_answer(db, user_id=current_user.id, session_id=id, submission=payload)
+    feedback = await interview_service.submit_answer(
+        db, user_id=current_user.id, session_id=id, submission=payload
+    )
     await db.commit()
     return feedback

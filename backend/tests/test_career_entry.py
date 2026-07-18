@@ -1,4 +1,5 @@
 """Integration tests for Career Entries CRUD, confirmation, and immutability rules."""
+
 import uuid
 
 import pytest

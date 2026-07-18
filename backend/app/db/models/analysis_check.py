@@ -1,4 +1,5 @@
 """Analysis Check ORM model."""
+
 import uuid
 
 from sqlalchemy import ForeignKey, Integer, String, Text
@@ -12,11 +13,12 @@ from app.db.types import JSONBType
 class AnalysisCheck(Base):
     __tablename__ = "analysis_checks"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     analysis_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("resume_analyses.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("resume_analyses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     check_code: Mapped[str] = mapped_column(String(50), nullable=False)

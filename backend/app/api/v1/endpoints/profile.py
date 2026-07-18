@@ -1,4 +1,5 @@
 """Profile router: CRUD operations for Career Profile metadata and structured entries."""
+
 import uuid
 from typing import Annotated
 
@@ -61,8 +62,11 @@ async def list_career_entries(
     db: DBSession,
     entry_type: Annotated[str | None, Query(description="Filter by entry type")] = None,
 ) -> list[CareerEntryResponse]:
-    """Retrieve all structured career entries for the authenticated user, optionally filtered by type."""
-    entries = await career_entry_service.get_career_entries(db, current_user.id, entry_type=entry_type)
+    """Retrieve all structured career entries for the authenticated user, optionally
+    filtered by type."""
+    entries = await career_entry_service.get_career_entries(
+        db, current_user.id, entry_type=entry_type
+    )
     return [CareerEntryResponse.model_validate(e) for e in entries]
 
 
@@ -99,6 +103,7 @@ async def delete_career_entry(
 async def confirm_career_entry(
     entry_id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> CareerEntryResponse:
-    """Confirm a manually entered career entry, promoting verification status from unverified to user_confirmed."""
+    """Confirm a manually entered career entry, promoting verification status from
+    unverified to user_confirmed."""
     entry = await career_entry_service.confirm_career_entry(db, entry_id, current_user.id)
     return CareerEntryResponse.model_validate(entry)

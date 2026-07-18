@@ -1,4 +1,5 @@
 """Job Matches router: run comparison, fetch history, check stale state, and view methodology."""
+
 import uuid
 from typing import Annotated
 
@@ -20,6 +21,7 @@ from app.services.matching.config import CATEGORY_WEIGHTS
 
 router = APIRouter(tags=["Job Matches"])
 
+
 def check_stale(result: JobMatchResult, resume: Resume, jd: JobDescription) -> bool:
     """Determine dynamically if a match result is stale."""
     if result.resume_version != resume.version:
@@ -28,11 +30,17 @@ def check_stale(result: JobMatchResult, resume: Resume, jd: JobDescription) -> b
         return True
     return False
 
+
 def check_ai_fallback(result: JobMatchResult) -> bool:
     """Determine dynamically if AI fallback occurred or was active."""
     from app.core.config import get_settings
+
     settings = get_settings()
-    if not (settings.AI_PROVIDER and settings.AI_API_KEY and settings.AI_API_KEY != "your-ai-api-key-here"):
+    if not (
+        settings.AI_PROVIDER
+        and settings.AI_API_KEY
+        and settings.AI_API_KEY != "your-ai-api-key-here"
+    ):
         return True
 
     # Check matched/missing requirements for deterministic extraction method
@@ -46,17 +54,18 @@ def check_ai_fallback(result: JobMatchResult) -> bool:
             return True
     return False
 
+
 @router.post(
     "/resumes/{resume_id}/matches",
     response_model=JobMatchResultResponse,
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
 )
 async def run_comparison(
     resume_id: uuid.UUID,
     payload: JobMatchRunRequest,
     current_user: CurrentUser,
     db: DBSession,
-    force: Annotated[bool, Query(description="Force recalculation")] = False
+    force: Annotated[bool, Query(description="Force recalculation")] = False,
 ) -> JobMatchResultResponse:
     """Run comparison between a resume and job description, returning full match details."""
     # Enforce ownership in service layer (engine)
@@ -65,7 +74,7 @@ async def run_comparison(
         resume_id=resume_id,
         job_description_id=payload.job_description_id,
         user_id=current_user.id,
-        force=force
+        force=force,
     )
 
     # Fetch current objects to check staleness
@@ -80,15 +89,13 @@ async def run_comparison(
     resp.ai_fallback_active = fallback
     return resp
 
-@router.get(
-    "/resumes/{resume_id}/matches/latest",
-    response_model=JobMatchResultResponse
-)
+
+@router.get("/resumes/{resume_id}/matches/latest", response_model=JobMatchResultResponse)
 async def get_latest_match(
     resume_id: uuid.UUID,
     current_user: CurrentUser,
     db: DBSession,
-    job_description_id: uuid.UUID | None = None
+    job_description_id: uuid.UUID | None = None,
 ) -> JobMatchResultResponse:
     """Retrieve the latest matching result for a resume, optionally filtered by Job Description."""
     # Verify resume ownership
@@ -119,16 +126,14 @@ async def get_latest_match(
     resp.ai_fallback_active = fallback
     return resp
 
-@router.get(
-    "/resumes/{resume_id}/matches",
-    response_model=list[JobMatchResultResponse]
-)
+
+@router.get("/resumes/{resume_id}/matches", response_model=list[JobMatchResultResponse])
 async def get_match_history(
     resume_id: uuid.UUID,
     current_user: CurrentUser,
     db: DBSession,
     page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Query(ge=1, le=100)] = 10
+    page_size: Annotated[int, Query(ge=1, le=100)] = 10,
 ) -> list[JobMatchResultResponse]:
     """Retrieve match history for a specific resume (paginated)."""
     resume = await db.get(Resume, resume_id)
@@ -161,15 +166,10 @@ async def get_match_history(
 
     return response_list
 
-@router.get(
-    "/resumes/{resume_id}/matches/{match_id}",
-    response_model=JobMatchResultResponse
-)
+
+@router.get("/resumes/{resume_id}/matches/{match_id}", response_model=JobMatchResultResponse)
 async def get_match_by_id(
-    resume_id: uuid.UUID,
-    match_id: uuid.UUID,
-    current_user: CurrentUser,
-    db: DBSession
+    resume_id: uuid.UUID, match_id: uuid.UUID, current_user: CurrentUser, db: DBSession
 ) -> JobMatchResultResponse:
     """Retrieve details of a specific match result, enforcing ownership checks."""
     resume = await db.get(Resume, resume_id)
@@ -191,22 +191,24 @@ async def get_match_by_id(
     resp.ai_fallback_active = fallback
     return resp
 
-@router.get(
-    "/matching/methodology",
-    response_model=JobMatchMethodologyResponse
-)
+
+@router.get("/matching/methodology", response_model=JobMatchMethodologyResponse)
 async def get_matching_methodology() -> JobMatchMethodologyResponse:
     """Return public details about how matching and scoring categories are weighted."""
     categories_list = []
     for name, weight in CATEGORY_WEIGHTS.items():
-        categories_list.append({
-            "category": name,
-            "max_points": weight,
-            "description": f"Evaluates {name.replace('_', ' ')} matching with target Job Description."
-        })
+        categories_list.append(
+            {
+                "category": name,
+                "max_points": weight,
+                "description": f"Evaluates {name.replace('_', ' ')} " \
+                    f"matching with target Job Description.",
+            }
+        )
 
     return JobMatchMethodologyResponse(
         matching_version=MATCHING_VERSION,
         categories=categories_list,
-        scoring_description="Scores are computed deterministically. Active categories are normalized to 100 max points."
+        scoring_description="Scores are computed deterministically. Active " \
+            "categories are normalized to 100 max points.",
     )

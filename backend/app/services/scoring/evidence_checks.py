@@ -9,6 +9,7 @@ or education. It surfaces awareness and consistency signals only.
 Numeric claims are flagged as "user-provided" — never "fabricated".
 Career Profile consistency adds positive confidence, not punishment.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -46,7 +47,9 @@ def check_internal_consistency(resume: Any) -> CheckResult:
     # Check for duplicate company+position entries
     exp_signatures: list[str] = []
     for exp in _get_list(resume, "experience"):
-        sig = f"{(_get(exp, 'company') or '').lower().strip()}|{(_get(exp, 'position') or '').lower().strip()}"
+        comp_sig = (_get(exp, "company") or "").lower().strip()
+        pos_sig = (_get(exp, "position") or "").lower().strip()
+        sig = f"{comp_sig}|{pos_sig}"
         if sig in exp_signatures and sig != "|":
             company = _get(exp, "company") or "?"
             issues.append(f"Duplicate experience entry: '{company}'")
@@ -54,23 +57,35 @@ def check_internal_consistency(resume: Any) -> CheckResult:
 
     if not issues:
         return CheckResult(
-            code, CATEGORY, "No Internal Inconsistencies",
+            code,
+            CATEGORY,
+            "No Internal Inconsistencies",
             "Resume entries are internally consistent with no conflicting fields.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     elif len(issues) == 1:
         return CheckResult(
-            code, CATEGORY, "Minor Inconsistency Detected",
+            code,
+            CATEGORY,
+            "Minor Inconsistency Detected",
             f"One inconsistency found: {issues[0]}",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
             recommendation="Review and correct the inconsistency in your experience dates.",
             evidence_data={"issues": issues},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Multiple Inconsistencies Detected",
+            code,
+            CATEGORY,
+            "Multiple Inconsistencies Detected",
             f"{len(issues)} internal inconsistencies found.",
-            "failed", possible, 0,
+            "failed",
+            possible,
+            0,
             recommendation="Review experience entries for date conflicts and duplicate roles.",
             evidence_data={"issues": issues},
         )
@@ -95,7 +110,9 @@ def check_timeline_consistency(resume: Any) -> CheckResult:
 
         if sd and ed and not is_current:
             if ed < sd:
-                invalid_ranges.append(f"'{company}': end date ({ed_str}) is before start date ({sd_str})")
+                invalid_ranges.append(
+                    f"'{company}': end date ({ed_str}) is before start date ({sd_str})"
+                )
             elif sd > today:
                 invalid_ranges.append(f"'{company}': start date ({sd_str}) is in the future")
 
@@ -113,23 +130,35 @@ def check_timeline_consistency(resume: Any) -> CheckResult:
 
     if not invalid_ranges:
         return CheckResult(
-            code, CATEGORY, "Timeline Consistency — Valid",
+            code,
+            CATEGORY,
+            "Timeline Consistency — Valid",
             "All date ranges are chronologically valid.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
         )
     elif len(invalid_ranges) == 1:
         return CheckResult(
-            code, CATEGORY, "One Invalid Date Range",
+            code,
+            CATEGORY,
+            "One Invalid Date Range",
             f"Invalid range detected: {invalid_ranges[0]}",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
             recommendation="Correct the date range to ensure end date is after start date.",
             evidence_data={"invalid_ranges": invalid_ranges},
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Multiple Invalid Date Ranges",
+            code,
+            CATEGORY,
+            "Multiple Invalid Date Ranges",
             f"{len(invalid_ranges)} date ranges are chronologically impossible.",
-            "failed", possible, 0,
+            "failed",
+            possible,
+            0,
             recommendation="Review all dates — ensure each end date comes after its start date.",
             evidence_data={"invalid_ranges": invalid_ranges},
         )
@@ -148,10 +177,16 @@ def check_numeric_awareness(resume: Any) -> CheckResult:
     bullets = collect_all_bullets(resume)
     if not bullets:
         return CheckResult(
-            code, CATEGORY, "No Metrics to Evaluate",
+            code,
+            CATEGORY,
+            "No Metrics to Evaluate",
             "No bullet points with numeric claims to evaluate.",
-            "passed", possible, possible,
-            evidence_data={"note": "Add metrics where truthful to strengthen evidence credibility."},
+            "passed",
+            possible,
+            possible,
+            evidence_data={
+                "note": "Add metrics where truthful to strengthen evidence credibility."
+            },
         )
 
     bullets_with_metrics = [b for b in bullets if has_any_metric(b)]
@@ -159,22 +194,32 @@ def check_numeric_awareness(resume: Any) -> CheckResult:
 
     if ratio >= 0.3:
         return CheckResult(
-            code, CATEGORY, "Metrics Present — User-Provided",
+            code,
+            CATEGORY,
+            "Metrics Present — User-Provided",
             f"{len(bullets_with_metrics)}/{len(bullets)} bullets include numeric claims.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             recommendation=None,
             evidence_data={
                 "bullets_with_metrics": len(bullets_with_metrics),
-                "note": "These metrics are user-provided claims and have not been externally verified. "
-                        "You can connect Career Profile entries to add supporting context.",
+                "note": "These metrics are user-provided claims " \
+                    "and have not been externally verified. "
+                "You can connect Career Profile entries to add supporting context.",
             },
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Few Quantifiable Claims",
+            code,
+            CATEGORY,
+            "Few Quantifiable Claims",
             f"Only {len(bullets_with_metrics)}/{len(bullets)} bullets include numeric outcomes.",
-            "warning", possible, possible - 1,
-            recommendation="Where truthful, add measurable outcomes. Metrics strengthen evidence credibility.",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Where truthful, add measurable outcomes. " \
+                "Metrics strengthen evidence credibility.",
             evidence_data={
                 "bullets_with_metrics": len(bullets_with_metrics),
                 "note": "Only add metrics that accurately reflect your actual work.",
@@ -193,11 +238,18 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
 
     if not career_profile:
         return CheckResult(
-            code, CATEGORY, "Career Profile Not Linked",
+            code,
+            CATEGORY,
+            "Career Profile Not Linked",
             "No Smart Career Profile found to cross-reference against resume entries.",
-            "warning", possible, possible - 1,
-            recommendation="Complete your Smart Career Profile to enable cross-reference verification.",
-            evidence_data={"note": "Profile consistency adds confidence signals — it is not required."},
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Complete your Smart Career Profile to " \
+                "enable cross-reference verification.",
+            evidence_data={
+                "note": "Profile consistency adds confidence signals — it is not required."
+            },
         )
 
     resume_companies = set()
@@ -216,9 +268,13 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
 
     if not resume_companies:
         return CheckResult(
-            code, CATEGORY, "No Experience to Cross-Reference",
+            code,
+            CATEGORY,
+            "No Experience to Cross-Reference",
             "Resume has no experience entries to compare with Career Profile.",
-            "warning", possible, possible - 1,
+            "warning",
+            possible,
+            possible - 1,
         )
 
     matched = resume_companies & profile_companies
@@ -226,9 +282,13 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
 
     if match_ratio >= 0.8:
         return CheckResult(
-            code, CATEGORY, "Strong Career Profile Alignment",
+            code,
+            CATEGORY,
+            "Strong Career Profile Alignment",
             f"{len(matched)}/{len(resume_companies)} companies match Career Profile entries.",
-            "passed", possible, possible,
+            "passed",
+            possible,
+            possible,
             evidence_data={
                 "matched_companies": list(matched),
                 "match_ratio": round(match_ratio, 2),
@@ -237,10 +297,15 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
     elif match_ratio >= 0.4:
         unmatched = resume_companies - profile_companies
         return CheckResult(
-            code, CATEGORY, "Partial Career Profile Alignment",
+            code,
+            CATEGORY,
+            "Partial Career Profile Alignment",
             f"{len(matched)}/{len(resume_companies)} resume companies found in Career Profile.",
-            "warning", possible, possible - 1,
-            recommendation="Add the remaining experience entries to your Smart Career Profile for stronger verification.",
+            "warning",
+            possible,
+            possible - 1,
+            recommendation="Add the remaining experience entries to your " \
+                "Smart Career Profile for stronger verification.",
             evidence_data={
                 "matched_companies": list(matched),
                 "unmatched_companies": list(unmatched)[:3],
@@ -248,10 +313,15 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
         )
     else:
         return CheckResult(
-            code, CATEGORY, "Low Career Profile Alignment",
+            code,
+            CATEGORY,
+            "Low Career Profile Alignment",
             f"Only {len(matched)}/{len(resume_companies)} resume companies match Career Profile.",
-            "warning", possible, max(0, possible - 1),
-            recommendation="Update your Smart Career Profile to include your work history for better verification.",
+            "warning",
+            possible,
+            max(0, possible - 1),
+            recommendation="Update your Smart Career Profile to include " \
+                "your work history for better verification.",
             evidence_data={"match_ratio": round(match_ratio, 2)},
         )
 
@@ -267,15 +337,21 @@ def check_verification_transparency(resume: Any) -> CheckResult:
     bullets_with_metrics = [b for b in bullets if has_any_metric(b)]
 
     return CheckResult(
-        code, CATEGORY, "Verification Transparency",
+        code,
+        CATEGORY,
+        "Verification Transparency",
         "Resume content is analyzed for internal consistency. "
-        "Numeric claims are treated as user-provided. No external employment verification is performed.",
-        "passed", possible, possible,
+        "Numeric claims are treated as user-provided. No " \
+            "external employment verification is performed.",
+        "passed",
+        possible,
+        possible,
         evidence_data={
             "total_bullets": len(bullets),
             "bullets_with_numeric_claims": len(bullets_with_metrics),
             "verification_level": "self_reported",
-            "note": "Connect your Smart Career Profile to add source-backed confidence to your entries.",
+            "note": "Connect your Smart Career Profile to add " \
+                "source-backed confidence to your entries.",
         },
     )
 

@@ -12,6 +12,7 @@ Usage (enqueue from endpoint):
 Workers are launched separately:
     rq worker --with-scheduler careeros-high careeros-default careeros-low
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -106,6 +107,7 @@ class RedisQueue(BaseQueue):
         try:
             # Resolve the task function from the registered task registry
             from app.services.queue import tasks as task_registry  # type: ignore[import]
+
             fn = getattr(task_registry, task_name.replace(".", "_"), None)
             if fn is None:
                 logger.error("RedisQueue: unknown task '%s'", task_name)
@@ -113,7 +115,12 @@ class RedisQueue(BaseQueue):
 
             rq_queue = RQQueue(f"careeros-{queue}", connection=self._redis)
             rq_queue.enqueue(fn, job_id=task_id, job_timeout=self._timeout, **kwargs)
-            logger.debug("RedisQueue: enqueued '%s' as job_id=%s on queue 'careeros-%s'", task_name, task_id, queue)
+            logger.debug(
+                "RedisQueue: enqueued '%s' as job_id=%s on queue 'careeros-%s'",
+                task_name,
+                task_id,
+                queue,
+            )
         except Exception:
             logger.exception("RedisQueue.enqueue failed for task '%s'", task_name)
 
@@ -140,11 +147,13 @@ async def get_queue() -> BaseQueue:
         return _queue_instance
 
     from app.core.config import get_settings
+
     settings = get_settings()
 
     if settings.REDIS_ENABLED:
         try:
             import redis.asyncio as aioredis  # type: ignore[import]
+
             client = aioredis.from_url(
                 settings.REDIS_URL,
                 socket_connect_timeout=2,
@@ -154,9 +163,7 @@ async def get_queue() -> BaseQueue:
             _queue_instance = RedisQueue(client, default_timeout=settings.TASK_TIMEOUT)
             logger.info("Queue: RQ/Redis connected at %s", settings.REDIS_URL)
         except Exception as exc:
-            logger.warning(
-                "Queue: Redis unavailable (%s) — falling back to InMemoryQueue.", exc
-            )
+            logger.warning("Queue: Redis unavailable (%s) — falling back to InMemoryQueue.", exc)
             _queue_instance = InMemoryQueue()
     else:
         logger.info("Queue: REDIS_ENABLED=false — using InMemoryQueue.")

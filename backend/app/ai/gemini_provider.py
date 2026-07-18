@@ -1,4 +1,5 @@
 """Google Gemini AI provider implementation."""
+
 import json
 from typing import TypeVar
 
