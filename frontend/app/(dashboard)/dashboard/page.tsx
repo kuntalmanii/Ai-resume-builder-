@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AtsScoreRing } from "@/components/ui/ats-score";
-import { resumesAPI } from "@/lib/api";
+import { resumesAPI, profileAPI } from "@/lib/api";
 import type { Resume } from "@/types";
 import { toast } from "sonner";
 
@@ -54,7 +54,7 @@ const quickActions = [
     id: "analyze-resume",
     label: "Analyze Resume",
     description: "Get ATS score and AI suggestions",
-    href: "/upload",
+    href: "/resumes",
     icon: BarChart3,
     gradient: "bg-card border-border hover:border-border-strong text-foreground hover:bg-muted/40",
     primary: false,
@@ -100,13 +100,38 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState("Good morning");
   const [tipIndex, setTipIndex] = useState(0);
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [profileCompleteness, setProfileCompleteness] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const data = await resumesAPI.list();
-      setResumes(data);
+      const [resumesData, profileData] = await Promise.all([
+        resumesAPI.list(),
+        profileAPI.get().catch(() => null)
+      ]);
+      setResumes(resumesData);
+
+      if (profileData) {
+        let score = 0;
+        if (profileData.location) score += 10;
+        if (profileData.professional_title) score += 10;
+        if (profileData.professional_summary) score += 15;
+        if (profileData.education && profileData.education.length > 0) score += 15;
+        if (profileData.experience && profileData.experience.length > 0) score += 20;
+        
+        const hasSkills = profileData.skills && (
+          (profileData.skills.technical && profileData.skills.technical.length > 0) ||
+          (profileData.skills.soft && profileData.skills.soft.length > 0) ||
+          (profileData.skills.tools && profileData.skills.tools.length > 0) ||
+          (profileData.skills.languages_prog && profileData.skills.languages_prog.length > 0)
+        );
+        if (hasSkills) score += 20;
+        if (profileData.phone || profileData.linkedin_url || profileData.github_url) score += 10;
+        setProfileCompleteness(score);
+      } else {
+        setProfileCompleteness(30);
+      }
     } catch {
       toast.error("Failed to load dashboard data.");
     } finally {
@@ -165,9 +190,9 @@ export default function DashboardPage() {
         <div className="bg-card border border-border rounded-lg p-3 w-full md:w-64 space-y-1.5 shadow-sm">
           <div className="flex justify-between items-center text-[10px] font-bold">
             <span className="text-muted-foreground uppercase">Profile Completeness</span>
-            <span className="text-primary">70%</span>
+            <span className="text-primary">{profileCompleteness}%</span>
           </div>
-          <Progress value={70} className="h-1.5 bg-muted" />
+          <Progress value={profileCompleteness} className="h-1.5 bg-muted" />
         </div>
       </motion.div>
 

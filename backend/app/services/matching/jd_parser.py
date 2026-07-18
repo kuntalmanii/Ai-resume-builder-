@@ -188,7 +188,9 @@ async def parse_jd_text(text: str) -> JobDescriptionRequirements:
 
             return result
         except Exception:
-            logger.exception("AI Job Description parsing failed. Falling back to deterministic rules.")
+            logger.exception(
+                "AI Job Description parsing failed. Falling back to deterministic rules."
+            )
 
     # Fallback to local rule-based extractor
     return parse_jd_deterministic(text)

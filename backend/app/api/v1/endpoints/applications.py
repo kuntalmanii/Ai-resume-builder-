@@ -37,7 +37,9 @@ async def list_applications(
     search: str = None,
 ) -> list[ApplicationResponse]:
     """List job applications for current user."""
-    apps = await application_service.get_by_user_id(db, user_id=current_user.id, status=status, search=search)
+    apps = await application_service.get_by_user_id(
+        db, user_id=current_user.id, status=status, search=search
+    )
     return [ApplicationResponse.model_validate(a) for a in apps]
 
 
@@ -60,7 +62,7 @@ async def update_application(
     app_obj = await application_service.get_by_id(db, id)
     if not app_obj or app_obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Application not found.")
-    updated = await application_service.update(db, db_obj=app_obj, obj_in=payload)
+    await application_service.update(db, db_obj=app_obj, obj_in=payload)
     await db.commit()
     # Reload with relationships
     full_app = await application_service.get_by_id(db, id)
@@ -76,7 +78,9 @@ async def update_application_status(
     if not app_obj or app_obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Application not found.")
 
-    updated = await application_service.update(db, db_obj=app_obj, obj_in=ApplicationUpdate(status=payload.status))
+    await application_service.update(
+        db, db_obj=app_obj, obj_in=ApplicationUpdate(status=payload.status)
+    )
     await db.commit()
     full_app = await application_service.get_by_id(db, id)
     return ApplicationResponse.model_validate(full_app)
@@ -96,7 +100,11 @@ async def delete_application(
 
 # ─── Interview Endpoints ──────────────────────────────────────────────────────
 
-@router.post("/{id}/interviews", response_model=InterviewResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{id}/interviews",
+    response_model=InterviewResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def schedule_interview(
     id: uuid.UUID, payload: InterviewCreate, current_user: CurrentUser, db: DBSession
 ) -> InterviewResponse:
@@ -105,7 +113,9 @@ async def schedule_interview(
     if not app_obj or app_obj.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Application not found.")
 
-    iv = await application_service.add_interview(db, user_id=current_user.id, application_id=id, obj_in=payload)
+    iv = await application_service.add_interview(
+        db, user_id=current_user.id, application_id=id, obj_in=payload
+    )
     await db.commit()
     return InterviewResponse.model_validate(iv)
 

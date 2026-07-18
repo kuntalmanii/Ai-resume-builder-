@@ -7,8 +7,35 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { FileText, Eye, Check, ShieldCheck } from "lucide-react";
-import { mockTemplates } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+interface Template {
+  id: string;
+  name: string;
+  description: string;
+  category: "classic" | "modern" | "minimal";
+}
+
+const templates: Template[] = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Traditional times-new-roman format preferred by corporate recruiters.",
+    category: "classic",
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    description: "Sleek sans-serif typography with clean dividers for startups and tech roles.",
+    category: "modern",
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    description: "A compact layout focusing entirely on typography and white-space density.",
+    category: "minimal",
+  },
+];
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -20,7 +47,7 @@ export default function TemplatesPage() {
     router.push(`/resumes/resume-new/edit?template=${templateId}`);
   };
 
-  const filteredTemplates = mockTemplates.filter((t) =>
+  const filteredTemplates = templates.filter((t: Template) =>
     activeFilter === "all" ? true : t.category === activeFilter
   );
 
@@ -51,7 +78,7 @@ export default function TemplatesPage() {
 
       {/* Grid gallery */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        {filteredTemplates.map((template) => {
+        {filteredTemplates.map((template: Template) => {
           const isSelected = selectedTemplateId === template.id;
 
           return (

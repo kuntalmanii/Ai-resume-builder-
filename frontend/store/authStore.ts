@@ -49,14 +49,12 @@ export const useAuthStore = create<AuthState>()(
 
         set({ isLoading: true });
         try {
-          const { authAPI } = await import("@/lib/api");
           const user = await authAPI.getMe();
           set({ user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           try {
             const freshToken = typeof window !== "undefined" ? localStorage.getItem("careeros_at") : null;
             if (freshToken && freshToken !== token) {
-              const { authAPI } = await import("@/lib/api");
               const user = await authAPI.getMe();
               set({ user, isAuthenticated: true, isLoading: false });
               return;
@@ -76,9 +74,7 @@ export const useAuthStore = create<AuthState>()(
           if (tokens.refresh_token) {
             setRefreshToken(tokens.refresh_token);
           }
-          // Fetch user info after login
-          const { authAPI: authApiImport } = await import("@/lib/api");
-          const user = await authApiImport.getMe();
+          const user = await authAPI.getMe();
           set({ user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });

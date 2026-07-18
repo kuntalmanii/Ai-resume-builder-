@@ -83,7 +83,7 @@ const candidateNavSections = [
       {
         label: "Portfolio Builder",
         href: "/portfolio",
-        icon: Globe,
+        icon: Layout,
       },
       {
         label: "Interview Prep",

@@ -110,15 +110,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 # ─── 3. Rate Limiter ─────────────────────────────────────────────────────────
 
-# Per-path override map (prefix -> (limit, window_seconds))
-# Paths not matched fall back to RATE_LIMIT_DEFAULT.
-_PATH_LIMITS: dict[str, tuple[int, int]] = {
-    "/api/v1/auth/": ("auth", None),      # use settings.RATE_LIMIT_AUTH
-    "/api/v1/resumes/import": ("upload", None),
-    "/api/v1/exports": ("export", None),
-    "/api/v1/resumes/analyze": ("ai", None),
-    "/api/v1/resumes/match": ("ai", None),
-    "/api/v1/suggestions": ("ai", None),
+_PATH_LIMITS: dict[str, str] = {
+    "/api/v1/auth/": "auth",
+    "/api/v1/resumes/import": "upload",
+    "/api/v1/exports": "export",
+    "/api/v1/resumes/analyze": "ai",
+    "/api/v1/resumes/match": "ai",
+    "/api/v1/suggestions": "ai",
 }
 
 
@@ -145,7 +143,7 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
 
         # Determine which rate limit bucket applies
         bucket = "default"
-        for prefix, (bucket_name, _) in _PATH_LIMITS.items():
+        for prefix, bucket_name in _PATH_LIMITS.items():
             if path.startswith(prefix):
                 bucket = bucket_name
                 break

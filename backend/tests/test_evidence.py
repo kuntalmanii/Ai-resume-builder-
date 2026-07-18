@@ -89,12 +89,11 @@ async def test_evidence_map_flow(client: AsyncClient):
             ])
         return None
 
-    with patch("app.services.evidence.claim_extractor.GeminiProvider.complete", side_effect=mock_complete):
-        with patch("app.services.evidence.credibility_engine.GeminiProvider.complete", side_effect=mock_complete):
-            audit_res = await client.post(f"/api/v1/resumes/{resume_id}/audit", headers=headers)
-            assert audit_res.status_code == 200
-            audit_data = audit_res.json()
-            assert "claims" in audit_data
+    with patch("app.ai.gemini_provider.GeminiProvider.complete", side_effect=mock_complete):
+        audit_res = await client.post(f"/api/v1/resumes/{resume_id}/audit", headers=headers)
+        assert audit_res.status_code == 200
+        audit_data = audit_res.json()
+        assert "claims" in audit_data
 
     # 4. Get claims again
     get_res2 = await client.get(f"/api/v1/resumes/{resume_id}/claims", headers=headers)

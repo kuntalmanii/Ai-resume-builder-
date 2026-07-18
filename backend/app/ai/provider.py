@@ -27,7 +27,8 @@ class AIProvider(ABC):
         Args:
             prompt: User prompt text.
             system_prompt: System/instruction prompt.
-            response_schema: If provided, parse and validate the response against this Pydantic schema.
+            response_schema: If provided, parse and validate the response
+                against this Pydantic schema.
             temperature: Sampling temperature (0=deterministic, 1=creative).
 
         Returns:

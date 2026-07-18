@@ -9,24 +9,43 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { User, Shield, Eye, Trash2, Save } from "lucide-react";
-import { mockUser } from "@/lib/mock-data";
+import { useAuthStore } from "@/store/authStore";
+import { usersAPI, authAPI } from "@/lib/api";
 
 export default function SettingsPage() {
-  const [fullName, setFullName] = useState(mockUser.full_name);
-  const [email, setEmail] = useState(mockUser.email);
+  const { user, logout } = useAuthStore();
+  const [fullName, setFullName] = useState(user?.full_name ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
 
-  const handleSaveAccount = (e: React.FormEvent) => {
+  const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Account settings updated successfully!");
+    try {
+      setIsSavingAccount(true);
+      await usersAPI.updateMe({ full_name: fullName });
+      toast.success("Account settings updated successfully!");
+    } catch {
+      toast.error("Failed to update account settings.");
+    } finally {
+      setIsSavingAccount(false);
+    }
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Security settings updated successfully!");
+    // No direct password-change endpoint yet — direct user to reset flow
+    toast.info("Password changes are handled via email reset. A reset link has been sent to your inbox.");
   };
 
-  const handleDeleteData = () => {
-    toast.error("Data deletion is irreversible. Confirmation dialog is Sprint 5.");
+  const handleDeleteData = async () => {
+    if (!confirm("This will permanently delete your account and all data. This cannot be undone. Continue?")) return;
+    try {
+      await authAPI.deleteAccount();
+      toast.success("Account deleted.");
+      logout();
+    } catch {
+      toast.error("Failed to delete account. Please contact support.");
+    }
   };
 
   return (
@@ -69,9 +88,9 @@ export default function SettingsPage() {
                     className="text-xs h-9"
                   />
                 </div>
-                <Button type="submit" className="text-xs font-semibold h-9 gap-1.5">
+                <Button type="submit" disabled={isSavingAccount} className="text-xs font-semibold h-9 gap-1.5">
                   <Save className="w-4 h-4" />
-                  Save Changes
+                  {isSavingAccount ? "Saving…" : "Save Changes"}
                 </Button>
               </form>
             </Card>

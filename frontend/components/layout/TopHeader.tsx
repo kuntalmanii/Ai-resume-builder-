@@ -122,19 +122,10 @@ export default function TopHeader({ onMenuClick }: TopHeaderProps) {
             <div className="absolute right-0 mt-2 w-80 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-4 py-2 border-b border-border flex items-center justify-between">
                 <span className="font-semibold text-sm">Notifications</span>
-                <span className="text-[10px] text-primary hover:underline cursor-pointer">Mark all read</span>
               </div>
-              <div className="max-h-64 overflow-y-auto">
-                <div className="px-4 py-3 border-b border-border/50 hover:bg-muted/40 transition-colors cursor-pointer">
-                  <p className="text-xs font-semibold text-foreground">ATS Score Improvement!</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Your resume 'Product Manager 2024' score increased to 78% after adding REST API keywords.</p>
-                  <span className="text-[9px] text-muted-foreground mt-1 block">5 minutes ago</span>
-                </div>
-                <div className="px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer">
-                  <p className="text-xs font-semibold text-foreground">Welcome to CareerOS AI</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Complete your Career Profile to enable evidence mode checking.</p>
-                  <span className="text-[9px] text-muted-foreground mt-1 block">2 hours ago</span>
-                </div>
+              <div className="px-4 py-8 text-center">
+                <Bell className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">No notifications yet</p>
               </div>
             </div>
           )}
