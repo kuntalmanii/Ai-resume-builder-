@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/shared/Header";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,8 @@ import { toast } from "sonner";
 import { resumesAPI } from "@/lib/api";
 import type { Resume } from "@/types";
 
-export default function ResumeEditPage({ params }: { params: { id: string } }) {
+export default function ResumeEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: resumeId } = use(params);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [activeSection, setActiveSection] = useState<string>("personal");
@@ -60,7 +61,7 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
   const fetchResume = async () => {
     try {
       setIsLoading(true);
-      const data = await resumesAPI.get(params.id);
+      const data = await resumesAPI.get(resumeId);
       setResume(data);
 
       const content = data.content || {};
@@ -87,7 +88,7 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     fetchResume();
-  }, [params.id]);
+  }, [resumeId]);
 
   const handleSave = async () => {
     if (!resume) return;
@@ -115,7 +116,7 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
       };
 
       const updated = await resumesAPI.updateContent(
-        params.id,
+        resumeId,
         updatedContent,
         resume.version // concurrency token check
       );
@@ -154,7 +155,7 @@ export default function ResumeEditPage({ params }: { params: { id: string } }) {
       <Header
         initialTitle={resume?.title || "Untitled Resume"}
         onSave={handleSave}
-        onExport={() => router.push(`/resumes/${params.id}/export`)}
+        onExport={() => router.push(`/resumes/${resumeId}/export`)}
         isSaving={isSaving}
       />
 

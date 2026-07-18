@@ -111,7 +111,11 @@ class RedisQueue(BaseQueue):
             except ImportError:
                 task_registry = None
 
-            fn = getattr(task_registry, task_name.replace(".", "_"), None) if task_registry else None
+            fn = (
+                getattr(task_registry, task_name.replace(".", "_"), None)
+                if task_registry
+                else None
+            )
             if fn is None:
                 logger.error("RedisQueue: unknown task '%s'", task_name)
                 return task_id

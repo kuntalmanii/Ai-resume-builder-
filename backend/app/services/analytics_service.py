@@ -6,14 +6,20 @@ from datetime import date, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.analysis import ResumeAnalysis
 from app.db.models.application import Application
 from app.db.models.job_match_result import JobMatchResult
 from app.db.models.profile import CareerProfile
 from app.db.models.resume import Resume
+from app.db.models.roadmap import Roadmap
 from app.schemas.analytics import (
     AnalyticsSummaryResponse,
+    ApplicationsSummary,
+    CredibilitySummary,
     FunnelStage,
+    InterviewsSummary,
     ResumePerformanceMetric,
+    RoadmapsSummary,
     SkillGapMetric,
 )
 
@@ -149,6 +155,72 @@ class AnalyticsService:
             for i in range(5)
         ]
 
+        # 6. Nested structures expected by the UI
+        # Applications Summary
+        apps_summary = ApplicationsSummary(
+            total=total_apps,
+            wishlist=wishlist_count,
+            applied=applied_count,
+            interviewing=interviews_count,
+            offer=offers_count,
+            rejected=rejections_count,
+            conversion_rate=interview_rate,
+        )
+
+        # Interviews Summary
+        interviews_summary = InterviewsSummary(
+            total=interviews_count,
+            average_score=0.0,
+        )
+
+        # Roadmaps Summary
+        roadmaps_query = select(Roadmap).where(Roadmap.user_id == user_id)
+        roadmaps_res = await db.execute(roadmaps_query)
+        roadmaps = list(roadmaps_res.scalars().all())
+
+        total_roadmaps = len(roadmaps)
+        completed_steps = 0
+        total_steps = 0
+        for rm in roadmaps:
+            plan_items = rm.plan.get("items", []) if isinstance(rm.plan, dict) else []
+            completed_items = rm.progress.get("completed", []) if isinstance(rm.progress, dict) else []
+            total_steps += len(plan_items)
+            completed_steps += len(completed_items)
+
+        roadmap_completion_rate = (
+            round((completed_steps / total_steps * 100), 2) if total_steps > 0 else 0.0
+        )
+        roadmaps_summary = RoadmapsSummary(
+            total=total_roadmaps,
+            completed_steps=completed_steps,
+            total_steps=total_steps,
+            completion_rate=roadmap_completion_rate,
+        )
+
+        # Credibility Summary
+        analysis_query = (
+            select(ResumeAnalysis)
+            .where(ResumeAnalysis.user_id == user_id)
+            .order_by(ResumeAnalysis.created_at.desc())
+        )
+        analysis_res = await db.execute(analysis_query)
+        latest_analysis = analysis_res.scalars().first()
+
+        cred_score = 0.0
+        audit_dt = None
+        if latest_analysis:
+            raw_score = latest_analysis.evidence_credibility_score
+            if raw_score <= 10:
+                cred_score = float(raw_score * 10)
+            else:
+                cred_score = float(raw_score)
+            audit_dt = latest_analysis.created_at.strftime("%Y-%m-%d")
+
+        credibility_summary = CredibilitySummary(
+            score=cred_score,
+            audit_date=audit_dt,
+        )
+
         return AnalyticsSummaryResponse(
             total_applications=total_apps,
             interviews_scheduled=interviews_count,
@@ -161,6 +233,10 @@ class AnalyticsService:
             skill_gaps=skill_gaps,
             weekly_application_trends=trends,
             evidence_score_trend=evidence_trend,
+            applications=apps_summary,
+            interviews=interviews_summary,
+            roadmaps=roadmaps_summary,
+            credibility=credibility_summary,
         )
 
 

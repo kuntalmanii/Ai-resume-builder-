@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,8 @@ import {
 import { jobDescriptionsAPI, jobMatchesAPI, resumesAPI } from "@/lib/api";
 import type { JobDescription, JobMatchResultResponse, Resume } from "@/types";
 
-export default function ResumeMatchPage({ params }: { params: { id: string } }) {
-  const resumeId = params.id;
+export default function ResumeMatchPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: resumeId } = use(params);
   const [resume, setResume] = useState<Resume | null>(null);
   
   // Job Description form states

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, use } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,8 @@ import {
 import { resumesAPI, evidenceAPI, careerEntriesAPI, CareerEntry } from "@/lib/api";
 import type { Resume, EvidenceAudit, EvidenceMethodology, ResumeClaim } from "@/types";
 
-export default function ResumeEvidencePage({ params }: { params: { id: string } }) {
-  const resumeId = params.id;
+export default function ResumeEvidencePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: resumeId } = use(params);
 
   // Domain states
   const [resume, setResume] = useState<Resume | null>(null);

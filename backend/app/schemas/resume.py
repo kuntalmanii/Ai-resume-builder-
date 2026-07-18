@@ -130,6 +130,19 @@ class ResumeDocument(BaseModel):
     interests: list[InterestEntry] = Field(default_factory=list)
     section_order: list[str] = Field(default_factory=list)
 
+    @field_validator("skills", mode="before")
+    @classmethod
+    def validate_skills(cls, v: Any) -> Any:
+        if isinstance(v, list) and len(v) > 0 and all(isinstance(x, str) for x in v):
+            return [
+                {
+                    "category": "Skills",
+                    "skills": v,
+                    "order": 0,
+                }
+            ]
+        return v
+
     @field_validator("section_order", mode="before")
     @classmethod
     def validate_section_order(cls, v: Any) -> list[str]:

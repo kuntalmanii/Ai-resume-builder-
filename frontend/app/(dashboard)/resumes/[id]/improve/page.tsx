@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -29,9 +29,9 @@ import {
 import { resumesAPI, suggestionsAPI, SuggestionResponse, AIStatusResponse } from "@/lib/api";
 import type { Resume, ResumeClaim, EvidenceMapResponse } from "@/types";
 
-export default function ResumeImprovePage({ params }: { params: { id: string } }) {
+export default function ResumeImprovePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const resumeId = params.id;
+  const { id: resumeId } = use(params);
 
   const [resume, setResume] = useState<Resume | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestionResponse[]>([]);
