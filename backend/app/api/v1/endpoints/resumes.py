@@ -2,13 +2,14 @@
 duplicating, and versioning."""
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, status
 from sqlalchemy import desc, select
 from sqlalchemy.orm import selectinload
 
 from app.api.dependencies import CurrentUser, DBSession
+from app.core.exceptions import ResourceNotFoundError
 from app.db.models.career_entry import CareerEntry
 from app.db.models.evidence_audit import EvidenceAudit
 from app.db.models.evidence_source import EvidenceSource
@@ -443,8 +444,8 @@ async def link_career_entry_to_claim(
 
         raise HTTPException(
             status_code=400,
-            detail=f"Clearly unrelated link: Career entry of type {entry.entry_type} " \
-                f"cannot support claim of type {claim.claim_type}",
+            detail=f"Clearly unrelated link: Career entry of type {entry.entry_type} "
+            f"cannot support claim of type {claim.claim_type}",
         )
 
     evidence = EvidenceSource(
@@ -491,8 +492,8 @@ async def get_evidence_methodology() -> dict[str, Any]:
         "scoring_dimensions": {
             "claim_support_coverage": {
                 "max_score": 40,
-                "description": "Percent of claims supported by " \
-                    "Career Profile or User confirmations",
+                "description": "Percent of claims supported by "
+                "Career Profile or User confirmations",
             },
             "internal_consistency": {
                 "max_score": 20,
@@ -504,8 +505,8 @@ async def get_evidence_methodology() -> dict[str, Any]:
             },
             "high_risk_claim_support": {
                 "max_score": 15,
-                "description": "Factual verification of employers, " \
-                    "roles, degrees, certs, and metrics",
+                "description": "Factual verification of employers, "
+                "roles, degrees, certs, and metrics",
             },
             "verification_transparency": {
                 "max_score": 10,

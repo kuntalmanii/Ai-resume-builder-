@@ -9,8 +9,8 @@ class JobDescriptionRequirement(BaseModel):
     normalized_value: str | None = Field(None, description="Normalized skill name or keyword")
     requirement_type: str = Field(
         ...,
-        description="required_skill | preferred_skill | responsibility | required_experience | " \
-            "preferred_experience | education | certification | domain_keyword | tool | soft_skill",
+        description="required_skill | preferred_skill | responsibility | required_experience | "
+        "preferred_experience | education | certification | domain_keyword | tool | soft_skill",
     )
     importance: str = Field(..., description="required | preferred | optional")
     source_excerpt: str = Field(..., description="Snippet from the job description raw text")

@@ -4,7 +4,7 @@ import asyncio
 import hashlib
 import re
 import uuid
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -21,15 +21,15 @@ class LLMResumeClaim(BaseModel):
     source_section: str = Field(
         ..., description="Section of the resume (e.g., experience, education, summary, projects)"
     )
-    source_entry_id: str = Field(
+    source_entry_id: str | None = Field(
         None,
-        description="Optional ID of the entry (e.g. specific job " \
-            "experience ID) if provided in the input text",
+        description="Optional ID of the entry (e.g. specific job "
+        "experience ID) if provided in the input text",
     )
     claim_type: str = Field(
         ...,
-        description="Type: metric, technology, scope, " \
-            "responsibility, role, certification, education",
+        description="Type: metric, technology, scope, "
+        "responsibility, role, certification, education",
     )
 
 
@@ -80,7 +80,7 @@ class ClaimExtractorService:
     @classmethod
     def deterministic_extract_claims(cls, content: dict[str, Any]) -> list[dict[str, Any]]:
         """Deterministically extract common factual claims without relying on LLM."""
-        claims = []
+        claims: list[dict[str, Any]] = []
 
         # 1. Professional Summary / Summary
         summary = content.get("professional_summary") or content.get("summary")
@@ -614,8 +614,8 @@ class ClaimExtractorService:
         for edu in content.get("education", []):
             lines.append(f"Section: education | Entry ID: {edu.get('id')}")
             lines.append(
-                f"Degree: {edu.get('degree')} at {edu.get('institution')} " \
-                    f"- GPA: {edu.get('gpa', 'N/A')}"
+                f"Degree: {edu.get('degree')} at {edu.get('institution')} "
+                f"- GPA: {edu.get('gpa', 'N/A')}"
             )
             lines.append("")
 
@@ -657,30 +657,33 @@ class ClaimExtractorService:
                     ai_fallback_active = True
                 else:
                     system_prompt = (
-                        "You are an expert factual auditor. Your task is to " \
-                            "extract atomic, factual claims from a resume document.\n"
-                        "An atomic claim is a single testable assertion, such as a specific " \
-                            "metric achieved, a tool used, a specific responsibility, "
+                        "You are an expert factual auditor. Your task is to "
+                        "extract atomic, factual claims from a resume document.\n"
+                        "An atomic claim is a single testable assertion, such as a specific "
+                        "metric achieved, a tool used, a specific responsibility, "
                         "or an educational degree obtained.\n\n"
                         "CRITICAL INSTRUCTIONS:\n"
-                        "1. Extract ONLY facts present in the text. Do " \
-                            "not hallucinate or infer missing details.\n"
+                        "1. Extract ONLY facts present in the text. Do "
+                        "not hallucinate or infer missing details.\n"
                         "2. Ensure each claim is atomic.\n"
                         "3. Ignore subjective or purely qualitative statements.\n"
-                        "4. Exclude personal contact PII like phone " \
-                            "numbers, exact email addresses, or street names."
+                        "4. Exclude personal contact PII like phone "
+                        "numbers, exact email addresses, or street names."
                     )
                     user_prompt = (
                         f"Resume Content:\n{content_text}\n\nExtract all atomic factual claims."
                     )
 
                     # Run Gemini completion with a 15 second timeout wrapper
-                    async def fetch_llm():
-                        return await provider.complete(
-                            prompt=user_prompt,
-                            system_prompt=system_prompt,
-                            response_schema=LLMClaimExtractionOutput,
-                            temperature=0.0,
+                    async def fetch_llm() -> LLMClaimExtractionOutput:
+                        return cast(
+                            LLMClaimExtractionOutput,
+                            await provider.complete(
+                                prompt=user_prompt,
+                                system_prompt=system_prompt,
+                                response_schema=LLMClaimExtractionOutput,
+                                temperature=0.0,
+                            ),
                         )
 
                     output = await asyncio.wait_for(fetch_llm(), timeout=15.0)

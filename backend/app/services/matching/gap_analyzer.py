@@ -38,16 +38,16 @@ def analyze_gaps(
                         "requirement_id": req_id,
                         "requirement_text": req.text,
                         "gap_type": "keyword_gap_semantically_covered",
-                        "details": f"Covered semantically by: '{match['matched_resume_text']}' " \
-                            f"in {match['resume_section']}.",
-                        "recommendation": f"Your resume demonstrates '{req.text}' " \
-                            f"semantically but doesn't " \
-                            f"use the exact phrase. Consider adding '{req.text}' directly.",
+                        "details": f"Covered semantically by: '{match['matched_resume_text']}' "
+                        f"in {match['resume_section']}.",
+                        "recommendation": f"Your resume demonstrates '{req.text}' "
+                        f"semantically but doesn't "
+                        f"use the exact phrase. Consider adding '{req.text}' directly.",
                     }
                 )
                 recommendations.append(
-                    f"Your resume demonstrates {req.requirement_type.replace('_', ' ')} " \
-                        f"semantically but doesn't use the phrase '{req.text}'."
+                    f"Your resume demonstrates {req.requirement_type.replace('_', ' ')} "
+                    f"semantically but doesn't use the phrase '{req.text}'."
                 )
             continue
 
@@ -59,15 +59,15 @@ def analyze_gaps(
                     "requirement_id": req_id,
                     "requirement_text": req.text,
                     "gap_type": "hidden_profile_opportunity",
-                    "details": f"Found in Career Profile: '{opp['title']}' " \
-                        f"at '{opp['organization']}'.",
-                    "recommendation": f"Add your '{opp['title']}' experience to this " \
-                        f"resume since it matches the target JD requirement.",
+                    "details": f"Found in Career Profile: '{opp['title']}' "
+                    f"at '{opp['organization']}'.",
+                    "recommendation": f"Add your '{opp['title']}' experience to this "
+                    f"resume since it matches the target JD requirement.",
                 }
             )
             recommendations.append(
-                f"Highlight your {opp['title']} project/role " \
-                    f"because this JD explicitly requires '{req.text}'."
+                f"Highlight your {opp['title']} project/role "
+                f"because this JD explicitly requires '{req.text}'."
             )
             continue
 
@@ -79,13 +79,13 @@ def analyze_gaps(
                     "requirement_text": req.text,
                     "gap_type": "missing_required_skill",
                     "details": f"'{req.text}' was not found in your resume or Career Profile.",
-                    "recommendation": f"'{req.text}' is a required skill. Do not add this " \
-                        f"skill unless you genuinely have experience with it.",
+                    "recommendation": f"'{req.text}' is a required skill. Do not add this "
+                    f"skill unless you genuinely have experience with it.",
                 }
             )
             recommendations.append(
-                f"'{req.text}' is a genuine gap based on your current resume and " \
-                    f"Career Profile. Do not add it unless you have real experience."
+                f"'{req.text}' is a genuine gap based on your current resume and "
+                f"Career Profile. Do not add it unless you have real experience."
             )
 
         elif req.requirement_type == "preferred_skill":
@@ -94,15 +94,15 @@ def analyze_gaps(
                     "requirement_id": req_id,
                     "requirement_text": req.text,
                     "gap_type": "missing_preferred_skill",
-                    "details": f"'{req.text}' (preferred) was not found " \
-                        f"in your resume or Career Profile.",
-                    "recommendation": f"Consider learning '{req.text}' or listing " \
-                        f"it if you have passive/project experience.",
+                    "details": f"'{req.text}' (preferred) was not found "
+                    f"in your resume or Career Profile.",
+                    "recommendation": f"Consider learning '{req.text}' or listing "
+                    f"it if you have passive/project experience.",
                 }
             )
             recommendations.append(
-                f"Consider highlighting '{req.text}' if you have " \
-                    f"passive exposure to this preferred skill."
+                f"Consider highlighting '{req.text}' if you have "
+                f"passive exposure to this preferred skill."
             )
 
         elif req.requirement_type == "education":

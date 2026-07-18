@@ -1,5 +1,7 @@
 """Pydantic schemas for Resume."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from typing import Any
@@ -219,7 +221,12 @@ class ResumeResponse(ResumeBase):
     model_config = {"from_attributes": True}
 
     @classmethod
-    def model_validate(cls, obj: Any, *args, **kwargs):
+    def model_validate(
+        cls,
+        obj: Any,
+        *args: Any,
+        **kwargs: Any,
+    ) -> ResumeResponse:
         instance = super().model_validate(obj, *args, **kwargs)
         if hasattr(obj, "__dict__") and "analyses" in obj.__dict__:
             analyses = obj.__dict__["analyses"]

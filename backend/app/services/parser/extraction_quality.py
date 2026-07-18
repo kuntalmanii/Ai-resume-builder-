@@ -30,8 +30,8 @@ def check_extraction_quality(extracted: dict, document_type: str) -> dict:
             return {
                 "status": "ocr_required",
                 "warnings": [
-                    "This PDF contains pages but no selectable " \
-                        "text. It is likely a scanned document."
+                    "This PDF contains pages but no selectable "
+                    "text. It is likely a scanned document."
                 ],
             }
         return {"status": "failed", "warnings": ["No text could be extracted from the document."]}
@@ -46,8 +46,8 @@ def check_extraction_quality(extracted: dict, document_type: str) -> dict:
             return {
                 "status": "ocr_required",
                 "warnings": [
-                    "Low text volume detected. This PDF appears to " \
-                        "contain scanned images rather than selectable text."
+                    "Low text volume detected. This PDF appears to "
+                    "contain scanned images rather than selectable text."
                 ],
             }
 
@@ -63,8 +63,8 @@ def check_extraction_quality(extracted: dict, document_type: str) -> dict:
         ratio = replacement_chars / character_count
         if ratio > 0.05:
             warnings.append(
-                "High volume of replacement/invalid characters " \
-                    "detected. Encoding might be corrupted."
+                "High volume of replacement/invalid characters "
+                "detected. Encoding might be corrupted."
             )
             return {"status": "poor", "warnings": warnings}
 
@@ -74,8 +74,8 @@ def check_extraction_quality(extracted: dict, document_type: str) -> dict:
         alnum_ratio = alnum_count / character_count
         if alnum_ratio < 0.4:
             warnings.append(
-                "The document text contains an unusually " \
-                    "high ratio of symbols or formatting markup."
+                "The document text contains an unusually "
+                "high ratio of symbols or formatting markup."
             )
             return {"status": "poor", "warnings": warnings}
 
@@ -86,8 +86,8 @@ def check_extraction_quality(extracted: dict, document_type: str) -> dict:
         dup_ratio = (len(lines) - len(unique_lines)) / len(lines)
         if dup_ratio > 0.6:
             warnings.append(
-                "High amount of duplicated lines detected. " \
-                    "The layout or PDF stream might be corrupted."
+                "High amount of duplicated lines detected. "
+                "The layout or PDF stream might be corrupted."
             )
             return {"status": "poor", "warnings": warnings}
 

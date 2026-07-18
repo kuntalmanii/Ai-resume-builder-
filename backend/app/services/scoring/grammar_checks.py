@@ -51,8 +51,8 @@ def check_repeated_punctuation(resume: Any) -> CheckResult:
             "warning",
             possible,
             0,
-            recommendation="Remove repeated punctuation marks. " \
-                "Use single periods to end sentences.",
+            recommendation="Remove repeated punctuation marks. "
+            "Use single periods to end sentences.",
             evidence_data={"instances_found": len(real_issues), "examples": real_issues[:3]},
         )
 
@@ -254,8 +254,8 @@ def check_bullet_ending_consistency(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Inconsistent Bullet Period Usage",
-            f"{with_period} bullets end with periods, " \
-                f"{without_period} do not — inconsistent styling.",
+            f"{with_period} bullets end with periods, "
+            f"{without_period} do not — inconsistent styling.",
             "warning",
             possible,
             0,

@@ -119,7 +119,12 @@ class PlaywrightPDFGenerator:
                     display_header_footer=settings.get("show_page_numbers", True),
                     header_template='<div style="height: 10px;"></div>',
                     footer_template=footer_html,
-                    margin=tree.margins,
+                    margin={
+                        "top": tree.margins["top"],
+                        "bottom": tree.margins["bottom"],
+                        "left": tree.margins["left"],
+                        "right": tree.margins["right"],
+                    },
                 )
                 await browser.close()
 

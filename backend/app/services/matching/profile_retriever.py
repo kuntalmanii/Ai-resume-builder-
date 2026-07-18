@@ -81,8 +81,8 @@ async def retrieve_profile_opportunities(
                         "title": entry.title,
                         "organization": entry.organization,
                         "matching_fact": matched_fact,
-                        "match_reason": f"Matches required skill '{canonical}' " \
-                            f"from the job description.",
+                        "match_reason": f"Matches required skill '{canonical}' "
+                        f"from the job description.",
                         # status can be: user_confirmed, source_verified, unverified
                         "verification_status": entry.verification_status,
                     }

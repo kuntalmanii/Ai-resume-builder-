@@ -15,7 +15,7 @@ class ApplicationRepository(BaseRepository[Application]):
         super().__init__(Application)
 
     async def get_by_user_id(
-        self, db: AsyncSession, user_id: UUID, status: str = None, search: str = None
+        self, db: AsyncSession, user_id: UUID, status: str | None = None, search: str | None = None
     ) -> list[Application]:
         query = (
             select(Application)

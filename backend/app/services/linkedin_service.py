@@ -28,14 +28,14 @@ class LinkedInService:
         # 2. Build AI prompts for optimization
         system_prompt = (
             "You are an expert LinkedIn profile optimizer and SEO specialist.\n"
-            "Your goal is to maximize search visibility for recruiters, " \
-                "keyword density, and overall professional layout.\n"
+            "Your goal is to maximize search visibility for recruiters, "
+            "keyword density, and overall professional layout.\n"
             "CRITICAL INSTRUCTIONS:\n"
             "1. NEVER invent projects, experiences, titles, or skills.\n"
-            "2. Ensure everything recommended is strictly " \
-                "aligned and grounded in the provided resume data.\n"
-            "3. Return the output as a valid JSON object matching the requested " \
-                "schema. No markdown formatting outside of JSON code block."
+            "2. Ensure everything recommended is strictly "
+            "aligned and grounded in the provided resume data.\n"
+            "3. Return the output as a valid JSON object matching the requested "
+            "schema. No markdown formatting outside of JSON code block."
         )
 
         original_profile = request.profile_data.model_dump()
@@ -102,8 +102,8 @@ class LinkedInService:
                 user_id=user_id,
                 type="success",
                 title="LinkedIn Profile Analyzed",
-                body=f"Your LinkedIn profile optimization is complete. " \
-                    f"Score: {opt_obj.optimization_score}/100.",
+                body=f"Your LinkedIn profile optimization is complete. "
+                f"Score: {opt_obj.optimization_score}/100.",
                 action_url="/linkedin",
             ),
         )

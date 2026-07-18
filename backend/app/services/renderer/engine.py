@@ -10,7 +10,10 @@ from app.services.renderer.tokens import ACCENT_COLORS, FONT_FAMILIES
 
 class ResumeRenderer:
     def __init__(
-        self, doc: ResumeDocument, template_id: str = "modern", settings: dict[str, Any] = None
+        self,
+        doc: ResumeDocument,
+        template_id: str = "modern",
+        settings: dict[str, Any] | None = None,
     ):
         self.doc = doc
         self.template_id = template_id
@@ -38,9 +41,10 @@ class ResumeRenderer:
         self.section_visibility = self.settings.get("section_visibility", {})
 
         # Determine section order
-        self.section_order = self.settings.get("section_ordering")
-        if not self.section_order:
-            self.section_order = self.doc.section_order or [
+        self.section_order: list[str] = (
+            self.settings.get("section_ordering")
+            or self.doc.section_order
+            or [
                 "professional_summary",
                 "education",
                 "experience",
@@ -52,6 +56,7 @@ class ResumeRenderer:
                 "languages",
                 "interests",
             ]
+        )
 
     def build_render_tree(self) -> RenderTree:
         """Construct the visual RenderTree from ResumeDocument and settings."""
@@ -327,7 +332,7 @@ class ResumeRenderer:
                 for group in self.doc.skills:
                     col = RenderNode(type="col", style_classes=["text-[9.5px]", "text-slate-700"])
                     col.children.append(
-                        RenderNode(type="text", text=group.name, style_classes=["font-bold"])
+                        RenderNode(type="text", text=group.category, style_classes=["font-bold"])
                     )
                     col.children.append(RenderNode(type="text", text=", ".join(group.skills)))
                     grid.children.append(col)
@@ -366,7 +371,7 @@ class ResumeRenderer:
                 entry.children.append(
                     RenderNode(
                         type="text",
-                        text=cert.date or "",
+                        text=cert.issue_date or "",
                         style_classes=["text-[9px]", "text-slate-500"],
                     )
                 )
@@ -400,7 +405,7 @@ class ResumeRenderer:
                 header.children.append(
                     RenderNode(
                         type="text",
-                        text=f"{pos.organization} — {pos.role}",
+                        text=f"{pos.organization} — {pos.position}",
                         style_classes=["text-[9.5px]", "font-bold"],
                     )
                 )
@@ -412,14 +417,15 @@ class ResumeRenderer:
                     )
                 )
                 entry.children.append(header)
-                if pos.description:
-                    entry.children.append(
-                        RenderNode(
-                            type="text",
-                            text=pos.description,
-                            style_classes=["text-[9.5px]", "text-slate-600"],
+                if pos.bullets:
+                    for bullet in pos.bullets:
+                        entry.children.append(
+                            RenderNode(
+                                type="text",
+                                text=bullet,
+                                style_classes=["text-[9.5px]", "text-slate-600"],
+                            )
                         )
-                    )
                 node.children.append(entry)
 
         elif section_name == "languages" and self.doc.languages:

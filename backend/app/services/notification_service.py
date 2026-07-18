@@ -24,7 +24,7 @@ class NotificationService:
     async def get_unread_count(self, db: AsyncSession, user_id: UUID) -> int:
         return await notification_repository.get_unread_count(db, user_id)
 
-    async def mark_as_read(self, db: AsyncSession, id: UUID, user_id: UUID) -> Notification:
+    async def mark_as_read(self, db: AsyncSession, id: UUID, user_id: UUID) -> Notification | None:
         notif = await notification_repository.get(db, id)
         if notif and notif.user_id == user_id:
             notif = await notification_repository.update(db, db_obj=notif, obj_in={"is_read": True})

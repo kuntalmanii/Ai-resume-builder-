@@ -24,8 +24,8 @@ class RoadmapService:
 
         system_prompt = (
             "You are a professional technical career mentor.\n"
-            "Build a personalized skills development roadmap for a candidate " \
-                "transitioning from their current skills to a target role.\n"
+            "Build a personalized skills development roadmap for a candidate "
+            "transitioning from their current skills to a target role.\n"
             "Identify the skill gaps and outline a list of 4 concrete milestones.\n"
             "Return EXACTLY a valid JSON object. Do not include chat wraps."
         )
@@ -97,8 +97,8 @@ class RoadmapService:
                 user_id=user_id,
                 type="success",
                 title="Upskilling Roadmap Created",
-                body=f"Your personalized learning path for " \
-                    f"'{request.target_role}' has been created.",
+                body=f"Your personalized learning path for "
+                f"'{request.target_role}' has been created.",
                 action_url="/roadmap",
             ),
         )

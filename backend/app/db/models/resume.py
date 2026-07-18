@@ -1,7 +1,10 @@
 """Resume ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,16 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.ai_suggestion import AISuggestion
+    from app.db.models.analysis import ResumeAnalysis
+    from app.db.models.evidence_audit import EvidenceAudit
+    from app.db.models.job_match_result import JobMatchResult
+    from app.db.models.resume_claim import ResumeClaim
+    from app.db.models.resume_export import ResumeExport
+    from app.db.models.resume_version import ResumeVersion
+    from app.db.models.user import User
 
 
 class Resume(Base):
@@ -22,7 +35,7 @@ class Resume(Base):
     template_id: Mapped[str] = mapped_column(String(50), nullable=False, default="modern")
 
     # Structured resume content (sections, bullet points, etc.)
-    content: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONBType, default=dict, nullable=False)
 
     # Plain text representation for ATS analysis
     raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -53,26 +66,26 @@ class Resume(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="resumes")  # type: ignore[name-defined]
-    analyses: Mapped[list["ResumeAnalysis"]] = relationship(  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User", back_populates="resumes")
+    analyses: Mapped[list[ResumeAnalysis]] = relationship(
         "ResumeAnalysis", back_populates="resume", cascade="all, delete-orphan"
     )
-    versions: Mapped[list["ResumeVersion"]] = relationship(  # type: ignore[name-defined]
+    versions: Mapped[list[ResumeVersion]] = relationship(
         "ResumeVersion", back_populates="resume", cascade="all, delete-orphan"
     )
-    match_results: Mapped[list["JobMatchResult"]] = relationship(  # type: ignore[name-defined]
+    match_results: Mapped[list[JobMatchResult]] = relationship(
         "JobMatchResult", back_populates="resume", cascade="all, delete-orphan"
     )
-    ai_suggestions: Mapped[list["AISuggestion"]] = relationship(  # type: ignore[name-defined]
+    ai_suggestions: Mapped[list[AISuggestion]] = relationship(
         "AISuggestion", back_populates="resume", cascade="all, delete-orphan"
     )
-    claims: Mapped[list["ResumeClaim"]] = relationship(  # type: ignore[name-defined]
+    claims: Mapped[list[ResumeClaim]] = relationship(
         "ResumeClaim", back_populates="resume", cascade="all, delete-orphan"
     )
-    audits: Mapped[list["EvidenceAudit"]] = relationship(  # type: ignore[name-defined]
+    audits: Mapped[list[EvidenceAudit]] = relationship(
         "EvidenceAudit", back_populates="resume", cascade="all, delete-orphan"
     )
-    exports: Mapped[list["ResumeExport"]] = relationship(  # type: ignore[name-defined]
+    exports: Mapped[list[ResumeExport]] = relationship(
         "ResumeExport", back_populates="resume", cascade="all, delete-orphan"
     )
 

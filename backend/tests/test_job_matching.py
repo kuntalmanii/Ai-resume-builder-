@@ -64,8 +64,8 @@ async def test_jd_crud_and_ownership(client: AsyncClient) -> None:
         json={
             "title": "SWE React",
             "company": "Meta",
-            "raw_text": "We need a React developer. This description " \
-                "has to be at least fifty characters long.",
+            "raw_text": "We need a React developer. This description "
+            "has to be at least fifty characters long.",
         },
     )
     assert res.status_code == 201
@@ -163,8 +163,8 @@ async def test_end_to_end_job_match(client: AsyncClient, db_session: AsyncSessio
         json={
             "title": "React and PostgreSQL developer",
             "company": "DataCorp",
-            "raw_text": "We are seeking a React developer. Must have experience " \
-                "with PostgreSQL. Preferred skills include TypeScript.",
+            "raw_text": "We are seeking a React developer. Must have experience "
+            "with PostgreSQL. Preferred skills include TypeScript.",
         },
     )
     assert jd_res.status_code == 201

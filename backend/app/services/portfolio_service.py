@@ -30,10 +30,18 @@ class PortfolioService:
         projects = []
         experience = []
         education = []
-        skills = []
+        skills: list[str] = []
 
-        if profile:
-            skills = profile.skills or []
+        if profile and profile.skills:
+            if isinstance(profile.skills, dict):
+                skills = [
+                    str(sk)
+                    for group in profile.skills.values()
+                    if isinstance(group, list)
+                    for sk in group
+                ]
+            elif isinstance(profile.skills, list):
+                skills = [str(sk) for sk in profile.skills]
 
         for entry in entries:
             payload = {
@@ -52,10 +60,28 @@ class PortfolioService:
             elif entry.entry_type == "education":
                 education.append(payload)
 
+        user_name = "John Doe"
+        from sqlalchemy import select
+
+        from app.db.models.user import User
+        user_query = select(User).where(User.id == user_id)
+        user_res = await db.execute(user_query)
+        user_obj = user_res.scalars().first()
+        if user_obj:
+            user_name = user_obj.full_name
+
         initial_content = {
-            "name": profile.full_name if profile else "John Doe",
-            "tagline": profile.tagline if profile else "Software Engineer",
-            "about": profile.bio if profile else "A passionate builder.",
+            "name": user_name,
+            "tagline": (
+                profile.professional_title
+                if profile and profile.professional_title
+                else "Software Engineer"
+            ),
+            "about": (
+                profile.professional_summary
+                if profile and profile.professional_summary
+                else "A passionate builder."
+            ),
             "skills": skills,
             "projects": projects,
             "experience": experience,

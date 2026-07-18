@@ -105,10 +105,13 @@ class RedisQueue(BaseQueue):
 
         task_id = str(uuid.uuid4())
         try:
-            # Resolve the task function from the registered task registry
-            from app.services.queue import tasks as task_registry  # type: ignore[import]
+            import importlib
+            try:
+                task_registry: Any = importlib.import_module("app.services.queue.tasks")
+            except ImportError:
+                task_registry = None
 
-            fn = getattr(task_registry, task_name.replace(".", "_"), None)
+            fn = getattr(task_registry, task_name.replace(".", "_"), None) if task_registry else None
             if fn is None:
                 logger.error("RedisQueue: unknown task '%s'", task_name)
                 return task_id

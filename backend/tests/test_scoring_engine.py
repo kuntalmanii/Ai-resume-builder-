@@ -73,11 +73,11 @@ def strong_resume():
                 "end_date": "Present",
                 "is_current": True,
                 "bullets": [
-                    "Led migration of monolithic Python app to " \
-                        "microservices, reducing latency by 40%.",
+                    "Led migration of monolithic Python app to "
+                    "microservices, reducing latency by 40%.",
                     "Designed API gateway handling 50k requests/second using FastAPI and Redis.",
-                    "Mentored 4 junior engineers across 3 time " \
-                        "zones, improving team velocity by 25%.",
+                    "Mentored 4 junior engineers across 3 time "
+                    "zones, improving team velocity by 25%.",
                 ],
             },
             {

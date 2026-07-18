@@ -4,7 +4,7 @@ parsing, and profile imports."""
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from fastapi import UploadFile
 from sqlalchemy import delete, select
@@ -239,7 +239,7 @@ async def finalize_import(
     title: str,
     template_id: str,
     import_to_career_profile: bool,
-    selected_entries: list[str] = None,
+    selected_entries: list[str] | None = None,
 ) -> Resume:
     """Finalize import: create Resume, ResumeVersion, and optionally import to Career
     Profile with deduplication."""
@@ -495,4 +495,4 @@ async def cleanup_expired_sessions(db: AsyncSession) -> int:
     stmt = delete(ResumeImportSession).where(ResumeImportSession.expires_at < datetime.now(UTC))
     res = await db.execute(stmt)
     await db.commit()
-    return res.rowcount
+    return int(cast(Any, res).rowcount)

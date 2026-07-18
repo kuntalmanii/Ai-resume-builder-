@@ -1,7 +1,10 @@
 """Resume Export snapshot model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.resume import Resume
 
 
 class ResumeExport(Base):
@@ -20,7 +26,7 @@ class ResumeExport(Base):
     )
     resume_version: Mapped[int] = mapped_column(Integer, nullable=False)
     template_id: Mapped[str] = mapped_column(String(50), nullable=False)
-    settings: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONBType, default=dict, nullable=False)
     checksum: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
     renderer_version: Mapped[str] = mapped_column(String(50), nullable=False, default="1.0.0")
@@ -37,4 +43,4 @@ class ResumeExport(Base):
     )
 
     # Relationships
-    resume: Mapped["Resume"] = relationship("Resume", back_populates="exports")  # type: ignore[name-defined]
+    resume: Mapped[Resume] = relationship("Resume", back_populates="exports")

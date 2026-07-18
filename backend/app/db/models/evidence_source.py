@@ -1,13 +1,20 @@
 """Evidence Source ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.ai_suggestion import AISuggestion
+    from app.db.models.resume_claim import ResumeClaim
 
 
 class EvidenceSource(Base):
@@ -60,12 +67,12 @@ class EvidenceSource(Base):
     )
 
     # Relationships
-    ai_suggestion: Mapped["AISuggestion"] = relationship(
+    ai_suggestion: Mapped[AISuggestion] = relationship(
         "AISuggestion", back_populates="evidence_sources"
-    )  # type: ignore[name-defined]
-    resume_claim: Mapped["ResumeClaim"] = relationship(
+    )
+    resume_claim: Mapped[ResumeClaim] = relationship(
         "ResumeClaim", back_populates="evidence_sources"
-    )  # type: ignore[name-defined]
+    )
 
     # Compatibility Properties
     @property

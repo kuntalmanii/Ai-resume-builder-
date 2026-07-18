@@ -93,7 +93,7 @@ class AnalyticsService:
         resume_metrics = []
         for r in resumes:
             # Query match results
-            match_query = select(func.avg(JobMatchResult.overall_score)).where(
+            match_query = select(func.avg(JobMatchResult.overall_match_percentage)).where(
                 JobMatchResult.resume_id == r.id
             )
             match_res = await db.execute(match_query)
@@ -109,7 +109,7 @@ class AnalyticsService:
                     resume_id=str(r.id),
                     title=r.title,
                     average_ats_score=75.0,  # default placeholder score
-                    average_jd_match=round(float(avg_match) * 100, 2),
+                    average_jd_match=round(float(avg_match), 2),
                     application_count=app_cnt,
                 )
             )

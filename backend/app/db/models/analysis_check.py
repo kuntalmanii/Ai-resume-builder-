@@ -1,6 +1,9 @@
 """Analysis Check ORM model."""
 
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -8,6 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.analysis import ResumeAnalysis
 
 
 class AnalysisCheck(Base):
@@ -29,10 +35,10 @@ class AnalysisCheck(Base):
     points_possible: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     points_awarded: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     recommendation: Mapped[str | None] = mapped_column(Text, nullable=True)
-    evidence_data: Mapped[dict | None] = mapped_column(JSONBType, nullable=True)
+    evidence_data: Mapped[dict[str, Any] | None] = mapped_column(JSONBType, nullable=True)
 
     # Relationships
-    analysis: Mapped["ResumeAnalysis"] = relationship("ResumeAnalysis", back_populates="checks")  # type: ignore[name-defined]
+    analysis: Mapped[ResumeAnalysis] = relationship("ResumeAnalysis", back_populates="checks")
 
     def __repr__(self) -> str:
         return f"<AnalysisCheck id={self.id} title={self.title} status={self.status}>"

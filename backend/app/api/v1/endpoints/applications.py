@@ -34,8 +34,8 @@ async def create_application(
 async def list_applications(
     current_user: CurrentUser,
     db: DBSession,
-    status: str = None,
-    search: str = None,
+    status: str | None = None,
+    search: str | None = None,
 ) -> list[ApplicationResponse]:
     """List job applications for current user."""
     apps = await application_service.get_by_user_id(

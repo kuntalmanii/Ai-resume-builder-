@@ -157,8 +157,8 @@ class Settings(BaseSettings):
             }
             if self.SECRET_KEY in insecure_keys or len(self.SECRET_KEY) < 32:
                 errors.append(
-                    "SECRET_KEY must be a cryptographically strong " \
-                        "string of at least 32 characters in production."
+                    "SECRET_KEY must be a cryptographically strong "
+                    "string of at least 32 characters in production."
                 )
 
             if not self.DATABASE_URL or "sqlite" in self.DATABASE_URL:

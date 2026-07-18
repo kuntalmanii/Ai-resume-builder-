@@ -118,15 +118,19 @@ class CredibilityEngineService:
                             and fact_end
                             and claim.normalized_value != cls.normalize_text(fact_end)
                         ):
-                            return f"End date conflict for role at {f.get('company')}. " \
+                            return (
+                                f"End date conflict for role at {f.get('company')}. "
                                 f"Resume: {claim.original_text}, Profile: {fact_end}"
+                            )
                         if (
                             claim.field_name == "start_date"
                             and fact_start
                             and claim.normalized_value != cls.normalize_text(fact_start)
                         ):
-                            return f"Start date conflict for role at {f.get('company')}. " \
+                            return (
+                                f"Start date conflict for role at {f.get('company')}. "
                                 f"Resume: {claim.original_text}, Profile: {fact_start}"
+                            )
 
         # Current-role vs explicit end-date conflicts
         if (
@@ -140,8 +144,10 @@ class CredibilityEngineService:
                     company_norm = cls.normalize_text(f.get("company", ""))
                     if company_norm and company_norm in c_norm:
                         if f.get("end_date") and not f.get("is_current"):
-                            return f"Role at {f.get('company')} is marked as current on resume, " \
+                            return (
+                                f"Role at {f.get('company')} is marked as current on resume, "
                                 f"but has an end date of {f.get('end_date')} in Profile."
+                            )
 
         # Degree-year conflicts
         if claim.claim_type == "education" and claim.field_name == "degree":
@@ -151,10 +157,12 @@ class CredibilityEngineService:
                     if inst_norm and inst_norm in cls.normalize_text(claim.claim_text):
                         if (
                             f.get("degree")
-                            and cls.normalize_text(f.get("degree")) != claim.normalized_value
+                            and cls.normalize_text(str(f.get("degree"))) != claim.normalized_value
                         ):
-                            return f"Degree mismatch at {f.get('institution')}. Resume: " \
+                            return (
+                                f"Degree mismatch at {f.get('institution')}. Resume: "
                                 f"{claim.original_text}, Profile: {f.get('degree')}"
+                            )
 
         # Metric conflicts
         if claim.claim_type == "metric":
@@ -167,8 +175,10 @@ class CredibilityEngineService:
                         claim_digits = re.findall(r"\d+", claim.claim_text)
                         fact_digits = re.findall(r"\d+", b)
                         if claim_digits and fact_digits and claim_digits != fact_digits:
-                            return f"Metric conflict for achievement. " \
+                            return (
+                                f"Metric conflict for achievement. "
                                 f"Resume: {claim.claim_text}, Profile: {b}"
+                            )
 
         return None
 
@@ -220,7 +230,7 @@ class CredibilityEngineService:
         entries_res = await db.scalars(entries_stmt)
         entries = list(entries_res)
 
-        facts = []
+        facts: list[dict[str, Any]] = []
         if profile:
             if profile.professional_summary:
                 facts.append({"type": "summary", "text": profile.professional_summary})
@@ -479,16 +489,16 @@ class CredibilityEngineService:
             for ev in list(claim.evidence_sources):
                 await db.delete(ev)
 
-            for ev in evidence_list:
+            for ev_dict in evidence_list:
                 evidence = EvidenceSource(
                     resume_claim_id=claim.id,
-                    label=ev["label"][:255],
-                    source_type=ev["source_type"],
-                    source_id=ev.get("source_id"),
-                    support_kind=ev["support_kind"],
-                    evidence_strength=ev["evidence_strength"],
-                    verification_status=ev["verification_status"],
-                    excerpt=ev.get("excerpt"),
+                    label=ev_dict["label"][:255],
+                    source_type=ev_dict["source_type"],
+                    source_id=ev_dict.get("source_id"),
+                    support_kind=ev_dict["support_kind"],
+                    evidence_strength=ev_dict["evidence_strength"],
+                    verification_status=ev_dict["verification_status"],
+                    excerpt=ev_dict.get("excerpt"),
                 )
                 db.add(evidence)
 

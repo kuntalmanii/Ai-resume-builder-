@@ -38,23 +38,23 @@ class InterviewService:
 
         system_prompt = (
             "You are an expert interviewer and technical recruiter.\n"
-            "Generate 5 interview questions tailored to the " \
-                "candidate's resume and target job description.\n"
+            "Generate 5 interview questions tailored to the "
+            "candidate's resume and target job description.\n"
             "The list must contain:\n"
             "- 2 Behavioral questions\n"
             "- 2 Technical questions\n"
             "- 1 System Design or Coding question\n"
-            "Return EXACTLY a valid JSON array of questions. " \
-                "Output nothing else. Do not use markdown wraps."
+            "Return EXACTLY a valid JSON array of questions. "
+            "Output nothing else. Do not use markdown wraps."
         )
 
         user_prompt = (
             f"Resume:\n{resume_content}\n\n"
             f"Target Job:\n{jd_text}\n\n"
-            "Output format: Array of objects, each containing: " \
-                "id (e.g. q1, q2), question (str), type (str: " \
-                "behavioral/technical/system_design/coding), " \
-                    "answer_hint (str), star_framework_hint (str)."
+            "Output format: Array of objects, each containing: "
+            "id (e.g. q1, q2), question (str), type (str: "
+            "behavioral/technical/system_design/coding), "
+            "answer_hint (str), star_framework_hint (str)."
         )
 
         ai_provider = get_ai_provider()
@@ -110,8 +110,8 @@ class InterviewService:
                 user_id=user_id,
                 type="info",
                 title="Practice Interview Ready",
-                body=f"AI has generated {len(parsed)} customized " \
-                    f"mock practice questions based on your resume.",
+                body=f"AI has generated {len(parsed)} customized "
+                f"mock practice questions based on your resume.",
                 action_url=f"/interviews/{session.id}",
             ),
         )
@@ -145,8 +145,8 @@ class InterviewService:
         system_prompt = (
             "You are an AI Interview Coach evaluating a candidate's practice answer.\n"
             "Score their answer out of 10. Be constructive but critical.\n"
-            "Return EXACTLY a valid JSON object matching the " \
-                "requested schema. Do not use markdown wraps."
+            "Return EXACTLY a valid JSON object matching the "
+            "requested schema. Do not use markdown wraps."
         )
 
         user_prompt = (

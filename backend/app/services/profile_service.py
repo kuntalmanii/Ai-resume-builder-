@@ -94,7 +94,8 @@ async def get_combined_profile(db: AsyncSession, user_id: uuid.UUID) -> dict:
     profile = await get_or_create_profile(db, user_id)
     entries = await career_entry_service.get_career_entries(db, user_id)
 
-    profile_dict = {
+    from typing import Any
+    profile_dict: dict[str, Any] = {
         "id": profile.id,
         "user_id": profile.user_id,
         "phone": profile.phone,

@@ -43,7 +43,7 @@ class OpenAIProvider(AIProvider):
 
         if response_schema:
             # Use structured outputs (JSON mode)
-            response = await self._client.chat.completions.create(
+            response = await self._client.chat.completions.create(  # type: ignore[call-overload]
                 model=self.model_name,
                 messages=messages,  # type: ignore[arg-type]
                 temperature=temperature,

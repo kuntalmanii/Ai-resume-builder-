@@ -1,7 +1,7 @@
 """Semantic matching module to compare unmatched requirements with resume facts using Gemini."""
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 
@@ -77,27 +77,30 @@ async def run_semantic_matching(
                 return []
 
             prompt = (
-                "You are an expert ATS semantic matcher. Compare the " \
-                    "list of unmatched job requirements against the list of "
-                "resume facts. Identify cases where a requirement is " \
-                    "NOT an exact match but is covered semantically.\n"
-                "Example: 'Build and maintain RESTful APIs' " \
-                    "matches 'Developed Node.js backend endpoints'.\n"
+                "You are an expert ATS semantic matcher. Compare the "
+                "list of unmatched job requirements against the list of "
+                "resume facts. Identify cases where a requirement is "
+                "NOT an exact match but is covered semantically.\n"
+                "Example: 'Build and maintain RESTful APIs' "
+                "matches 'Developed Node.js backend endpoints'.\n"
                 "Rules:\n"
-                "1. Only match items with high confidence (>= 0.75). " \
-                    "If related but not equivalent, set confidence low.\n"
+                "1. Only match items with high confidence (>= 0.75). "
+                "If related but not equivalent, set confidence low.\n"
                 "2. Provide a brief (1-sentence) explanation justifying the match.\n"
-                "3. Do not map a missing required hard skill (like Kafka) " \
-                    "to a generic skill (like backend development).\n\n"
+                "3. Do not map a missing required hard skill (like Kafka) "
+                "to a generic skill (like backend development).\n\n"
                 f"Unmatched Job Requirements:\n{reqs_data}\n\n"
                 f"Resume Facts:\n{facts_data}"
             )
 
-            result: SemanticMatchReport = await provider.complete(
-                prompt=prompt,
-                system_prompt="You are a strict, precise semantic matching " \
+            result = cast(
+                SemanticMatchReport,
+                await provider.complete(
+                    prompt=prompt,
+                    system_prompt="You are a strict, precise semantic matching "
                     "analyzer. Output structured semantic matches.",
-                response_schema=SemanticMatchReport,
+                    response_schema=SemanticMatchReport,
+                ),
             )
 
             for item in result.matches:

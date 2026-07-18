@@ -1,4 +1,5 @@
 """Alembic environment configuration for async SQLAlchemy."""
+
 import asyncio
 from logging.config import fileConfig
 
@@ -38,6 +39,7 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     from app.core.config import get_settings
+
     settings = get_settings()
     return settings.DATABASE_URL
 

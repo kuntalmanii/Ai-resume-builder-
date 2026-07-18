@@ -1,7 +1,10 @@
 """Job Description ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.ai_suggestion import AISuggestion
+    from app.db.models.analysis import ResumeAnalysis
+    from app.db.models.job_match_result import JobMatchResult
+    from app.db.models.user import User
 
 
 class JobDescription(Base):
@@ -24,7 +33,7 @@ class JobDescription(Base):
 
     source_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     source_type: Mapped[str] = mapped_column(String(50), nullable=False, default="manual")
-    parsed_requirements: Mapped[dict | None] = mapped_column(JSONBType, nullable=True)
+    parsed_requirements: Mapped[dict[str, Any] | None] = mapped_column(JSONBType, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -37,14 +46,14 @@ class JobDescription(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="job_descriptions")  # type: ignore[name-defined]
-    analyses: Mapped[list["ResumeAnalysis"]] = relationship(  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User", back_populates="job_descriptions")
+    analyses: Mapped[list[ResumeAnalysis]] = relationship(
         "ResumeAnalysis", back_populates="job_description", cascade="all, delete-orphan"
     )
-    match_results: Mapped[list["JobMatchResult"]] = relationship(  # type: ignore[name-defined]
+    match_results: Mapped[list[JobMatchResult]] = relationship(
         "JobMatchResult", back_populates="job_description", cascade="all, delete-orphan"
     )
-    ai_suggestions: Mapped[list["AISuggestion"]] = relationship(  # type: ignore[name-defined]
+    ai_suggestions: Mapped[list[AISuggestion]] = relationship(
         "AISuggestion", back_populates="job_description", cascade="all, delete-orphan"
     )
 

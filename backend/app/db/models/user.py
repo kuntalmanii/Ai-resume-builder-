@@ -1,13 +1,23 @@
 """User ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.analysis import ResumeAnalysis
+    from app.db.models.career_entry import CareerEntry
+    from app.db.models.job_description import JobDescription
+    from app.db.models.profile import CareerProfile
+    from app.db.models.resume import Resume
 
 
 class User(Base):
@@ -32,19 +42,19 @@ class User(Base):
     )
 
     # Relationships
-    career_profile: Mapped["CareerProfile"] = relationship(  # type: ignore[name-defined]
+    career_profile: Mapped[CareerProfile] = relationship(
         "CareerProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    resumes: Mapped[list["Resume"]] = relationship(  # type: ignore[name-defined]
+    resumes: Mapped[list[Resume]] = relationship(
         "Resume", back_populates="user", cascade="all, delete-orphan"
     )
-    analyses: Mapped[list["ResumeAnalysis"]] = relationship(  # type: ignore[name-defined]
+    analyses: Mapped[list[ResumeAnalysis]] = relationship(
         "ResumeAnalysis", back_populates="user", cascade="all, delete-orphan"
     )
-    job_descriptions: Mapped[list["JobDescription"]] = relationship(  # type: ignore[name-defined]
+    job_descriptions: Mapped[list[JobDescription]] = relationship(
         "JobDescription", back_populates="user", cascade="all, delete-orphan"
     )
-    career_entries: Mapped[list["CareerEntry"]] = relationship(  # type: ignore[name-defined]
+    career_entries: Mapped[list[CareerEntry]] = relationship(
         "CareerEntry", back_populates="user", cascade="all, delete-orphan"
     )
 

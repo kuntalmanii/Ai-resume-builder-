@@ -29,7 +29,7 @@ TAXONOMY = {
 
 # Special matching rules to prevent false positives
 # Each list contains tuple of (pattern, flags)
-SPECIAL_PATTERNS = {
+SPECIAL_PATTERNS: dict[str, list[tuple[str, int]]] = {
     "Go": [
         (r"\bgolang\b", re.IGNORECASE),
         (r"\bGo\b", 0),  # case-sensitive to avoid matching the English verb "go"

@@ -43,7 +43,6 @@ jobs:
 
       - name: Type check with mypy
         run: mypy app --ignore-missing-imports --no-strict-optional
-        continue-on-error: true  # non-blocking for now; track as tech debt
 
   # ──────────────────────────────────────────────────────────────────────────
   # Job 2: Backend Tests (SQLite fast suite)

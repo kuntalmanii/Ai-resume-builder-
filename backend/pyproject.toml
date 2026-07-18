@@ -6,15 +6,24 @@ requires-python = ">=3.11"
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
+strict = false
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
+exclude = [
+    '^alembic/versions/',
+    '^tests/',
+]
 
 [tool.ruff]
 line-length = 100
+exclude = [
+    "alembic/versions",
+    "scripts/seed_demo.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP"]
+
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

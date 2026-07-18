@@ -1,13 +1,19 @@
 """Evidence Audit ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.resume import Resume
 
 
 class EvidenceAudit(Base):
@@ -46,7 +52,7 @@ class EvidenceAudit(Base):
     )
 
     # Relationships
-    resume: Mapped["Resume"] = relationship("Resume", back_populates="audits")  # type: ignore[name-defined]
+    resume: Mapped[Resume] = relationship("Resume", back_populates="audits")
 
     def __repr__(self) -> str:
         return f"<EvidenceAudit id={self.id} score={self.overall_score} status={self.status}>"

@@ -37,7 +37,7 @@ class RecruiterService:
                 )
                 match_res = await db.execute(match_query)
                 match = match_res.scalars().first()
-                match_score = round(match.overall_score * 100, 2) if match else 75.0
+                match_score = float(match.overall_match_percentage) if match else 75.0
 
                 candidates.append(
                     {

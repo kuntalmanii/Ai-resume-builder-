@@ -64,5 +64,7 @@ class Application(Base):
     cover_letters = relationship("CoverLetter", back_populates="application")
 
     def __repr__(self) -> str:
-        return f"<Application id={self.id} company={self.company} " \
+        return (
+            f"<Application id={self.id} company={self.company} "
             f"role={self.role} status={self.status}>"
+        )

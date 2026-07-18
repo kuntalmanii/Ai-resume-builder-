@@ -3,7 +3,7 @@
 import copy
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -31,8 +31,8 @@ class LLMClaim(BaseModel):
     )
     support_status: str = Field(
         ...,
-        description="supported, partially_supported, unsupported, " \
-            "contradictory, user_confirmation_required",
+        description="supported, partially_supported, unsupported, "
+        "contradictory, user_confirmation_required",
     )
     supporting_sources: list[str] = Field(
         default_factory=list, description="List of source facts supporting this claim"
@@ -149,25 +149,25 @@ class AISuggestionService:
                 facts.append(f"Skills: {profile.skills}")
             for exp in profile.experience:
                 facts.append(
-                    f"Experience at {exp.get('company')} ({exp.get('position')}): " \
-                        f"{', '.join(exp.get('bullets', []))}"
+                    f"Experience at {exp.get('company')} ({exp.get('position')}): "
+                    f"{', '.join(exp.get('bullets', []))}"
                 )
             for proj in profile.projects:
                 facts.append(f"Project {proj.get('name')}: {', '.join(proj.get('bullets', []))}")
 
         for ent in entries:
             facts.append(
-                f"Career Entry ({ent.entry_type}): " \
-                    f"{ent.content.get('company') or ent.content.get('name')} " \
-                    f"- {ent.content.get('position') or ''}: {ent.content.get('description') or ''}"
+                f"Career Entry ({ent.entry_type}): "
+                f"{ent.data.get('company') or ent.data.get('name')} "
+                f"- {ent.data.get('position') or ''}: {ent.data.get('description') or ''}"
             )
 
         # Add user answers if any
         if answers:
             for ans in answers:
                 facts.append(
-                    f"User Confirmed Achievement Fact: Question: " \
-                        f"'{ans.get('question')}' Answer: '{ans.get('answer')}'"
+                    f"User Confirmed Achievement Fact: Question: "
+                    f"'{ans.get('question')}' Answer: '{ans.get('answer')}'"
                 )
 
         facts_text = "\n".join([f"- {f}" for f in facts]) or "No career facts documented yet."
@@ -184,32 +184,32 @@ class AISuggestionService:
         # 5. Call LLM for completion
         provider = GeminiProvider()
         system_prompt = (
-            "You are an expert AI career coach and resume optimizer. Your " \
-                "task is to suggest a single high-quality resume improvement "
-            "based strictly on the user's career facts. You must " \
-                "perform strict claim validation on any suggestions.\n\n"
+            "You are an expert AI career coach and resume optimizer. Your "
+            "task is to suggest a single high-quality resume improvement "
+            "based strictly on the user's career facts. You must "
+            "perform strict claim validation on any suggestions.\n\n"
             "CRITICAL INSTRUCTIONS FOR GROUNDING AND CLAIMS VALIDATION:\n"
-            "1. You MUST NOT fabricate any facts, metrics, or achievements. " \
-                "All claims in the suggested text must be strictly grounded "
+            "1. You MUST NOT fabricate any facts, metrics, or achievements. "
+            "All claims in the suggested text must be strictly grounded "
             "in the provided Career Profile Facts or the Original Resume content.\n"
-            "2. If you want to include an achievement metric (e.g., 'improved " \
-                "sales by 40%') but do not see the exact metric in the facts, "
-            "DO NOT make up a number. Instead, write the suggestion using " \
-                "placeholders/qualitative text and add a clarifying question to "
-            "the 'questions' list (e.g., 'By what percentage did you improve " \
-                "sales?'). Set that claim's risk_level to 'user_confirmation_required' "
+            "2. If you want to include an achievement metric (e.g., 'improved "
+            "sales by 40%') but do not see the exact metric in the facts, "
+            "DO NOT make up a number. Instead, write the suggestion using "
+            "placeholders/qualitative text and add a clarifying question to "
+            "the 'questions' list (e.g., 'By what percentage did you improve "
+            "sales?'). Set that claim's risk_level to 'user_confirmation_required' "
             "and the overall risk_level of the suggestion to 'medium'.\n"
-            "3. Extract each atomic claim made in your suggested text. Validate each claim " \
-                "against the provided Career Profile Facts and Original Resume Content:\n"
+            "3. Extract each atomic claim made in your suggested text. Validate each claim "
+            "against the provided Career Profile Facts and Original Resume Content:\n"
             "   - 'supported': The claim is fully documented in the facts. (risk_level = 'low')\n"
-            "   - 'partially_supported': The claim is partially supported, " \
-                "or requires minor user confirmation. (risk_level = 'medium')\n"
-            "   - 'unsupported': The claim has no supporting facts " \
-                "whatsoever in the user's profile. (risk_level = 'high')\n"
-            "   - 'contradictory': The claim directly contradicts a " \
-                "fact in the user's profile. (risk_level = 'blocked')\n"
-            "4. Set the overall risk_level of the suggestion " \
-                "to the maximum risk of any individual claim."
+            "   - 'partially_supported': The claim is partially supported, "
+            "or requires minor user confirmation. (risk_level = 'medium')\n"
+            "   - 'unsupported': The claim has no supporting facts "
+            "whatsoever in the user's profile. (risk_level = 'high')\n"
+            "   - 'contradictory': The claim directly contradicts a "
+            "fact in the user's profile. (risk_level = 'blocked')\n"
+            "4. Set the overall risk_level of the suggestion "
+            "to the maximum risk of any individual claim."
         )
 
         inst = req.instruction or "Optimize for maximum impact, clarity, and ATS compatibility."
@@ -221,16 +221,19 @@ class AISuggestionService:
             f"Grounded Career Profile Facts (Ground Truth):\n{facts_text}\n\n"
             f"Job Description Context (if any):\n{jd_text}\n\n"
             f"User Specific Instructions:\n{inst}\n\n"
-            "Please generate the optimized text, rationale, expected ATS score gain " \
-                "(0-10), list of atomic claims, and any achievement clarifying questions."
+            "Please generate the optimized text, rationale, expected ATS score gain "
+            "(0-10), list of atomic claims, and any achievement clarifying questions."
         )
 
         # Execute structured completion
-        output: LLMSuggestionOutput = await provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            response_schema=LLMSuggestionOutput,
-            temperature=0.2,
+        output = cast(
+            LLMSuggestionOutput,
+            await provider.complete(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                response_schema=LLMSuggestionOutput,
+                temperature=0.2,
+            ),
         )
 
         # 6. Create AISuggestion record
@@ -332,7 +335,7 @@ class AISuggestionService:
                 if mr and mr.missing_requirements:
                     # Missing requirements is a list of dicts/strings
                     missing_keywords = [
-                        req.get("name") if isinstance(req, dict) else str(req)
+                        str(req.get("name") or "") if isinstance(req, dict) else str(req)
                         for req in mr.missing_requirements
                     ]
 
@@ -369,8 +372,8 @@ class AISuggestionService:
                             target_field="bullets",
                             target_index=0,
                             job_description_id=job_description_id,
-                            instruction=f"Rephrase this bullet to target the " \
-                                f"{jd.title} position requirements.",
+                            instruction=f"Rephrase this bullet to target the "
+                            f"{jd.title} position requirements.",
                         )
                         suggestions_to_create.append(req)
 
@@ -387,8 +390,8 @@ class AISuggestionService:
                         target_entry_id=entry_id,
                         target_field="bullets",
                         target_index=0,
-                        instruction="Enhance this experience bullet " \
-                            "using active verbs and metrics.",
+                        instruction="Enhance this experience bullet "
+                        "using active verbs and metrics.",
                     )
                     suggestions_to_create.append(req)
                     if len(suggestions_to_create) >= max_suggestions:
@@ -493,10 +496,10 @@ class AISuggestionService:
 
         provider = GeminiProvider()
         system_prompt = (
-            "You are a strict claim verification assistant. Your job " \
-                "is to extract all factual claims from the edited text "
-            "and check them against the provided Ground Truth Facts. Determine if " \
-                "they are supported, unsupported, partially supported, or contradictory."
+            "You are a strict claim verification assistant. Your job "
+            "is to extract all factual claims from the edited text "
+            "and check them against the provided Ground Truth Facts. Determine if "
+            "they are supported, unsupported, partially supported, or contradictory."
         )
         user_prompt = (
             f'Edited Text:\n"{edited_text}"\n\n'
@@ -504,11 +507,14 @@ class AISuggestionService:
             "Extract the claims and output the risk level and validation list."
         )
 
-        output: LLMClaimValidationOnly = await provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            response_schema=LLMClaimValidationOnly,
-            temperature=0.1,
+        output = cast(
+            LLMClaimValidationOnly,
+            await provider.complete(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                response_schema=LLMClaimValidationOnly,
+                temperature=0.1,
+            ),
         )
 
         sugg.risk_level = output.risk_level
@@ -570,17 +576,17 @@ class AISuggestionService:
                 facts.append(f"Skills: {profile.skills}")
             for exp in profile.experience:
                 facts.append(
-                    f"Experience at {exp.get('company')} ({exp.get('position')}): " \
-                        f"{', '.join(exp.get('bullets', []))}"
+                    f"Experience at {exp.get('company')} ({exp.get('position')}): "
+                    f"{', '.join(exp.get('bullets', []))}"
                 )
             for proj in profile.projects:
                 facts.append(f"Project {proj.get('name')}: {', '.join(proj.get('bullets', []))}")
 
         for ent in entries:
             facts.append(
-                f"Career Entry ({ent.entry_type}): " \
-                    f"{ent.content.get('company') or ent.content.get('name')} " \
-                    f"- {ent.content.get('position') or ''}: {ent.content.get('description') or ''}"
+                f"Career Entry ({ent.entry_type}): "
+                f"{ent.data.get('company') or ent.data.get('name')} "
+                f"- {ent.data.get('position') or ''}: {ent.data.get('description') or ''}"
             )
 
         # Add the confirmed answer fact
@@ -601,16 +607,16 @@ class AISuggestionService:
         # 3. Call LLM for completion
         provider = GeminiProvider()
         system_prompt = (
-            "You are an expert AI career coach and resume optimizer. Your " \
-                "task is to suggest a single high-quality resume improvement "
-            "based strictly on the user's career facts. You must " \
-                "perform strict claim validation on any suggestions.\n\n"
+            "You are an expert AI career coach and resume optimizer. Your "
+            "task is to suggest a single high-quality resume improvement "
+            "based strictly on the user's career facts. You must "
+            "perform strict claim validation on any suggestions.\n\n"
             "CRITICAL INSTRUCTIONS FOR GROUNDING AND CLAIMS VALIDATION:\n"
-            "1. You MUST NOT fabricate any facts, metrics, or achievements. " \
-                "All claims in the suggested text must be strictly grounded "
+            "1. You MUST NOT fabricate any facts, metrics, or achievements. "
+            "All claims in the suggested text must be strictly grounded "
             "in the provided Career Profile Facts or the Original Resume content.\n"
-            "2. Since the user has answered the clarifying question, " \
-                "incorporate their exact answer/metric into the suggested text "
+            "2. Since the user has answered the clarifying question, "
+            "incorporate their exact answer/metric into the suggested text "
             "and mark that claim as 'supported' and risk_level as 'low'."
         )
 
@@ -621,17 +627,20 @@ class AISuggestionService:
             f"Suggestion Type Mode: {sugg.suggestion_type}\n\n"
             f"Grounded Career Profile Facts (Ground Truth):\n{facts_text}\n\n"
             f"Job Description Context (if any):\n{jd_text}\n\n"
-            f"User Specific Instructions:\nOptimize the suggestion " \
-                f"using the provided answer: '{answer}'.\n\n"
-            "Please generate the optimized text, rationale, expected ATS score gain " \
-                "(0-10), list of atomic claims, and any achievement clarifying questions."
+            f"User Specific Instructions:\nOptimize the suggestion "
+            f"using the provided answer: '{answer}'.\n\n"
+            "Please generate the optimized text, rationale, expected ATS score gain "
+            "(0-10), list of atomic claims, and any achievement clarifying questions."
         )
 
-        output: LLMSuggestionOutput = await provider.complete(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-            response_schema=LLMSuggestionOutput,
-            temperature=0.2,
+        output = cast(
+            LLMSuggestionOutput,
+            await provider.complete(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                response_schema=LLMSuggestionOutput,
+                temperature=0.2,
+            ),
         )
 
         # 4. Update the suggestion fields
@@ -710,8 +719,8 @@ class AISuggestionService:
             sugg.status = "invalidated"
             await db.commit()
             raise ConflictError(
-                f"Version conflict: The resume has been modified (version {resume.version}) " \
-                    f"since this suggestion was generated (version {sugg.source_resume_version}).",
+                f"Version conflict: The resume has been modified (version {resume.version}) "
+                f"since this suggestion was generated (version {sugg.source_resume_version}).",
                 details="RESUME_VERSION_CONFLICT",
             )
 
@@ -846,7 +855,7 @@ class AISuggestionService:
             sugg.target_entry_id,
             sugg.target_field,
             sugg.target_index,
-            text_to_apply,
+            text_to_apply or "",
         )
 
         # 3. Update resume version and content

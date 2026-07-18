@@ -35,7 +35,7 @@ class ApplicationService:
         return app_obj
 
     async def get_by_user_id(
-        self, db: AsyncSession, user_id: UUID, status: str = None, search: str = None
+        self, db: AsyncSession, user_id: UUID, status: str | None = None, search: str | None = None
     ) -> list[Application]:
         return await application_repository.get_by_user_id(
             db, user_id, status=status, search=search
@@ -59,8 +59,8 @@ class ApplicationService:
                     user_id=db_obj.user_id,
                     type="info",
                     title="Application Status Updated",
-                    body=f"Application for {db_obj.role} at " \
-                        f"{db_obj.company} moved to {data['status']}.",
+                    body=f"Application for {db_obj.role} at "
+                    f"{db_obj.company} moved to {data['status']}.",
                     action_url=f"/applications/{db_obj.id}",
                 ),
             )
@@ -91,8 +91,8 @@ class ApplicationService:
                 user_id=user_id,
                 type="reminder",
                 title="Interview Scheduled",
-                body=f"New {iv_obj.round_type} interview scheduled for {role} at " \
-                    f"{company} on {iv_obj.scheduled_at.strftime('%Y-%m-%d %H:%M')}.",
+                body=f"New {iv_obj.round_type} interview scheduled for {role} at "
+                f"{company} on {iv_obj.scheduled_at.strftime('%Y-%m-%d %H:%M')}.",
                 action_url=f"/applications/{application_id}",
             ),
         )

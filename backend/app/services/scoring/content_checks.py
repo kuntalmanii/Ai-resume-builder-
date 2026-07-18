@@ -79,8 +79,8 @@ def check_action_verbs(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible // 2,
-            recommendation=f"Rewrite {weak_count} bullets to start with strong " \
-                f"action verbs (e.g. Built, Designed, Led, Reduced).",
+            recommendation=f"Rewrite {weak_count} bullets to start with strong "
+            f"action verbs (e.g. Built, Designed, Led, Reduced).",
             evidence_data={
                 "action_verb_ratio": round(ratio, 2),
                 "bullets_lacking_action_verb": weak_count,
@@ -95,8 +95,8 @@ def check_action_verbs(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Rewrite bullets to lead with action verbs. " \
-                "Replace 'Responsible for X' with 'Delivered X'.",
+            recommendation="Rewrite bullets to lead with action verbs. "
+            "Replace 'Responsible for X' with 'Delivered X'.",
             evidence_data={
                 "action_verb_ratio": round(ratio, 2),
                 "bullets_lacking_action_verb": weak_count,
@@ -131,8 +131,8 @@ def check_specificity(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "High Content Specificity",
-            f"Bullets contain concrete technologies, scope, and " \
-                f"outcomes (avg specificity: {avg_score:.1f}/5).",
+            f"Bullets contain concrete technologies, scope, and "
+            f"outcomes (avg specificity: {avg_score:.1f}/5).",
             "passed",
             possible,
             possible,
@@ -150,8 +150,8 @@ def check_specificity(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible // 2,
-            recommendation="Add specific technologies, team sizes, " \
-                "project scope, or outcomes to vague bullets.",
+            recommendation="Add specific technologies, team sizes, "
+            "project scope, or outcomes to vague bullets.",
             evidence_data={"avg_specificity": round(avg_score, 2)},
         )
     else:
@@ -159,13 +159,13 @@ def check_specificity(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Low Content Specificity",
-            f"Bullets are too generic — missing specific technologies, " \
-                f"scope, or outcomes (avg: {avg_score:.1f}/5).",
+            f"Bullets are too generic — missing specific technologies, "
+            f"scope, or outcomes (avg: {avg_score:.1f}/5).",
             "failed",
             possible,
             0,
-            recommendation="Make bullets concrete: mention the technology " \
-                "used, scale, team size, or outcome achieved.",
+            recommendation="Make bullets concrete: mention the technology "
+            "used, scale, team size, or outcome achieved.",
             evidence_data={"avg_specificity": round(avg_score, 2)},
         )
 
@@ -203,8 +203,8 @@ def check_measurable_impact(resume: Any) -> CheckResult:
             evidence_data={
                 "bullets_with_metrics": with_metrics,
                 "metric_coverage_ratio": round(ratio, 2),
-                "note": "Metrics are user-provided claims and " \
-                    "have not been independently verified.",
+                "note": "Metrics are user-provided claims and "
+                "have not been independently verified.",
             },
         )
     elif ratio >= 0.2:
@@ -216,8 +216,8 @@ def check_measurable_impact(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible // 2,
-            recommendation="Add measurable outcomes (%, $, counts, time saved) " \
-                "to more bullets where truthful data exists.",
+            recommendation="Add measurable outcomes (%, $, counts, time saved) "
+            "to more bullets where truthful data exists.",
             evidence_data={
                 "bullets_with_metrics": with_metrics,
                 "metric_coverage_ratio": round(ratio, 2),
@@ -233,8 +233,8 @@ def check_measurable_impact(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Where accurate, add metrics: e.g. 'Reduced " \
-                "page load time by 40%', 'Served 10k+ users'.",
+            recommendation="Where accurate, add metrics: e.g. 'Reduced "
+            "page load time by 40%', 'Served 10k+ users'.",
             evidence_data={
                 "bullets_with_metrics": with_metrics,
                 "note": "Add only truthful metrics — do not fabricate performance claims.",
@@ -283,8 +283,8 @@ def check_conciseness(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation=f"Shorten {len(too_long)} long bullet(s) to under " \
-                f"{MAX_BULLET_WORDS} words for better readability.",
+            recommendation=f"Shorten {len(too_long)} long bullet(s) to under "
+            f"{MAX_BULLET_WORDS} words for better readability.",
             evidence_data={
                 "long_bullets_count": len(too_long),
                 "avg_bullet_words": round(avg_words, 1),
@@ -299,8 +299,8 @@ def check_conciseness(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Trim long bullets. Aim for 12–25 words " \
-                "per bullet for maximum readability.",
+            recommendation="Trim long bullets. Aim for 12–25 words "
+            "per bullet for maximum readability.",
             evidence_data={
                 "long_bullets_count": len(too_long),
                 "avg_bullet_words": round(avg_words, 1),
@@ -346,8 +346,8 @@ def check_repetition(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation="Rewrite duplicate bullets to highlight " \
-                "different achievements or responsibilities.",
+            recommendation="Rewrite duplicate bullets to highlight "
+            "different achievements or responsibilities.",
             evidence_data={"duplicate_pairs": len(duplicates)},
         )
     else:
@@ -359,8 +359,8 @@ def check_repetition(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Remove or differentiate repeated bullet points. " \
-                "Each bullet should highlight a unique contribution.",
+            recommendation="Remove or differentiate repeated bullet points. "
+            "Each bullet should highlight a unique contribution.",
             evidence_data={"duplicate_pairs": len(duplicates)},
         )
 
@@ -405,8 +405,8 @@ def check_weak_phrases(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation="Replace weak phrases with specific action " \
-                "verbs. Instead of 'Worked on X', use 'Built X'.",
+            recommendation="Replace weak phrases with specific action "
+            "verbs. Instead of 'Worked on X', use 'Built X'.",
             evidence_data={"weak_bullet_count": len(weak), "examples": sample[:2]},
         )
     else:
@@ -418,8 +418,8 @@ def check_weak_phrases(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Rewrite bullets to use active, specific language. Avoid " \
-                "'responsible for', 'helped with', 'participated in'.",
+            recommendation="Rewrite bullets to use active, specific language. Avoid "
+            "'responsible for', 'helped with', 'participated in'.",
             evidence_data={"weak_bullet_count": len(weak), "ratio": round(ratio, 2)},
         )
 

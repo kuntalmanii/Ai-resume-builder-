@@ -2,6 +2,7 @@
 
 import logging
 import re
+from typing import cast
 
 from app.ai.factory import get_ai_provider
 from app.core.config import get_settings
@@ -128,7 +129,7 @@ def parse_deterministic_fallback(
     summary = "\n".join(segments.get("professional_summary", []))
 
     # 3. Education Heuristic
-    education = []
+    education: list[EducationEntry] = []
     edu_lines = segments.get("education", [])
     current_edu = None
 
@@ -187,7 +188,7 @@ def parse_deterministic_fallback(
         education.append(current_edu)
 
     # 4. Experience Heuristic
-    experience = []
+    experience: list[ExperienceEntry] = []
     exp_lines = segments.get("experience", [])
     current_job = None
 
@@ -251,7 +252,7 @@ def parse_deterministic_fallback(
         experience.append(current_job)
 
     # 5. Skills Heuristic
-    skills = []
+    skills: list[SkillGroup] = []
     skills_lines = segments.get("skills", [])
     all_skills = []
     for line in skills_lines:
@@ -266,7 +267,7 @@ def parse_deterministic_fallback(
         skills.append(SkillGroup(category="Skills", skills=all_skills, order=1))
 
     # 6. Projects Heuristic
-    projects = []
+    projects: list[ProjectEntry] = []
     proj_lines = segments.get("projects", [])
     current_proj = None
 
@@ -295,7 +296,7 @@ def parse_deterministic_fallback(
         projects.append(current_proj)
 
     # 7. Other simple sections
-    certifications = []
+    certifications: list[CertificationEntry] = []
     for line in segments.get("certifications", []):
         line_clean = line.strip()
         if line_clean:
@@ -303,13 +304,13 @@ def parse_deterministic_fallback(
                 CertificationEntry(name=line_clean, order=len(certifications) + 1)
             )
 
-    achievements = []
+    achievements: list[AchievementEntry] = []
     for line in segments.get("achievements", []):
         line_clean = line.strip()
         if line_clean:
             achievements.append(AchievementEntry(title=line_clean, order=len(achievements) + 1))
 
-    positions = []
+    positions: list[PositionOfResponsibilityEntry] = []
     for line in segments.get("positions_of_responsibility", []):
         line_clean = line.strip()
         if line_clean:
@@ -319,13 +320,13 @@ def parse_deterministic_fallback(
                 )
             )
 
-    languages = []
+    languages: list[LanguageEntry] = []
     for line in segments.get("languages", []):
         line_clean = line.strip()
         if line_clean:
             languages.append(LanguageEntry(language=line_clean, order=len(languages) + 1))
 
-    interests = []
+    interests: list[InterestEntry] = []
     for line in segments.get("interests", []):
         line_clean = line.strip()
         if line_clean:
@@ -395,30 +396,33 @@ async def parse_resume_text(text: str) -> tuple[ResumeDocument, list[str], dict[
         try:
             provider = get_ai_provider()
             prompt = (
-                "You are a professional resume parser. Segment and " \
-                    "map the provided resume text into a structured JSON "
+                "You are a professional resume parser. Segment and "
+                "map the provided resume text into a structured JSON "
                 "schema matching the ResumeDocument structure.\n"
                 "Rules:\n"
-                "1. NEVER fabricate or hallucinate any facts. " \
-                    "Only extract what is present in the text.\n"
+                "1. NEVER fabricate or hallucinate any facts. "
+                "Only extract what is present in the text.\n"
                 "2. Do not enhance phrasing or add achievements.\n"
-                "3. If any field like start_date, degree, company is " \
-                    "missing, set it to empty string or null. Do not guess.\n"
-                "4. Make sure to populate the `section_order` list with " \
-                    "keys that represent sections present in the resume.\n\n"
+                "3. If any field like start_date, degree, company is "
+                "missing, set it to empty string or null. Do not guess.\n"
+                "4. Make sure to populate the `section_order` list with "
+                "keys that represent sections present in the resume.\n\n"
                 f"Resume text to parse:\n{text}"
             )
 
-            result: ResumeDocument = await provider.complete(
-                prompt=prompt,
-                system_prompt=(
-                    "You are a precise, deterministic resume data " \
+            result = cast(
+                ResumeDocument,
+                await provider.complete(
+                    prompt=prompt,
+                    system_prompt=(
+                        "You are a precise, deterministic resume data "
                         "parser. Extract structured entities (education, "
-                    "experience, projects, skills) and map them " \
+                        "experience, projects, skills) and map them "
                         "accurately. Never invent certifications, credentials, "
-                    "or bullet points. Be faithful to the source text."
+                        "or bullet points. Be faithful to the source text."
+                    ),
+                    response_schema=ResumeDocument,
                 ),
-                response_schema=ResumeDocument,
             )
 
             # Verification of personal details using local regex

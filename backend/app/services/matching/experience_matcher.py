@@ -106,8 +106,8 @@ def run_experience_matching(
                 gaps.append(
                     {
                         "requirement": req.get("text"),
-                        "details": f"Your resume demonstrates {total_years} " \
-                            f"years of unique calendar experience.",
+                        "details": f"Your resume demonstrates {total_years} "
+                        f"years of unique calendar experience.",
                         "gapYears": round(gap, 1),
                     }
                 )

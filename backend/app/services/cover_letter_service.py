@@ -40,15 +40,15 @@ class CoverLetterService:
         # 3. Grounding prompts
         system_prompt = (
             "You are an expert career advisor and professional resume writer.\n"
-            "Your task is to write a highly compelling, " \
-                "personalized cover letter for the candidate.\n"
+            "Your task is to write a highly compelling, "
+            "personalized cover letter for the candidate.\n"
             "CRITICAL INSTRUCTIONS:\n"
             "1. NEVER invent any work experiences, projects, credentials, or skills.\n"
             "2. Ground ALL claims and achievements strictly on the provided resume content.\n"
-            "3. If a requirement in the job description is " \
-                "not mentioned in the resume, do not claim " \
-                "the candidate has it; instead focus on " \
-                    "transferable skills that ARE in the resume.\n"
+            "3. If a requirement in the job description is "
+            "not mentioned in the resume, do not claim "
+            "the candidate has it; instead focus on "
+            "transferable skills that ARE in the resume.\n"
             "4. Make the tone matches the requested style (e.g. professional, creative, modern)."
         )
 
@@ -56,8 +56,8 @@ class CoverLetterService:
             f"Candidate Resume Content:\n{resume_content}\n\n"
             f"Target Job Description:\n{jd_text}\n\n"
             f"Style Preference: {request.style_preference}\n\n"
-            "Please write a cover letter. Output ONLY the raw cover " \
-                "letter text. Do not include any chat prefix/suffix."
+            "Please write a cover letter. Output ONLY the raw cover "
+            "letter text. Do not include any chat prefix/suffix."
         )
 
         ai_provider = get_ai_provider()
@@ -109,7 +109,7 @@ class CoverLetterService:
         *,
         root_id: uuid.UUID,
         user_id: uuid.UUID,
-        content: str,
+        content: str | None = None,
         title: str | None = None,
     ) -> CoverLetter:
         """Create a new version increment of a cover letter."""
@@ -126,7 +126,7 @@ class CoverLetterService:
             resume_id=root.resume_id,
             job_description_id=root.job_description_id,
             title=title or root.title,
-            content=content,
+            content=content if content is not None else root.content,
             version=next_ver,
             parent_id=root_id,
             is_grounded=root.is_grounded,
@@ -151,14 +151,16 @@ class CoverLetterService:
         *,
         id: uuid.UUID,
         user_id: uuid.UUID,
-        content: str,
+        content: str | None = None,
         title: str | None = None,
     ) -> CoverLetter | None:
         cl = await cover_letter_repository.get(db, id)
         if not cl or cl.user_id != user_id:
             return None
-        updates = {"content": content}
-        if title:
+        updates = {}
+        if content is not None:
+            updates["content"] = content
+        if title is not None:
             updates["title"] = title
         return await cover_letter_repository.update(db, db_obj=cl, obj_in=updates)
 

@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1.router import router as v1_router
 from app.core.config import get_settings
 from app.core.exceptions import (
-    CareerOSException,
+    CareerOSError,
     ConflictError,
     ForbiddenError,
     ResourceNotFoundError,
@@ -119,17 +119,17 @@ def create_application() -> FastAPI:
 
     # ─── Root health probes (fast, no-auth, no versioning) ───────────────────
     @app.get("/health", include_in_schema=False)
-    async def root_health() -> dict:
+    async def root_health() -> dict[str, str]:
         return {"status": "healthy", "service": "CareerOS AI API"}
 
     @app.get("/live", include_in_schema=False)
-    async def root_liveness() -> dict:
+    async def root_liveness() -> dict[str, str]:
         return {"status": "alive"}
 
     # ─── Exception Handlers ──────────────────────────────────────────────────
 
-    @app.exception_handler(CareerOSException)
-    async def careeros_exception_handler(request: Request, exc: CareerOSException) -> JSONResponse:
+    @app.exception_handler(CareerOSError)
+    async def careeros_exception_handler(request: Request, exc: CareerOSError) -> JSONResponse:
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         if isinstance(exc, ResourceNotFoundError):
             status_code = status.HTTP_404_NOT_FOUND

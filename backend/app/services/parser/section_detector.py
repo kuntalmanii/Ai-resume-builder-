@@ -129,7 +129,7 @@ def segment_text_by_sections(text: str) -> dict[str, list[str]]:
 
     Text before the first detected section heading goes into 'personal_information'.
     """
-    segments = {
+    segments: dict[str, list[str]] = {
         "personal_information": [],
         "professional_summary": [],
         "education": [],

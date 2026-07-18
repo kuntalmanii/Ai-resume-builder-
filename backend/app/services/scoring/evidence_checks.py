@@ -204,8 +204,8 @@ def check_numeric_awareness(resume: Any) -> CheckResult:
             recommendation=None,
             evidence_data={
                 "bullets_with_metrics": len(bullets_with_metrics),
-                "note": "These metrics are user-provided claims " \
-                    "and have not been externally verified. "
+                "note": "These metrics are user-provided claims "
+                "and have not been externally verified. "
                 "You can connect Career Profile entries to add supporting context.",
             },
         )
@@ -218,8 +218,8 @@ def check_numeric_awareness(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation="Where truthful, add measurable outcomes. " \
-                "Metrics strengthen evidence credibility.",
+            recommendation="Where truthful, add measurable outcomes. "
+            "Metrics strengthen evidence credibility.",
             evidence_data={
                 "bullets_with_metrics": len(bullets_with_metrics),
                 "note": "Only add metrics that accurately reflect your actual work.",
@@ -245,8 +245,8 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
             "warning",
             possible,
             possible - 1,
-            recommendation="Complete your Smart Career Profile to " \
-                "enable cross-reference verification.",
+            recommendation="Complete your Smart Career Profile to "
+            "enable cross-reference verification.",
             evidence_data={
                 "note": "Profile consistency adds confidence signals — it is not required."
             },
@@ -304,8 +304,8 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
             "warning",
             possible,
             possible - 1,
-            recommendation="Add the remaining experience entries to your " \
-                "Smart Career Profile for stronger verification.",
+            recommendation="Add the remaining experience entries to your "
+            "Smart Career Profile for stronger verification.",
             evidence_data={
                 "matched_companies": list(matched),
                 "unmatched_companies": list(unmatched)[:3],
@@ -320,8 +320,8 @@ def check_profile_consistency(resume: Any, career_profile: Any | None = None) ->
             "warning",
             possible,
             max(0, possible - 1),
-            recommendation="Update your Smart Career Profile to include " \
-                "your work history for better verification.",
+            recommendation="Update your Smart Career Profile to include "
+            "your work history for better verification.",
             evidence_data={"match_ratio": round(match_ratio, 2)},
         )
 
@@ -341,8 +341,8 @@ def check_verification_transparency(resume: Any) -> CheckResult:
         CATEGORY,
         "Verification Transparency",
         "Resume content is analyzed for internal consistency. "
-        "Numeric claims are treated as user-provided. No " \
-            "external employment verification is performed.",
+        "Numeric claims are treated as user-provided. No "
+        "external employment verification is performed.",
         "passed",
         possible,
         possible,
@@ -350,8 +350,8 @@ def check_verification_transparency(resume: Any) -> CheckResult:
             "total_bullets": len(bullets),
             "bullets_with_numeric_claims": len(bullets_with_metrics),
             "verification_level": "self_reported",
-            "note": "Connect your Smart Career Profile to add " \
-                "source-backed confidence to your entries.",
+            "note": "Connect your Smart Career Profile to add "
+            "source-backed confidence to your entries.",
         },
     )
 

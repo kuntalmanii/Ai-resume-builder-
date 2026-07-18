@@ -130,7 +130,7 @@ def _build_response(
         job_description_id=analysis.job_description_id,
         overall_score=analysis.overall_score,
         ats_score=analysis.ats_score,
-        content_strength_score=analysis.content_strength_score,
+        content_score=analysis.content_strength_score,
         jd_match_score=analysis.jd_match_score,
         completeness_score=analysis.completeness_score,
         readability_score=analysis.readability_score,
@@ -198,11 +198,9 @@ async def run_analysis(
     # Get career profile for evidence cross-reference
     career_profile = None
     try:
-        from app.repositories.profile import profile_repository
+        from app.services.profile_service import get_combined_profile
 
-        cp = await profile_repository.get_by_user_id(db, current_user.id)
-        if cp:
-            career_profile = cp.content  # dict
+        career_profile = await get_combined_profile(db, current_user.id)
     except Exception:
         pass  # Career profile is optional
 
@@ -339,7 +337,7 @@ async def list_analyses(
             resume_id=a.resume_id,
             overall_score=a.overall_score,
             ats_score=a.ats_score,
-            content_strength_score=a.content_strength_score,
+            content_score=a.content_strength_score,
             analysis_version=a.analysis_version,
             status=a.status,
             created_at=a.created_at,

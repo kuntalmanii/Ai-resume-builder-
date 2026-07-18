@@ -110,8 +110,13 @@ def calculate_match_scores(
         # Check if there are confirmed career profile opportunities matching experience requirements
         has_confirmed_exp_opp = False
         for opp in profile_opportunities:
-            req = next((r for r in requirements if r.id == opp["requirement_id"]), None)
-            if req and req.requirement_type in ["required_experience", "preferred_experience"]:
+            opp_req: JobDescriptionRequirement | None = next(
+                (r for r in requirements if r.id == opp["requirement_id"]), None
+            )
+            if opp_req and opp_req.requirement_type in [
+                "required_experience",
+                "preferred_experience",
+            ]:
                 if opp["verification_status"] in ["user_confirmed", "source_verified"]:
                     has_confirmed_exp_opp = True
                     break

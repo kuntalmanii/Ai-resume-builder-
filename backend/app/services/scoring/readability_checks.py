@@ -65,8 +65,8 @@ def check_bullet_length(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation=f"Shorten {len(long_bullets)} long " \
-                f"bullet(s). Aim for 12–25 words per bullet.",
+            recommendation=f"Shorten {len(long_bullets)} long "
+            f"bullet(s). Aim for 12–25 words per bullet.",
             evidence_data={"long_bullet_count": len(long_bullets)},
         )
     else:
@@ -74,13 +74,13 @@ def check_bullet_length(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Many Bullets Exceed Readable Length",
-            f"{len(long_bullets)}/{len(bullets)} bullets exceed " \
-                f"{MAX_BULLET_WORDS} words — hard to scan quickly.",
+            f"{len(long_bullets)}/{len(bullets)} bullets exceed "
+            f"{MAX_BULLET_WORDS} words — hard to scan quickly.",
             "failed",
             possible,
             0,
-            recommendation="Trim long bullets to their key contribution. Remove " \
-                "unnecessary context from individual bullets.",
+            recommendation="Trim long bullets to their key contribution. Remove "
+            "unnecessary context from individual bullets.",
             evidence_data={"long_bullet_count": len(long_bullets), "ratio": round(ratio, 2)},
         )
 
@@ -135,8 +135,8 @@ def check_sentence_complexity(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Each bullet should make a single point. Split " \
-                "multi-sentence bullets into separate items.",
+            recommendation="Each bullet should make a single point. Split "
+            "multi-sentence bullets into separate items.",
             evidence_data={"multi_sentence_count": len(multi_sentence)},
         )
 
@@ -174,13 +174,13 @@ def check_excessive_paragraphs(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Summary Is Too Long",
-            f"Professional summary is {summary_words} words — exceeds " \
-                f"recommended length of {EXCESSIVE_SUMMARY_WORDS} words.",
+            f"Professional summary is {summary_words} words — exceeds "
+            f"recommended length of {EXCESSIVE_SUMMARY_WORDS} words.",
             "warning",
             possible,
             possible - 1,
-            recommendation="Trim the professional summary to 3–5 sentences (50–80 " \
-                "words). Move details to the experience section.",
+            recommendation="Trim the professional summary to 3–5 sentences (50–80 "
+            "words). Move details to the experience section.",
             evidence_data={"summary_word_count": summary_words},
         )
     else:
@@ -188,13 +188,13 @@ def check_excessive_paragraphs(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Experience Entries Lack Bullets",
-            f"{len(long_descriptions)} experience entries " \
-                f"use descriptions instead of bullet points.",
+            f"{len(long_descriptions)} experience entries "
+            f"use descriptions instead of bullet points.",
             "warning",
             possible,
             possible - 1,
-            recommendation="Convert experience descriptions to bullet " \
-                "points for better readability and ATS parsing.",
+            recommendation="Convert experience descriptions to bullet "
+            "points for better readability and ATS parsing.",
             evidence_data={"entries_without_bullets": long_descriptions},
         )
 
@@ -250,8 +250,8 @@ def check_repetition(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Ensure each bullet highlights a unique " \
-                "contribution. Remove copy-pasted bullets.",
+            recommendation="Ensure each bullet highlights a unique "
+            "contribution. Remove copy-pasted bullets.",
             evidence_data={"duplicate_pairs": len(duplicates)},
         )
 
@@ -302,8 +302,8 @@ def check_density_balance(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation="Add 2–4 bullet points per experience " \
-                "entry and fill in sparse sections.",
+            recommendation="Add 2–4 bullet points per experience "
+            "entry and fill in sparse sections.",
             evidence_data={"sections_populated": total_sections_populated},
         )
     else:
@@ -315,8 +315,8 @@ def check_density_balance(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Populate multiple sections (experience, education, " \
-                "skills, projects) for a well-rounded resume.",
+            recommendation="Populate multiple sections (experience, education, "
+            "skills, projects) for a well-rounded resume.",
             evidence_data={"sections_populated": total_sections_populated},
         )
 

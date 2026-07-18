@@ -1,6 +1,7 @@
 """FastAPI endpoints for Resume Import Sessions."""
 
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, File, Response, UploadFile, status
 
@@ -16,8 +17,16 @@ from app.services.parser import import_service
 router = APIRouter(prefix="/resume-imports", tags=["Resume Imports"])
 
 
-@router.post("", response_model=ResumeImportSessionResponse, status_code=status.HTTP_201_CREATED)
-async def upload_resume(db: DBSession, current_user: CurrentUser, file: UploadFile = File(...)):
+@router.post(
+    "",
+    response_model=ResumeImportSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_resume(
+    db: DBSession,
+    current_user: CurrentUser,
+    file: UploadFile = File(...),
+) -> Any:
     """Upload resume document (PDF/DOCX), validate it, extract text, parse structures,
     and return session."""
     session = await import_service.create_import_session(db, current_user.id, file)
@@ -29,7 +38,7 @@ async def get_import_session(
     import_id: uuid.UUID,
     db: DBSession,
     current_user: CurrentUser,
-):
+) -> Any:
     """Retrieve details of an owned import session."""
     session = await import_service.get_import_session(db, current_user.id, import_id)
     return session
@@ -41,7 +50,7 @@ async def update_import_document(
     payload: ResumeImportUpdate,
     db: DBSession,
     current_user: CurrentUser,
-):
+) -> Any:
     """Update parsed resume document in import session during user review."""
     session = await import_service.update_import_document(
         db, current_user.id, import_id, payload.parsed_document.model_dump()
@@ -55,7 +64,7 @@ async def finalize_import(
     payload: ResumeImportFinalize,
     db: DBSession,
     current_user: CurrentUser,
-):
+) -> Any:
     """Finalize import: create Resume, ResumeVersion, and optionally import career profile items."""
     resume = await import_service.finalize_import(
         db,
@@ -74,7 +83,7 @@ async def delete_import_session(
     import_id: uuid.UUID,
     db: DBSession,
     current_user: CurrentUser,
-):
+) -> Response:
     """Cancel and delete owned import session."""
     await import_service.delete_import_session(db, current_user.id, import_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

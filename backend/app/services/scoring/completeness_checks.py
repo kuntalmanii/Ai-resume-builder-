@@ -63,8 +63,8 @@ def check_personal_info(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Add your name, email address, and location " \
-                "to the personal information section.",
+            recommendation="Add your name, email address, and location "
+            "to the personal information section.",
         )
 
 
@@ -112,8 +112,8 @@ def check_foundation(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Add your educational background and/or any " \
-                "work experience, internships, or projects.",
+            recommendation="Add your educational background and/or any "
+            "work experience, internships, or projects.",
         )
 
 
@@ -141,13 +141,13 @@ def check_skills(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Skills Section Sparse",
-            f"Only {total_skills} skill(s) listed. A more " \
-                f"complete skills section helps ATS matching.",
+            f"Only {total_skills} skill(s) listed. A more "
+            f"complete skills section helps ATS matching.",
             "warning",
             possible,
             possible - 1,
-            recommendation="Expand your skills section with " \
-                "technical skills, tools, and soft skills.",
+            recommendation="Expand your skills section with "
+            "technical skills, tools, and soft skills.",
             evidence_data={"skill_count": total_skills},
         )
     else:
@@ -159,8 +159,8 @@ def check_skills(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Add a Skills section with your technical " \
-                "skills, tools, and relevant competencies.",
+            recommendation="Add a Skills section with your technical "
+            "skills, tools, and relevant competencies.",
         )
 
 
@@ -182,8 +182,8 @@ def check_evidence(resume: Any) -> CheckResult:
             code,
             CATEGORY,
             "Strong Evidence of Capability",
-            f"Resume demonstrates capability through {len(experience)} " \
-                f"experience and {len(projects)} project entries.",
+            f"Resume demonstrates capability through {len(experience)} "
+            f"experience and {len(projects)} project entries.",
             "passed",
             possible,
             possible,
@@ -198,8 +198,8 @@ def check_evidence(resume: Any) -> CheckResult:
             "warning",
             possible,
             possible - 1,
-            recommendation="Add more experience entries, internships, or " \
-                "personal projects to demonstrate capability.",
+            recommendation="Add more experience entries, internships, or "
+            "personal projects to demonstrate capability.",
             evidence_data={"experience_count": len(experience), "project_count": len(projects)},
         )
     else:
@@ -211,8 +211,8 @@ def check_evidence(resume: Any) -> CheckResult:
             "failed",
             possible,
             0,
-            recommendation="Add work experience, internships, or personal/academic " \
-                "projects to showcase your capabilities.",
+            recommendation="Add work experience, internships, or personal/academic "
+            "projects to showcase your capabilities.",
         )
 
 
@@ -242,8 +242,8 @@ def check_summary(resume: Any) -> CheckResult:
             "warning",
             possible,
             0,
-            recommendation="Expand the summary to 2–4 sentences covering " \
-                "your role, skills, and key value proposition.",
+            recommendation="Expand the summary to 2–4 sentences covering "
+            "your role, skills, and key value proposition.",
         )
     else:
         return CheckResult(
@@ -254,8 +254,8 @@ def check_summary(resume: Any) -> CheckResult:
             "warning",
             possible,
             0,
-            recommendation="Add a 2–4 sentence professional summary " \
-                "that highlights your background and value.",
+            recommendation="Add a 2–4 sentence professional summary "
+            "that highlights your background and value.",
         )
 
 
@@ -300,8 +300,8 @@ def check_credibility_sections(resume: Any) -> CheckResult:
             "warning",
             possible,
             0,
-            recommendation="Consider adding certifications, achievements, or " \
-                "language proficiencies to strengthen credibility.",
+            recommendation="Consider adding certifications, achievements, or "
+            "language proficiencies to strengthen credibility.",
         )
 
 

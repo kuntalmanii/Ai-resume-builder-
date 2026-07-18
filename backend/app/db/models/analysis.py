@@ -19,14 +19,24 @@ JD Score Normalization Decision:
 - If a job description is provided, overall_score is the direct sum of all categories (out of 100).
 """
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.ai_suggestion import AISuggestion
+    from app.db.models.analysis_check import AnalysisCheck
+    from app.db.models.job_description import JobDescription
+    from app.db.models.resume import Resume
+    from app.db.models.user import User
 
 
 class ResumeAnalysis(Base):
@@ -76,15 +86,15 @@ class ResumeAnalysis(Base):
     )
 
     # Relationships
-    resume: Mapped["Resume"] = relationship("Resume", back_populates="analyses")  # type: ignore[name-defined]
-    user: Mapped["User"] = relationship("User", back_populates="analyses")  # type: ignore[name-defined]
-    job_description: Mapped["JobDescription"] = relationship(
+    resume: Mapped[Resume] = relationship("Resume", back_populates="analyses")
+    user: Mapped[User] = relationship("User", back_populates="analyses")
+    job_description: Mapped[JobDescription] = relationship(
         "JobDescription", back_populates="analyses"
-    )  # type: ignore[name-defined]
-    checks: Mapped[list["AnalysisCheck"]] = relationship(  # type: ignore[name-defined]
+    )
+    checks: Mapped[list[AnalysisCheck]] = relationship(
         "AnalysisCheck", back_populates="analysis", cascade="all, delete-orphan"
     )
-    ai_suggestions: Mapped[list["AISuggestion"]] = relationship(  # type: ignore[name-defined]
+    ai_suggestions: Mapped[list[AISuggestion]] = relationship(
         "AISuggestion", back_populates="analysis", cascade="all, delete-orphan"
     )
 

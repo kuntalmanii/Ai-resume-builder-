@@ -30,7 +30,8 @@ class NotificationRepository(BaseRepository[Notification]):
         from sqlalchemy import func
 
         query = select(func.count(Notification.id)).where(
-            Notification.user_id == user_id, Notification.is_read == False  # noqa: E712
+            Notification.user_id == user_id,
+            Notification.is_read == False,  # noqa: E712
         )
         result = await db.execute(query)
         return result.scalar() or 0
@@ -44,8 +45,9 @@ class NotificationRepository(BaseRepository[Notification]):
             )
             .values(is_read=True)
         )
+        from typing import Any, cast
         result = await db.execute(query)
-        return result.rowcount
+        return cast(Any, result).rowcount
 
 
 notification_repository = NotificationRepository()

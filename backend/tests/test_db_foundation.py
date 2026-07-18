@@ -113,9 +113,7 @@ async def test_resume_version_unique_constraint(db_session: AsyncSession) -> Non
     db_session.add(resume)
     await db_session.flush()
 
-    v1 = ResumeVersion(
-        resume_id=resume.id, version_number=1, content_snapshot={"data": "v1"}
-    )
+    v1 = ResumeVersion(resume_id=resume.id, version_number=1, content_snapshot={"data": "v1"})
     db_session.add(v1)
     await db_session.flush()
 
@@ -158,9 +156,7 @@ async def test_resume_cascade_deletes_versions(db_session: AsyncSession) -> None
     db_session.add(resume)
     await db_session.flush()
 
-    version = ResumeVersion(
-        resume_id=resume.id, version_number=1, content_snapshot={"data": "v1"}
-    )
+    version = ResumeVersion(resume_id=resume.id, version_number=1, content_snapshot={"data": "v1"})
     db_session.add(version)
     await db_session.flush()
     version_id = version.id

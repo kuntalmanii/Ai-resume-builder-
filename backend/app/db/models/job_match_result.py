@@ -1,7 +1,10 @@
 """Job Match Result ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.job_description import JobDescription
+    from app.db.models.resume import Resume
 
 
 class JobMatchResult(Base):
@@ -42,22 +49,32 @@ class JobMatchResult(Base):
     education_certification_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # Detailed matches & gaps stored as JSONB list entries
-    exact_keyword_matches: Mapped[list[dict]] = mapped_column(
+    exact_keyword_matches: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONBType, default=list, nullable=False
     )
-    semantic_matches: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    missing_keywords: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    skill_gaps: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    experience_gaps: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    hidden_experiences: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
+    semantic_matches: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    missing_keywords: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    skill_gaps: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    experience_gaps: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    hidden_experiences: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
 
-    matched_requirements: Mapped[list[dict]] = mapped_column(
+    matched_requirements: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONBType, default=list, nullable=False
     )
-    missing_requirements: Mapped[list[dict]] = mapped_column(
+    missing_requirements: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONBType, default=list, nullable=False
     )
-    hidden_profile_matches: Mapped[list[dict]] = mapped_column(
+    hidden_profile_matches: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONBType, default=list, nullable=False
     )
     recommendations: Mapped[list[str]] = mapped_column(JSONBType, default=list, nullable=False)
@@ -67,10 +84,10 @@ class JobMatchResult(Base):
     )
 
     # Relationships
-    resume: Mapped["Resume"] = relationship("Resume", back_populates="match_results")  # type: ignore[name-defined]
-    job_description: Mapped["JobDescription"] = relationship(
+    resume: Mapped[Resume] = relationship("Resume", back_populates="match_results")
+    job_description: Mapped[JobDescription] = relationship(
         "JobDescription", back_populates="match_results"
-    )  # type: ignore[name-defined]
+    )
 
     def __repr__(self) -> str:
         return f"<JobMatchResult id={self.id} match={self.overall_match_percentage}%>"

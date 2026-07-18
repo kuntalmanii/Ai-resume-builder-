@@ -38,8 +38,8 @@ async def _create_test_resume(client: AsyncClient, headers: dict) -> dict:
             "template_id": "modern",
             "content": {
                 "personal_information": {},
-                "professional_summary": "Experienced software engineer " \
-                    "specializing in web applications.",
+                "professional_summary": "Experienced software engineer "
+                "specializing in web applications.",
                 "education": [],
                 "experience": [
                     {
@@ -89,8 +89,8 @@ async def test_generate_single_suggestion(client: AsyncClient, db_session: Async
 
     # Mock output from Gemini
     mock_llm_output = LLMSuggestionOutput(
-        suggested_text="Built scalable web APIs in Google using " \
-            "Python, improving performance by 30%.",
+        suggested_text="Built scalable web APIs in Google using "
+        "Python, improving performance by 30%.",
         rationale="Added impact metric and grounded company context.",
         risk_level="medium",
         claims=[
@@ -267,8 +267,8 @@ async def test_answer_clarifying_question(client: AsyncClient, db_session: Async
                 claim_type="metric",
                 support_status="supported",
                 supporting_sources=[
-                    "User Confirmed Achievement Fact: Question: 'By what " \
-                        "percentage did throughput increase?' Answer: '50%'"
+                    "User Confirmed Achievement Fact: Question: 'By what "
+                    "percentage did throughput increase?' Answer: '50%'"
                 ],
                 risk_level="low",
             )

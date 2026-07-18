@@ -2,6 +2,7 @@
 
 import logging
 import re
+from typing import cast
 
 from app.ai.factory import get_ai_provider
 from app.core.config import get_settings
@@ -216,15 +217,18 @@ async def parse_jd_text(text: str) -> JobDescriptionRequirements:
                 f"Job Description text to analyze:\n{text}"
             )
 
-            result: JobDescriptionRequirements = await provider.complete(
-                prompt=prompt,
-                system_prompt=(
-                    "You are a precise, logical requirement parser. "
-                    "Map natural language requirements into structured "
-                    "entities. Maintain absolute fidelity to the source "
-                    "text without exaggerating or inferring missing skills."
+            result = cast(
+                JobDescriptionRequirements,
+                await provider.complete(
+                    prompt=prompt,
+                    system_prompt=(
+                        "You are a precise, logical requirement parser. "
+                        "Map natural language requirements into structured "
+                        "entities. Maintain absolute fidelity to the source "
+                        "text without exaggerating or inferring missing skills."
+                    ),
+                    response_schema=JobDescriptionRequirements,
                 ),
-                response_schema=JobDescriptionRequirements,
             )
 
             # Post-process: set extraction method to hybrid/llm

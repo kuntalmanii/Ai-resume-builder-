@@ -3,7 +3,7 @@
 from typing import Any
 
 
-class CareerOSException(Exception):
+class CareerOSError(Exception):
     """Base exception for CareerOS AI errors."""
 
     def __init__(self, message: str, code: str = "INTERNAL_SERVER_ERROR", details: Any = None):
@@ -13,35 +13,35 @@ class CareerOSException(Exception):
         super().__init__(message)
 
 
-class ResourceNotFoundError(CareerOSException):
+class ResourceNotFoundError(CareerOSError):
     """Exceptions raised when a resource is not found."""
 
     def __init__(self, message: str, details: Any = None):
         super().__init__(message, code="RESOURCE_NOT_FOUND", details=details)
 
 
-class ConflictError(CareerOSException):
+class ConflictError(CareerOSError):
     """Exceptions raised when there is a state conflict (e.g. duplicate email)."""
 
     def __init__(self, message: str, details: Any = None):
         super().__init__(message, code="CONFLICT_ERROR", details=details)
 
 
-class ValidationError(CareerOSException):
+class ValidationError(CareerOSError):
     """Exceptions raised on invalid input schema validation."""
 
     def __init__(self, message: str, details: Any = None):
         super().__init__(message, code="VALIDATION_ERROR", details=details)
 
 
-class UnauthorizedError(CareerOSException):
+class UnauthorizedError(CareerOSError):
     """Exceptions raised on token / authentication verification failures."""
 
     def __init__(self, message: str, details: Any = None):
         super().__init__(message, code="UNAUTHORIZED", details=details)
 
 
-class ForbiddenError(CareerOSException):
+class ForbiddenError(CareerOSError):
     """Exceptions raised on access privilege / forbidden checks."""
 
     def __init__(self, message: str, details: Any = None):

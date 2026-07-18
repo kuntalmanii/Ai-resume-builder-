@@ -1,7 +1,10 @@
 """Career Profile ORM model — stores structured career data per user."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.user import User
 
 
 class CareerProfile(Base):
@@ -29,16 +35,22 @@ class CareerProfile(Base):
     portfolio_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
     # Structured career data stored as JSONB for flexibility
-    education: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    experience: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    projects: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    skills: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
-    certifications: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    achievements: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
-    positions_of_responsibility: Mapped[list[dict]] = mapped_column(
+    education: Mapped[list[dict[str, Any]]] = mapped_column(JSONBType, default=list, nullable=False)
+    experience: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONBType, default=list, nullable=False
     )
-    languages: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
+    projects: Mapped[list[dict[str, Any]]] = mapped_column(JSONBType, default=list, nullable=False)
+    skills: Mapped[dict[str, Any]] = mapped_column(JSONBType, default=dict, nullable=False)
+    certifications: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    achievements: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    positions_of_responsibility: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
+    languages: Mapped[list[dict[str, Any]]] = mapped_column(JSONBType, default=list, nullable=False)
     interests: Mapped[list[str]] = mapped_column(JSONBType, default=list, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
@@ -52,7 +64,7 @@ class CareerProfile(Base):
     )
 
     # Relationship
-    user: Mapped["User"] = relationship("User", back_populates="career_profile")  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User", back_populates="career_profile")
 
     def __repr__(self) -> str:
         return f"<CareerProfile user_id={self.user_id}>"

@@ -201,14 +201,14 @@ async def get_matching_methodology() -> JobMatchMethodologyResponse:
             {
                 "category": name,
                 "max_points": weight,
-                "description": f"Evaluates {name.replace('_', ' ')} " \
-                    f"matching with target Job Description.",
+                "description": f"Evaluates {name.replace('_', ' ')} "
+                f"matching with target Job Description.",
             }
         )
 
     return JobMatchMethodologyResponse(
         matching_version=MATCHING_VERSION,
         categories=categories_list,
-        scoring_description="Scores are computed deterministically. Active " \
-            "categories are normalized to 100 max points.",
+        scoring_description="Scores are computed deterministically. Active "
+        "categories are normalized to 100 max points.",
     )

@@ -1,7 +1,10 @@
 """AI Suggestion ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.analysis import ResumeAnalysis
+    from app.db.models.evidence_source import EvidenceSource
+    from app.db.models.job_description import JobDescription
+    from app.db.models.resume import Resume
 
 
 class AISuggestion(Base):
@@ -62,7 +71,9 @@ class AISuggestion(Base):
     )  # low, medium, high, blocked
 
     # List of claim validation objects
-    claim_validation: Mapped[list[dict]] = mapped_column(JSONBType, default=list, nullable=False)
+    claim_validation: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONBType, default=list, nullable=False
+    )
     expected_score_gain: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     provider_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
@@ -84,14 +95,14 @@ class AISuggestion(Base):
     )
 
     # Relationships
-    resume: Mapped["Resume"] = relationship("Resume", back_populates="ai_suggestions")  # type: ignore[name-defined]
-    analysis: Mapped["ResumeAnalysis"] = relationship(
+    resume: Mapped[Resume] = relationship("Resume", back_populates="ai_suggestions")
+    analysis: Mapped[ResumeAnalysis] = relationship(
         "ResumeAnalysis", back_populates="ai_suggestions"
-    )  # type: ignore[name-defined]
-    job_description: Mapped["JobDescription"] = relationship(
+    )
+    job_description: Mapped[JobDescription] = relationship(
         "JobDescription", back_populates="ai_suggestions"
-    )  # type: ignore[name-defined]
-    evidence_sources: Mapped[list["EvidenceSource"]] = relationship(  # type: ignore[name-defined]
+    )
+    evidence_sources: Mapped[list[EvidenceSource]] = relationship(
         "EvidenceSource", back_populates="ai_suggestion", cascade="all, delete-orphan"
     )
 

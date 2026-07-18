@@ -1,13 +1,20 @@
 """Resume Claim ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.evidence_source import EvidenceSource
+    from app.db.models.resume import Resume
 
 
 class ResumeClaim(Base):
@@ -47,8 +54,8 @@ class ResumeClaim(Base):
     )
 
     # Relationships
-    resume: Mapped["Resume"] = relationship("Resume", back_populates="claims")  # type: ignore[name-defined]
-    evidence_sources: Mapped[list["EvidenceSource"]] = relationship(  # type: ignore[name-defined]
+    resume: Mapped[Resume] = relationship("Resume", back_populates="claims")
+    evidence_sources: Mapped[list[EvidenceSource]] = relationship(
         "EvidenceSource", back_populates="resume_claim", cascade="all, delete-orphan"
     )
 

@@ -1,7 +1,10 @@
 """Resume Import Session ORM model."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.user import User
 
 
 class ResumeImportSession(Base):
@@ -23,14 +29,16 @@ class ResumeImportSession(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="uploaded")
 
     # Metadata about extraction (page count, character count, etc.)
-    extraction_metadata: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
+    extraction_metadata: Mapped[dict[str, Any]] = mapped_column(
+        JSONBType, default=dict, nullable=False
+    )
 
     # The parsed ResumeDocument (Pydantic schema serialized to dict)
-    parsed_document: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
+    parsed_document: Mapped[dict[str, Any]] = mapped_column(JSONBType, default=dict, nullable=False)
 
-    parsing_warnings: Mapped[list] = mapped_column(JSONBType, default=list, nullable=False)
-    detected_sections: Mapped[list] = mapped_column(JSONBType, default=list, nullable=False)
-    missing_sections: Mapped[list] = mapped_column(JSONBType, default=list, nullable=False)
+    parsing_warnings: Mapped[list[Any]] = mapped_column(JSONBType, default=list, nullable=False)
+    detected_sections: Mapped[list[Any]] = mapped_column(JSONBType, default=list, nullable=False)
+    missing_sections: Mapped[list[Any]] = mapped_column(JSONBType, default=list, nullable=False)
 
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -44,7 +52,7 @@ class ResumeImportSession(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User")  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User")
 
     def __repr__(self) -> str:
         return f"<ResumeImportSession id={self.id} status={self.status}>"

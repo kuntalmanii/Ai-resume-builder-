@@ -3,6 +3,7 @@ concurrency control."""
 
 import copy
 import uuid
+from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -56,7 +57,7 @@ async def get_resumes(
         stmt = stmt.where(Resume.status == status)
 
     # Simple sorting resolver
-    order_col = Resume.updated_at
+    order_col: Any = Resume.updated_at
     if sort_by == "created_at":
         order_col = Resume.created_at
     elif sort_by == "title":

@@ -1,7 +1,10 @@
 """Career Entry ORM model — stores structured individual career experiences."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +12,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import JSONBType
+
+if TYPE_CHECKING:
+    from app.db.models.user import User
 
 
 class CareerEntry(Base):
@@ -31,7 +37,7 @@ class CareerEntry(Base):
     is_current: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Detailed section-specific metadata (grade, GPA, bullets, skills list, etc.)
-    data: Mapped[dict] = mapped_column(JSONBType, default=dict, nullable=False)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONBType, default=dict, nullable=False)
 
     verification_status: Mapped[str] = mapped_column(
         String(50), default="unverified", nullable=False
@@ -49,7 +55,7 @@ class CareerEntry(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="career_entries")  # type: ignore[name-defined]
+    user: Mapped[User] = relationship("User", back_populates="career_entries")
 
     def __repr__(self) -> str:
         return f"<CareerEntry id={self.id} type={self.entry_type} title={self.title}>"
