@@ -198,32 +198,31 @@ async def parse_jd_text(text: str) -> JobDescriptionRequirements:
         try:
             provider = get_ai_provider()
             prompt = (
-                "You are a professional Job Description Requirement " \
-                    "Extractor. Analyze the provided job description "
-                "text and map all extracted details into the " \
-                    "JobDescriptionRequirements JSON schema.\n"
+                "You are a professional Job Description Requirement Extractor. "
+                "Analyze the provided job description text and map all extracted details "
+                "into the JobDescriptionRequirements JSON schema.\n"
                 "Strict Guidelines:\n"
-                "1. NEVER fabricate or hallucinate any requirements. " \
-                    "Extract only what is present in the text.\n"
-                "2. Classify each requirement fragment under " \
-                    "raw_requirement_fragments. Each fragment must match one of "
-                "the requirement_type values (required_skill, " \
-                    "preferred_skill, responsibility, required_experience, "
-                "preferred_experience, education, certification, " \
-                    "domain_keyword, tool, soft_skill).\n"
+                "1. NEVER fabricate or hallucinate any requirements. "
+                "Extract only what is present in the text.\n"
+                "2. Classify each requirement fragment under "
+                "raw_requirement_fragments. Each fragment must match one of "
+                "the requirement_type values (required_skill, "
+                "preferred_skill, responsibility, required_experience, "
+                "preferred_experience, education, certification, "
+                "domain_keyword, tool, soft_skill).\n"
                 "3. Preserve the exact source_excerpt from the text to verify where it came from.\n"
-                "4. Assign importance (required, preferred, " \
-                    "optional) based on explicit wording.\n\n"
+                "4. Assign importance (required, preferred, "
+                "optional) based on explicit wording.\n\n"
                 f"Job Description text to analyze:\n{text}"
             )
 
             result: JobDescriptionRequirements = await provider.complete(
                 prompt=prompt,
                 system_prompt=(
-                    "You are a precise, logical requirement parser. " \
-                        "Map natural language requirements into structured "
-                    "entities. Maintain absolute fidelity to the source " \
-                        "text without exaggerating or inferring missing skills."
+                    "You are a precise, logical requirement parser. "
+                    "Map natural language requirements into structured "
+                    "entities. Maintain absolute fidelity to the source "
+                    "text without exaggerating or inferring missing skills."
                 ),
                 response_schema=JobDescriptionRequirements,
             )
