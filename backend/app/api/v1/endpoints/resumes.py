@@ -29,7 +29,9 @@ from app.schemas.resume import (
     ResumeUpdate,
     ResumeVersionResponse,
 )
+from app.schemas.tailor import ResumeTailorRequest, ResumeTailorResponse
 from app.services import resume_service
+from app.services.ai.tailor_service import TailorService
 from app.services.evidence.claim_extractor import ClaimExtractorService
 from app.services.evidence.credibility_engine import CredibilityEngineService
 
@@ -473,6 +475,18 @@ async def link_career_entry_to_claim(
     await db.refresh(claim)
 
     return ResumeClaimSchema.model_validate(claim)
+
+
+@router.post("/{resume_id}/tailor", response_model=ResumeTailorResponse)
+async def tailor_resume(
+    resume_id: uuid.UUID,
+    payload: ResumeTailorRequest,
+    current_user: CurrentUser,
+    db: DBSession,
+) -> ResumeTailorResponse:
+    """Tailor a candidate's resume using Google's X-Y-Z formula against a target JD."""
+    service = TailorService(db)
+    return await service.tailor_resume(current_user.id, resume_id, payload)
 
 
 evidence_router = APIRouter(prefix="/evidence", tags=["Evidence Methodology"])

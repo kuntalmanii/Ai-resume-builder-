@@ -12,6 +12,7 @@ interface HeaderProps {
   initialTitle: string;
   onSave?: () => void;
   onExport?: () => void;
+  onTailor?: () => void;
   isSaving?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function Header({
   initialTitle,
   onSave,
   onExport,
+  onTailor,
   isSaving = false,
 }: HeaderProps) {
   const [title, setTitle] = useState(initialTitle);
@@ -65,6 +67,16 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-2">
+          {onTailor && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onTailor}
+              className="h-[36px] px-3.5 text-xs font-semibold border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+            >
+              ✨ Tailor with AI
+            </Button>
+          )}
           {onSave && (
             <Button
               variant="outline"

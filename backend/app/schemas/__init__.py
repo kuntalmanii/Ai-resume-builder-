@@ -51,6 +51,12 @@ from app.schemas.resume import (
     ResumeUpdate,
     ResumeVersionResponse,
 )
+from app.schemas.tailor import (
+    BulletDiff,
+    ResumeTailorRequest,
+    ResumeTailorResponse,
+    XYZStructure,
+)
 from app.schemas.user import UserResponse, UserUpdate
 
 __all__ = [
@@ -93,4 +99,9 @@ __all__ = [
     "JobMatchMethodologyResponse",
     "JobDescriptionRequirement",
     "JobDescriptionRequirements",
+    "ResumeTailorRequest",
+    "ResumeTailorResponse",
+    "BulletDiff",
+    "XYZStructure",
 ]
+

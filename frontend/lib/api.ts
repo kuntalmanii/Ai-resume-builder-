@@ -316,6 +316,19 @@ export const resumesAPI = {
 
   getClaims: (id: string): Promise<EvidenceMapResponse> =>
     request<EvidenceMapResponse>(`/resumes/${id}/claims`),
+
+  tailor: (
+    id: string,
+    payload: {
+      target_role?: string;
+      job_description_text?: string;
+      focus_skills?: string[];
+    }
+  ): Promise<any> =>
+    request<any>(`/resumes/${id}/tailor`, {
+      method: "POST",
+      body: payload,
+    }),
 };
 
 // ─── Resume Imports API ────────────────────────────────────────────────────────

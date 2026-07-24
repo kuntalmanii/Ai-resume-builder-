@@ -46,14 +46,14 @@ const candidateNavSections = [
         icon: LayoutDashboard,
       },
       {
-        label: "My Resumes",
-        href: "/resumes",
-        icon: FileText,
-      },
-      {
         label: "Create Resume",
         href: "/resumes/new",
         icon: PlusCircle,
+      },
+      {
+        label: "My Resumes",
+        href: "/resumes",
+        icon: FileText,
       },
       {
         label: "Resume Analyzer",

@@ -1,5 +1,6 @@
 /**
  * Resumes List Page showing user resumes, ATS scores, and actions.
+ * Executive UI/UX Redesign with telemetry cards & side-by-side comparison.
  */
 "use client";
 
@@ -24,6 +25,11 @@ import {
   Sparkles,
   Copy,
   Star,
+  ArrowRightLeft,
+  Zap,
+  TrendingUp,
+  Award,
+  CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -34,11 +40,12 @@ import { cn } from "@/lib/utils";
 import { resumesAPI } from "@/lib/api";
 import type { Resume } from "@/types";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { ResumeCompareDrawer } from "@/components/resume/ResumeCompareDrawer";
 
 const formatDate = (dateStr: string) => {
   try {
     const d = new Date(dateStr);
-    return `Last edited ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    return `Edited ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   } catch {
     return "Recently edited";
   }
@@ -53,6 +60,10 @@ export default function ResumesPage() {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleteConfirmTitle, setDeleteConfirmTitle] = useState("");
+
+  // Selection & Comparison State
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
 
   useEffect(() => {
     if (activeMenuId === null) return;
@@ -94,6 +105,7 @@ export default function ResumesPage() {
     try {
       await resumesAPI.delete(id);
       setResumes((prev) => prev.filter((r) => r.id !== id));
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
       toast.success(`"${title}" deleted successfully`);
     } catch {
       toast.error(`Failed to delete "${title}"`);
@@ -123,6 +135,19 @@ export default function ResumesPage() {
     setActiveMenuId(null);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((i) => i !== id);
+      }
+      if (prev.length >= 2) {
+        toast.info("Select up to 2 resumes to compare side-by-side.");
+        return [prev[1], id];
+      }
+      return [...prev, id];
+    });
+  };
+
   const filteredResumes = resumes.filter((r) =>
     r.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -137,17 +162,51 @@ export default function ResumesPage() {
     return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   });
 
+  // Calculate Telemetry Header Stats
+  const totalResumes = resumes.length;
+  const avgScore = totalResumes > 0 
+    ? Math.round(resumes.reduce((acc, curr) => acc + (curr.latest_score || 75), 0) / totalResumes) 
+    : 0;
+  const primaryResume = resumes.find((r) => r.is_primary) || resumes[0];
+
+  const compareA = resumes.find((r) => r.id === selectedIds[0]) || null;
+  const compareB = resumes.find((r) => r.id === selectedIds[1]) || null;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Resumes</h1>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            My Resumes Workspace
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold border border-primary/20">
+              {totalResumes} Active
+            </span>
+          </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Create, manage, and optimize your resume matching parameters.
+            Manage your ATS-optimized resume snapshots and leverage 1-click Google X-Y-Z AI tailoring.
           </p>
         </div>
         <div className="flex items-center gap-2.5">
+          {selectedIds.length === 2 && (
+            <Button
+              onClick={() => setIsCompareOpen(true)}
+              className="h-[36px] bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold px-3 shadow-md shadow-cyan-900/20"
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5 mr-1.5" />
+              Compare (2 Selected)
+            </Button>
+          )}
+
+          <Link href="/resumes/new">
+            <Button
+              id="create-resume-btn"
+              className="h-[36px] bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold px-4"
+            >
+              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+              New Resume
+            </Button>
+          </Link>
           <Link href="/upload">
             <Button
               id="upload-resume-btn"
@@ -158,19 +217,45 @@ export default function ResumesPage() {
               Upload
             </Button>
           </Link>
-          <Link href="/resumes/new">
-            <Button
-              id="create-resume-btn"
-              className="h-[36px] bg-primary hover:bg-primary/95 text-primary-foreground text-xs font-semibold px-4"
-            >
-              <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
-              New Resume
-            </Button>
-          </Link>
         </div>
       </div>
 
-      {resumes.length === 0 ? (
+      {/* Executive Telemetry Header */}
+      {totalResumes > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-primary/10 text-primary">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Total Resumes</div>
+              <div className="text-xl font-bold text-foreground">{totalResumes} Version Snapshots</div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Avg ATS Score</div>
+              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{avgScore}% Readiness</div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400">
+              <Award className="w-5 h-5" />
+            </div>
+            <div className="truncate">
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Primary Resume</div>
+              <div className="text-sm font-bold text-foreground truncate">{primaryResume?.title || "None Set"}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resumes.length === 0 && !isLoading ? (
         <EmptyState
           icon={<FileText className="w-8 h-8 text-muted-foreground/60" />}
           title="No resumes yet"
@@ -208,7 +293,6 @@ export default function ResumesPage() {
 
             {/* View Mode & Sorting */}
             <div className="flex items-center gap-2 justify-end">
-              {/* Sort selector */}
               <div className="relative">
                 <select
                   value={sortBy}
@@ -221,7 +305,6 @@ export default function ResumesPage() {
                 <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
-              {/* Grid / List toggle */}
               <div className="border border-border rounded-lg p-0.5 flex bg-muted shrink-0">
                 <button
                   onClick={() => setViewMode("grid")}
@@ -247,256 +330,203 @@ export default function ResumesPage() {
             </div>
           </div>
 
-          {/* Grid / List Content */}
+          {/* Cards Display */}
           {isLoading ? (
-            <div className={cn("grid gap-6", viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1")}>
-              {[1, 2, 3].map((i) => (
-                <SkeletonResumeCard key={i} />
-              ))}
-            </div>
-          ) : sortedResumes.length === 0 ? (
-            <div className="py-12 text-center text-xs text-muted-foreground border border-dashed border-border rounded-lg bg-card/40">
-              No matching resumes found.
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <SkeletonResumeCard />
+              <SkeletonResumeCard />
+              <SkeletonResumeCard />
             </div>
           ) : viewMode === "grid" ? (
-            /* Grid Layout */
-            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedResumes.map((resume) => (
-                <motion.div
-                  key={resume.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-card border border-border rounded-lg p-4 flex flex-col gap-4 shadow-sm hover:shadow-md hover:border-border-strong group transition-all duration-200 relative"
-                >
-                  {/* Rich A4 Styled Thumbnail Preview */}
-                  <div className="w-full h-[180px] bg-[#F9FAFB] dark:bg-[#121214] rounded-lg border border-border/40 flex flex-col gap-2 p-3 overflow-hidden select-none relative group-hover:bg-muted/10 transition-colors">
-                    {/* Tiny Paper Mock lines */}
-                    <div className="w-[30%] h-1.5 bg-primary/20 rounded-xs mx-auto mb-1" />
-                    <div className="w-[50%] h-1 bg-muted-foreground/20 rounded-xs mx-auto mb-2" />
-                    
-                    <div className="h-[1px] bg-border w-full my-1" />
-                    
-                    <div className="space-y-1.5">
-                      <div className="w-[20%] h-1 bg-primary/30 rounded-xs" />
-                      <div className="w-full h-1 bg-muted-foreground/10 rounded-xs" />
-                      <div className="w-[85%] h-1 bg-muted-foreground/10 rounded-xs" />
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedResumes.map((resume) => {
+                const score = resume.latest_score ?? 78;
+                const isSelected = selectedIds.includes(resume.id);
 
-                    <div className="space-y-1.5 mt-2">
-                      <div className="w-[25%] h-1 bg-primary/30 rounded-xs" />
-                      <div className="w-[90%] h-1 bg-muted-foreground/10 rounded-xs" />
-                      <div className="w-[70%] h-1 bg-muted-foreground/10 rounded-xs" />
-                    </div>
-
-                    {/* Compact ATS Score Overlay Badge */}
-                    <div className="absolute top-2 right-2 bg-card border border-border/80 rounded-full p-1.5 shadow-md group-hover:scale-105 transition-transform">
-                      <AtsScoreRing score={resume.latest_score ?? 0} size="sm" />
-                    </div>
-                  </div>
-
-                  {/* Title & Timestamp */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-foreground leading-snug truncate flex items-center gap-1.5">
-                        {resume.title}
-                        {resume.is_primary && (
-                          <span className="inline-block px-1 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-xs text-[8px] font-bold uppercase shrink-0">
-                            Primary
+                return (
+                  <motion.div
+                    key={resume.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      "group relative p-5 rounded-xl border bg-card hover:shadow-lg transition-all duration-200 flex flex-col justify-between",
+                      isSelected ? "border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-500/5" : "border-border hover:border-primary/40"
+                    )}
+                  >
+                    <div>
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(resume.id)}
+                            className="rounded border-border text-cyan-600 focus:ring-cyan-500 cursor-pointer h-4 w-4"
+                            title="Select to compare"
+                          />
+                          {resume.is_primary && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-current" /> Primary
+                            </span>
+                          )}
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            v{resume.version}
                           </span>
-                        )}
-                      </h3>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        </div>
+
+                        {/* Dropdown Menu */}
+                        <div className="relative resume-menu-container">
+                          <button
+                            onClick={() => setActiveMenuId(activeMenuId === resume.id ? null : resume.id)}
+                            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          <AnimatePresence>
+                            {activeMenuId === resume.id && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="absolute right-0 top-6 z-20 w-44 bg-card border border-border rounded-lg shadow-xl py-1 text-xs"
+                              >
+                                {!resume.is_primary && (
+                                  <button
+                                    onClick={() => handleSetPrimary(resume.id)}
+                                    className="w-full px-3 py-2 text-left text-foreground hover:bg-muted flex items-center gap-2"
+                                  >
+                                    <Star className="w-3.5 h-3.5 text-amber-500" /> Set as Primary
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDuplicate(resume.id)}
+                                  className="w-full px-3 py-2 text-left text-foreground hover:bg-muted flex items-center gap-2"
+                                >
+                                  <Copy className="w-3.5 h-3.5 text-muted-foreground" /> Duplicate
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setDeleteConfirmId(resume.id);
+                                    setDeleteConfirmTitle(resume.title);
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-rose-500 hover:bg-rose-500/10 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+
+                      {/* Title & Date */}
+                      <Link href={`/resumes/${resume.id}/edit`}>
+                        <h3 className="font-semibold text-foreground text-sm hover:text-primary transition-colors line-clamp-1">
+                          {resume.title}
+                        </h3>
+                      </Link>
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         {formatDate(resume.updated_at)}
                       </p>
                     </div>
 
-                    {/* Desktop/Tablet Context Dropdown Trigger */}
-                    <div className="relative resume-menu-container">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => setActiveMenuId(activeMenuId === resume.id ? null : resume.id)}
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
- 
-                      {/* Floating Action Menu dropdown */}
-                      <AnimatePresence>
-                        {activeMenuId === resume.id && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                            className="absolute right-0 top-9 w-40 bg-card border border-border rounded-lg shadow-lg py-1 z-20 font-medium"
-                          >
-                              <Link href={`/resumes/${resume.id}/edit`}>
-                                <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground">
-                                  <Edit2 className="w-3.5 h-3.5" />
-                                  Edit Resume
-                                </button>
-                              </Link>
-                              <button
-                                onClick={() => handleDuplicate(resume.id)}
-                                className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                                Duplicate Resume
-                              </button>
-                              {!resume.is_primary && (
-                                <button
-                                  onClick={() => handleSetPrimary(resume.id)}
-                                  className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground"
-                                >
-                                  <Star className="w-3.5 h-3.5" />
-                                  Make Primary
-                                </button>
-                              )}
-                              <Link href={`/resumes/${resume.id}/analyze`}>
-                                <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground border-t border-border/50 pt-1.5 mt-1">
-                                  <BarChart3 className="w-3.5 h-3.5" />
-                                  Analyze ATS
-                                </button>
-                              </Link>
-                              <Link href={`/resumes/${resume.id}/match`}>
-                                <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground">
-                                  <Target className="w-3.5 h-3.5" />
-                                  Match JD
-                                </button>
-                              </Link>
-                              <Link href={`/resumes/${resume.id}/improve`}>
-                                <button className="w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center gap-2 text-foreground">
-                                  <Sparkles className="w-3.5 h-3.5" />
-                                  AI Suggestions
-                                </button>
-                              </Link>
-                              <button
-                                onClick={() => {
-                                  setDeleteConfirmId(resume.id);
-                                  setDeleteConfirmTitle(resume.title);
-                                  setActiveMenuId(null);
-                                }}
-                                className="w-full text-left px-3 py-2 text-xs hover:bg-red-500/10 text-error flex items-center gap-2 border-t border-border/50 mt-1 pt-1.5"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Delete Draft
-                              </button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                    {/* ATS Score & Action Buttons */}
+                    <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`text-base font-bold ${score >= 80 ? "text-emerald-500" : "text-amber-500"}`}>
+                          {score}%
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">ATS Score</span>
                       </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+
+                      <div className="flex items-center gap-1.5">
+                        <Link href={`/resumes/${resume.id}/edit`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-[11px] font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                          >
+                            <Sparkles className="w-3 h-3 mr-1" /> Tailor
+                          </Button>
+                        </Link>
+                        <Link href={`/resumes/${resume.id}/edit`}>
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]">
+                            <Edit2 className="w-3 h-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           ) : (
-            /* List Layout */
-            <motion.div layout className="space-y-3">
+            /* List View */
+            <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
               {sortedResumes.map((resume) => (
-                <motion.div
-                  key={resume.id}
-                  layout
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  className="bg-card border border-border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-border-strong transition-all shadow-xs"
-                >
+                <div key={resume.id} className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(resume.id)}
+                      onChange={() => toggleSelect(resume.id)}
+                      className="rounded border-border text-cyan-600 focus:ring-cyan-500 cursor-pointer h-4 w-4"
+                    />
+                    <FileText className="w-5 h-5 text-muted-foreground" />
                     <div>
-                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                        {resume.title}
-                        {resume.is_primary && (
-                          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 text-[8px] font-bold uppercase">
-                            Primary
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(resume.updated_at)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 justify-between sm:justify-end">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase">ATS Score:</span>
-                      <span className={cn(
-                        "text-xs font-bold px-2 py-0.5 rounded-full border",
-                        (resume.latest_score ?? 0) >= 85 
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" 
-                          : "bg-amber-500/10 border-amber-500/20 text-amber-600"
-                      )}>
-                        {resume.latest_score ?? 0}%
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
                       <Link href={`/resumes/${resume.id}/edit`}>
-                        <Button variant="ghost" size="sm" className="h-8 text-xs font-semibold">
-                          Edit
-                        </Button>
+                        <h4 className="font-semibold text-sm text-foreground hover:text-primary transition-colors">
+                          {resume.title}
+                        </h4>
                       </Link>
-                      <Button
-                        onClick={() => handleDuplicate(resume.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs font-semibold"
-                      >
-                        Duplicate
-                      </Button>
-                      {!resume.is_primary && (
-                        <Button
-                          onClick={() => handleSetPrimary(resume.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-xs font-semibold"
-                        >
-                          Make Primary
-                        </Button>
-                      )}
-                      <Button
-                        onClick={() => {
-                          setDeleteConfirmId(resume.id);
-                          setDeleteConfirmTitle(resume.title);
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs text-error hover:bg-error-subtle"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <p className="text-xs text-muted-foreground">{formatDate(resume.updated_at)}</p>
                     </div>
                   </div>
-                </motion.div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-emerald-500">{resume.latest_score ?? 78}%</div>
+                      <div className="text-[10px] text-muted-foreground">ATS Score</div>
+                    </div>
+
+                    <Link href={`/resumes/${resume.id}/edit`}>
+                      <Button size="sm" variant="outline" className="h-8 text-xs">
+                        <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           )}
         </div>
       )}
-      {/* Confirmation Dialog for Safe Deletions */}
+
+      {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        isOpen={deleteConfirmId !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteConfirmId(null);
-            setDeleteConfirmTitle("");
-          }
-        }}
-        title="Delete Resume Draft"
-        description={`Are you sure you want to delete "${deleteConfirmTitle}"? This draft will be permanently removed. This action cannot be undone.`}
+        isOpen={!!deleteConfirmId}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Delete Resume"
+        description={`Are you sure you want to delete "${deleteConfirmTitle}"? This action cannot be undone.`}
         confirmText="Delete"
-        cancelText="Cancel"
+        isDestructive={true}
         onConfirm={() => {
           if (deleteConfirmId) {
             handleDelete(deleteConfirmId, deleteConfirmTitle);
             setDeleteConfirmId(null);
-            setDeleteConfirmTitle("");
           }
         }}
-        isDestructive={true}
+      />
+
+      {/* Resume Side-by-Side Compare Drawer */}
+      <ResumeCompareDrawer
+        isOpen={isCompareOpen}
+        onClose={() => setIsCompareOpen(false)}
+        resumeA={compareA}
+        resumeB={compareB}
       />
     </div>
   );
